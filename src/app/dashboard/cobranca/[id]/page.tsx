@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import { DebtRenegotiationForm } from './DebtRenegotiationForm'
+import DebtRenegotiationForm from './DebtRenegotiationForm'
 
 async function getDebt(id: string) {
   const debt = await prisma.debt.findUnique({
