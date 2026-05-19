@@ -1,41 +1,46 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { calculateRepurchasePredictionForCustomer, RepurchasePrediction } from '@/services/recompra';
+import {
+  calculateRepurchasePredictionForCustomer,
+  RepurchasePrediction,
+} from '@/services/recompra';
 
 /**
- * Gets repurchase predictions for all active customers based on a specified time frame.
- * @param days - The number of days ahead to look for predicted repurchases (e.g., 3, 7, 15).
+ * Gets repurchase predictions for customers based on a specified time frame.
+ * @param days - The number of days ahead to look for predicted repurchases.
  * @returns A list of repurchase predictions.
  */
-export async function getRepurchasePredictions(days: number = 3): Promise<RepurchasePrediction[]> {
-    
-    const allCustomers = await prisma.customer.findMany({
-        where: { 
-            active: true,
-            // Opcional: Adicionar um filtro para clientes com pelo menos um pedido, se o volume de clientes for muito grande.
-            // orders: { some: {} } 
-        },
-    });
+export async function getRepurchasePredictions(
+  days: number = 3,
+): Promise<RepurchasePrediction[]> {
+  const allCustomers = await prisma.customer.findMany({
+    // Se no futuro o schema tiver um campo de status/ativo real,
+    // o filtro pode ser reintroduzido com base no nome correto.
+  });
 
-    const predictions: RepurchasePrediction[] = [];
+  const predictions: RepurchasePrediction[] = [];
 
-    for (const customer of allCustomers) {
-        const predictionData = await calculateRepurchasePredictionForCustomer(customer.id);
+  for (const customer of allCustomers) {
+    const predictionData =
+      await calculateRepurchasePredictionForCustomer(customer.id);
 
-        if (!predictionData) {
-            continue; // Skip customers with no prediction data
-        }
-
-        // Filtra para incluir apenas clientes cuja data de recompra prevista está no futuro e dentro da janela de dias especificada.
-        if (predictionData.daysUntilNextPurchase >= 0 && predictionData.daysUntilNextPurchase <= days) {
-            predictions.push({
-                customer,
-                ...predictionData
-            });
-        }
+    if (!predictionData) {
+      continue;
     }
 
-    // Ordena as previsões para mostrar as mais próximas primeiro.
-    return predictions.sort((a, b) => a.daysUntilNextPurchase - b.daysUntilNextPurchase);
+    if (
+      predictionData.daysUntilNextPurchase >= 0 &&
+      predictionData.daysUntilNextPurchase <= days
+    ) {
+      predictions.push({
+        customer,
+        ...predictionData,
+      });
+    }
+  }
+
+  return predictions.sort(
+    (a, b) => a.daysUntilNextPurchase - b.daysUntilNextPurchase,
+  );
 }

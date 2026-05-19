@@ -29,7 +29,6 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
   const isUpdate = !!vehicle?.id
 
   const form = useForm<VehicleFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(vehicleFormSchema) as any,
     defaultValues: {
       placa: vehicle?.placa ?? '',

@@ -42,7 +42,9 @@ const InventoryMovementType = {
 
 const OrderItemSchema = z.object({
   productId: z.string().min(1, 'Produto é obrigatório.'),
-  quantity: z.coerce.number().positive('Quantidade deve ser maior que zero.'),
+  quantity: z.coerce
+    .number()
+    .positive('Quantidade deve ser maior que zero.'),
   unitPrice: z.coerce.number(),
   unitCost: z.coerce.number(),
 });
@@ -51,7 +53,9 @@ const OrderFormSchema = z.object({
   customerId: z.string().min(1, 'Cliente é obrigatório.'),
   paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória.'),
   orderStatus: z.string().min(1, 'Status do pedido é obrigatório.'),
-  items: z.array(OrderItemSchema).min(1, 'O pedido deve ter pelo menos um item.'),
+  items: z
+    .array(OrderItemSchema)
+    .min(1, 'O pedido deve ter pelo menos um item.'),
 });
 
 export type OrderFormState = {
@@ -73,7 +77,8 @@ export async function createOrder(
     };
   }
 
-  const { customerId, paymentMethod, orderStatus, items } = validatedFields.data;
+  const { customerId, paymentMethod, orderStatus, items } =
+    validatedFields.data;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -190,7 +195,10 @@ export async function updateOrderStatus(
       message: `Status do pedido atualizado para ${status}.`,
     };
   } catch (error) {
-    console.error(`Erro ao atualizar status do pedido ${orderId}:`, error);
+    console.error(
+      `Erro ao atualizar status do pedido ${orderId}:`,
+      error,
+    );
 
     return {
       success: false,

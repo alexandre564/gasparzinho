@@ -1,5 +1,8 @@
 import { Suspense } from 'react';
-import { getPaginatedDebts, getTotalOpenDebt } from '../../actions';
+import {
+  getPaginatedDebts,
+  getTotalOpenDebt,
+} from '@/app/dashboard/financeiro/actions';
 import type { Debt } from '@prisma/client';
 import type { DebtStatus } from './types';
 
