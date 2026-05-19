@@ -71,3 +71,5 @@ export async function getFinancialOverview() {
     netBalance: -totalExpenses,
   };
 }
+
+export const addTransaction = createExpense;
