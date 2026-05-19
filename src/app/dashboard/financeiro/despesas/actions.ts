@@ -6,12 +6,28 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { startOfDay, endOfDay, startOfWeek, startOfMonth, endOfWeek, endOfMonth, subDays } from 'date-fns';
 
+// State definition for the createExpense action
+export type CreateExpenseState = {
+  success: boolean;
+  message: string;
+  errors?: {
+    description?: string[];
+    value?: string[];
+    date?: string[];
+    category?: string[];
+    isRecurring?: string[];
+  };
+};
+
+// Zod schema for validation
 const ExpenseSchema = z.object({
     description: z.string().min(3, { message: 'Descrição deve ter no mínimo 3 caracteres.' }),
     value: z.coerce.number().positive({ message: 'Valor deve ser positivo.' }),
-    date: z.coerce.date(),
-    category: z.string(),
-    isRecurring: z.boolean().default(false),
+    date: z.coerce.date({
+        error: "Data inválida.",
+    }),
+    category: z.string().min(1, { message: 'Por favor, selecione uma categoria.' }),
+    isRecurring: z.preprocess((val) => val === 'true', z.boolean().default(false)),
 });
 
 const ITEMS_PER_PAGE = 10;
@@ -41,19 +57,34 @@ export async function getPaginatedExpenses(query: string, currentPage: number, c
     }
 }
 
-export async function createExpense(formData: FormData) {
-    const validatedFields = ExpenseSchema.safeParse(Object.fromEntries(formData.entries()));
+export async function createExpense(
+    prevState: CreateExpenseState,
+    formData: FormData
+): Promise<CreateExpenseState> {
+    const rawFormData = Object.fromEntries(formData.entries());
+
+    // Handle checkbox value which is not present in formData if unchecked
+    if (!rawFormData.isRecurring) {
+        rawFormData.isRecurring = 'false';
+    }
+
+    const validatedFields = ExpenseSchema.safeParse(rawFormData);
 
     if (!validatedFields.success) {
-        return { success: false, message: validatedFields.error.flatten().fieldErrors };
+        return {
+            success: false,
+            message: 'Erro de validação. Corrija os campos e tente novamente.',
+            errors: validatedFields.error.flatten().fieldErrors
+        };
     }
 
     try {
         await prisma.expense.create({ data: validatedFields.data });
         revalidatePath('/dashboard/financeiro');
         revalidatePath('/dashboard/financeiro/despesas');
-        return { success: true, message: 'Despesa criada com sucesso!' };
+        return { success: true, message: 'Despesa criada com sucesso!', errors: {} };
     } catch (error) {
+        console.error('Database Error:', error);
         return { success: false, message: 'Falha ao criar despesa no banco de dados.' };
     }
 }

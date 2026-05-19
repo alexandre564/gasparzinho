@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { toast } from 'sonner';
-import { createExpense } from './actions';
+import { createExpense, CreateExpenseState } from './actions';
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from 'lucide-react';
-import { ExpenseCategory } from '@prisma/client';
 
-const initialState = { message: null, errors: {} };
+const initialState: CreateExpenseState = { message: "", success: false, errors: {} };
+
+const categories = [
+    "Alimentação",
+    "Transporte",
+    "Moradia",
+    "Salário",
+    "Saúde",
+    "Educação",
+    "Lazer",
+    "Outros"
+];
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -26,35 +36,36 @@ function SubmitButton() {
 
 export default function ExpenseForm() {
     const [state, dispatch] = useFormState(createExpense, initialState);
+    const formRef = useRef<HTMLFormElement>(null);
 
     useEffect(() => {
-        if (state.success === true) {
+        if (state.success) {
             toast.success(state.message);
-            document.getElementById('expense-form')?.reset(); // Reset form on success
-        } else if (state.success === false && typeof state.message === 'string') {
+            formRef.current?.reset();
+        } else if (!state.success && state.message && !state.errors) {
             toast.error(state.message);
         }
     }, [state]);
 
   return (
-    <form id="expense-form" action={dispatch} className="space-y-4">
-        
+    <form ref={formRef} id="expense-form" action={dispatch} className="space-y-4">
+
         <div className="space-y-1">
             <Label htmlFor="description">Descrição</Label>
             <Input id="description" name="description" required />
-            {state?.errors?.description && <p className="text-sm text-red-500">{state.errors.description[0]}</p>}
+            {state.errors?.description && <p className="text-sm text-red-500">{state.errors.description[0]}</p>}
         </div>
 
          <div className="space-y-1">
             <Label htmlFor="value">Valor</Label>
             <Input id="value" name="value" type="number" step="0.01" required />
-            {state?.errors?.value && <p className="text-sm text-red-500">{state.errors.value[0]}</p>}
+            {state.errors?.value && <p className="text-sm text-red-500">{state.errors.value[0]}</p>}
         </div>
 
         <div className="space-y-1">
             <Label htmlFor="date">Data</Label>
             <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().substring(0, 10)} required />
-            {state?.errors?.date && <p className="text-sm text-red-500">{state.errors.date[0]}</p>}
+            {state.errors?.date && <p className="text-sm text-red-500">{state.errors.date[0]}</p>}
         </div>
 
         <div className="space-y-1">
@@ -62,14 +73,14 @@ export default function ExpenseForm() {
             <Select name="category" required>
                 <SelectTrigger><SelectValue placeholder="Selecione uma categoria..." /></SelectTrigger>
                 <SelectContent>
-                    {Object.values(ExpenseCategory).map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                    {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                 </SelectContent>
             </Select>
-            {state?.errors?.category && <p className="text-sm text-red-500">{state.errors.category[0]}</p>}
+            {state.errors?.category && <p className="text-sm text-red-500">{state.errors.category[0]}</p>}
         </div>
 
         <div className="flex items-center space-x-2">
-            <Checkbox id="isRecurring" name="isRecurring" value="true"/>
+            <Checkbox id="isRecurring" name="isRecurring" value="true" />
             <label htmlFor="isRecurring" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Despesa Recorrente</label>
         </div>
 

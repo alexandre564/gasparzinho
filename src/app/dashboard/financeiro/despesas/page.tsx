@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
 import { getPaginatedExpenses } from './actions';
-import { Expense, ExpenseCategory } from '@prisma/client';
+import { Expense } from '@prisma/client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Pagination from '@/components/Pagination';
-import {Search} from '@/components/Search';
+import { Search } from '@/components/Search';
 import { Loader2, Repeat } from 'lucide-react';
 
 import ExpenseForm from './ExpenseForm';
@@ -14,11 +14,21 @@ import DeleteExpenseButton from './DeleteExpenseButton';
 
 const currencyFormatter = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-export default async function ExpensesPage({ searchParams }: { searchParams?: { query?: string; page?: string; category?: ExpenseCategory; } }) {
+// Define a local type for the page props for clarity
+type ExpensesPageProps = {
+    searchParams?: {
+        query?: string;
+        page?: string;
+        category?: string; // Category is a string
+    }
+}
+
+export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
   const category = searchParams?.category;
 
+  // The action now correctly receives a string for the category
   const { expenses, totalPages } = await getPaginatedExpenses(query, currentPage, category);
 
   return (
@@ -31,7 +41,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams?: { 
                     <CardHeader>
                         <div className="flex items-center justify-between gap-4">
                             <Search placeholder="Buscar por descrição..." />
-                            {/* TODO: Add Category Filter */}
+                            {/* TODO: Add Category Filter based on the string categories */}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -52,7 +62,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams?: { 
                                         <TableCell className="font-medium">
                                             <div className='flex items-center gap-2'>
                                                 {expense.description}
-                                                {expense.isRecurring && <Repeat className='h-3 w-3 text-muted-foreground' title='Despesa Recorrente'/>}
+                                                {expense.isRecurring && <Repeat className='h-3 w-3 text-muted-foreground' />}
                                             </div>
                                         </TableCell>
                                         <TableCell className="hidden sm:table-cell"><Badge variant="outline">{expense.category}</Badge></TableCell>

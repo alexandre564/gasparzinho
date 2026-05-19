@@ -1,38 +1,52 @@
 'use client';
 
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
-import { DebtStatus } from '@prisma/client';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { DebtStatus } from './types';
+
+const statuses: DebtStatus[] = ['PENDENTE', 'PAGA', 'ATRASADA', 'RENEGOCIADA'];
 
 export default function StatusFilter() {
-    const searchParams = useSearchParams();
-    const pathname = usePathname();
-    const { replace } = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { replace } = useRouter();
 
-    const handleFilterChange = (status: string) => {
-        const params = new URLSearchParams(searchParams);
-        params.set('page', '1'); // Reset to first page
+  const handleFilterChange = (status: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', '1');
 
-        if (status && status !== 'TODOS') {
-            params.set('status', status);
-        } else {
-            params.delete('status');
-        }
-        
-        replace(`${pathname}?${params.toString()}`);
+    if (status && status !== 'TODOS') {
+      params.set('status', status);
+    } else {
+      params.delete('status');
     }
 
-    return (
-         <Select onValueChange={handleFilterChange} defaultValue={searchParams.get('status') || 'TODOS'}>
-            <SelectTrigger className="w-[180px]">
-                <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="TODOS">Todos os Status</SelectItem>
-                {Object.values(DebtStatus).map(status => (
-                    <SelectItem key={status} value={status}>{status.replace('_', ' ')}</SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    );
+    replace(`${pathname}?${params.toString()}`);
+  };
+
+  return (
+    <Select
+      onValueChange={handleFilterChange}
+      defaultValue={searchParams.get('status') || 'TODOS'}
+    >
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Filtrar por status..." />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="TODOS">Todos os Status</SelectItem>
+        {statuses.map((status) => (
+          <SelectItem key={status} value={status}>
+            {status.charAt(0).toUpperCase() +
+              status.slice(1).toLowerCase().replace('_', ' ')}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
