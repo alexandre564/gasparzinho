@@ -27,7 +27,7 @@ type RenegotiationFormValues = z.infer<typeof renegotiationSchema>;
 type DebtRenegotiationFormProps = {
   debt: {
     id: string;
-    amount: number;
+    amount?: number;
     dueDate: Date | string;
   };
 };
