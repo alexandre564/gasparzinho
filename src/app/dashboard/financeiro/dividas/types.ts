@@ -1,0 +1,1 @@
+export type DebtStatus = 'PENDENTE' | 'PAGA' | 'ATRASADA' | 'RENEGOCIADA';

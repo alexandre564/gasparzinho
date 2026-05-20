@@ -1,0 +1,178 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- Models ---
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role          String  @default("VENDEDOR")
+  accessLevel   String  @default("USER")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id           String    @id @default(cuid())
+  name         String
+  phone        String    @unique
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  reference     String?
+  cep           String?
+  city          String  @default("Lavras")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  orders Order[]
+  debts  Debt[]
+
+  @@index([phone])
+  @@index([name])
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  price       Float
+  cost        Float
+  category    String
+  stockKind   String
+  inventory   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  orderItems         OrderItem[]
+  inventoryMovements InventoryMovement[]
+  butaneCylinders    ButaneCylinder[]
+}
+
+model ButaneCylinder {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model InventoryMovement {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  type      String
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  status        String    @default("PENDENTE")
+  paymentMethod String
+  grossValue    Float
+  totalCost     Float
+  netValue      Float
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  items    OrderItem[]
+  delivery Delivery?
+  debt     Debt?
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  total     Float
+
+  @@index([orderId])
+}
+
+model Delivery {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String   @default("PENDENTE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Debt {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  value      Float
+  dueDate    DateTime
+  status     String   @default("PENDENTE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  category    String
+  value       Float
+  date        DateTime
+  isRecurring Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Vehicle {
+  id           String  @id @default(cuid())
+  placa        String  @unique
+  modelo       String
+  tipo         String
+  status       String
+  custoMedioKm Float
+  observacoes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+model DailyClosing {
+  id             String   @id @default(cuid())
+  date           DateTime
+  totalSales     Decimal  @default(0)
+  totalExpenses  Decimal  @default(0)
+  totalRevenue   Decimal  @default(0)
+  ordersCount    Int      @default(0)
+  netBalance     Decimal  @default(0)
+  notes          String?
+  closedBy       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
