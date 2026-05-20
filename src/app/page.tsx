@@ -14,23 +14,23 @@ import { Button } from '@/components/ui/button';
 const highlights = [
   {
     icon: ClipboardList,
-    title: 'Vendas rápidas',
-    text: 'Registre pedidos de gás, água e acessórios com cliente, pagamento e entrega no mesmo fluxo.',
+    title: 'Vendas rapidas',
+    text: 'Registre pedidos de gas, agua e acessorios com cliente, pagamento e entrega no mesmo fluxo.',
   },
   {
     icon: PackageCheck,
     title: 'Estoque no controle',
-    text: 'Acompanhe produtos, botijões e reposição para evitar falta nas rotas de entrega.',
+    text: 'Acompanhe produtos, botijoes e reposicao para evitar falta nas rotas de entrega.',
   },
   {
     icon: Truck,
-    title: 'Entregas visíveis',
-    text: 'Veja pedidos pendentes, em rota e concluídos para organizar o atendimento do dia.',
+    title: 'Entregas visiveis',
+    text: 'Veja pedidos pendentes, em rota e concluidos para organizar o atendimento do dia.',
   },
   {
     icon: Banknote,
     title: 'Financeiro claro',
-    text: 'Monitore vendas, despesas, dívidas e fechamento diário em um painel único.',
+    text: 'Monitore vendas, despesas, dividas e fechamento diario em um painel unico.',
   },
 ];
 
@@ -43,7 +43,7 @@ export default function Home() {
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400 text-slate-950">
               <PackageCheck className="h-5 w-5" />
             </span>
-            <span className="text-lg font-semibold tracking-normal">Gás Gasparzinho</span>
+            <span className="text-lg font-semibold tracking-normal">Gas Gasparzinho</span>
           </Link>
           <Button asChild variant="secondary" className="bg-white text-slate-950 hover:bg-amber-100">
             <Link href="/login">Entrar</Link>
@@ -54,14 +54,14 @@ export default function Home() {
           <div className="max-w-3xl">
             <p className="mb-4 inline-flex items-center gap-2 rounded-md bg-amber-400 px-3 py-1 text-sm font-semibold text-slate-950">
               <ShieldCheck className="h-4 w-4" />
-              Sistema de gestão para revenda de gás
+              Sistema de gestao para revenda de gas
             </p>
             <h1 className="text-4xl font-bold leading-tight tracking-normal sm:text-5xl lg:text-6xl">
-              Venda, entregue e feche o caixa do gás em um só lugar.
+              Venda, entregue e feche o caixa do gas em um so lugar.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              O Gasparzinho centraliza pedidos, clientes, estoque, entregas, cobranças e relatórios
-              para a operação diária de uma revenda de gás.
+              O Gasparzinho centraliza pedidos, clientes, estoque, entregas, cobrancas e relatorios
+              para a operacao diaria de uma revenda de gas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="bg-amber-400 text-slate-950 hover:bg-amber-300">

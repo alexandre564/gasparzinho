@@ -7,8 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Gás Gasparzinho',
-  description: 'Sistema de vendas, entregas, estoque e financeiro para revenda de gás.',
+  title: 'Gas Gasparzinho',
+  description: 'Sistema de vendas, entregas, estoque e financeiro para revenda de gas.',
 };
 
 export default function RootLayout({

@@ -12,7 +12,7 @@ export async function PATCH(request: Request) {
       return Response.json(
         {
           success: false,
-          message: 'ID da dívida não informado.',
+          message: 'ID da divida nao informado.',
         },
         { status: 400 }
       );
@@ -27,7 +27,7 @@ export async function PATCH(request: Request) {
 
     return Response.json({
       success: true,
-      message: 'Dívida marcada como paga.',
+      message: 'Divida marcada como paga.',
     });
   } catch (error) {
     console.error('Database Error:', error);
@@ -35,7 +35,7 @@ export async function PATCH(request: Request) {
     return Response.json(
       {
         success: false,
-        message: 'Falha ao atualizar a dívida.',
+        message: 'Falha ao atualizar a divida.',
       },
       { status: 500 }
     );
