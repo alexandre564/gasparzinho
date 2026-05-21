@@ -1,14 +1,15 @@
 'use client';
 
-import { useSearchParams, usePathname, useRouter } from 'next/navigation';
-
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
+
+const categories = ['BOTIJAO', 'AGUA', 'ACESSORIO', 'OUTROS'];
 
 export function CategoryFilter() {
   const searchParams = useSearchParams();
@@ -18,27 +19,30 @@ export function CategoryFilter() {
 
   const handleValueChange = (category: string) => {
     const params = new URLSearchParams(searchParams);
+    params.set('page', '1');
+
     if (category && category !== 'ALL') {
       params.set('category', category);
     } else {
       params.delete('category');
     }
+
     replace(`${pathname}?${params.toString()}`);
   };
 
   return (
     <Select onValueChange={handleValueChange} defaultValue={currentCategory || 'ALL'}>
-        <SelectTrigger className="w-full md:w-[240px]">
-            <SelectValue placeholder="Filtrar por categoria..." />
-        </SelectTrigger>
-        <SelectContent>
-            <SelectItem value="ALL">Todas as Categorias</SelectItem>
-            {['GAS','AGUA','REFIL','OUTROS'].map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                    {cat} 
-                </SelectItem>
-            ))}
-        </SelectContent>
+      <SelectTrigger className="w-full lg:w-[220px]">
+        <SelectValue placeholder="Categoria" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="ALL">Todas as categorias</SelectItem>
+        {categories.map((category) => (
+          <SelectItem key={category} value={category}>
+            {category}
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 }

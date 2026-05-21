@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { DebtStatus } from './types';
 
-const statuses: DebtStatus[] = ['PENDENTE', 'PAGA', 'ATRASADA', 'RENEGOCIADA'];
+const statuses: DebtStatus[] = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO'];
 
 export default function StatusFilter() {
   const searchParams = useSearchParams();

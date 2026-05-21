@@ -128,7 +128,7 @@ export async function getTotalOpenDebt() {
       },
       where: {
         status: {
-          in: ['PENDENTE', 'ATRASADA'],
+          in: ['PENDENTE', 'VENCIDO'],
         },
       },
     });
@@ -146,7 +146,7 @@ export async function markDebtAsPaid(id: string) {
   try {
     await prisma.debt.update({
       where: { id },
-      data: { status: 'PAGA' },
+      data: { status: 'PAGO' },
     });
 
     revalidatePath('/dashboard/financeiro/dividas');

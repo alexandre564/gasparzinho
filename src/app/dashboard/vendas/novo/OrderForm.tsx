@@ -34,7 +34,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Loader2, PlusCircle, Save, Trash2 } from 'lucide-react';
+import { Loader2, MessageCircle, PlusCircle, Save, Trash2, Truck } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 type CustomerSelectItem = {
@@ -72,6 +72,7 @@ const OrderItemSchema = z.object({
 const OrderFormSchema = z.object({
   customerId: z.string().min(1, 'Selecione um cliente.'),
   paymentMethod: z.string().min(1, 'Selecione a forma de pagamento.'),
+  paymentDueDate: z.string().optional(),
   orderStatus: z.string().min(1, 'Selecione o status do pedido.'),
   items: z.array(OrderItemSchema).min(1, 'Adicione pelo menos um item ao pedido.'),
 });
@@ -84,18 +85,20 @@ const formatCurrency = (value: number) =>
     currency: 'BRL',
   }).format(value);
 
-export default function OrderForm() {
+export default function OrderForm({ initialCustomerId = '' }: { initialCustomerId?: string }) {
   const router = useRouter();
   const [customers, setCustomers] = useState<CustomerSelectItem[]>([]);
   const [products, setProducts] = useState<ProductSelectItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(OrderFormSchema),
     defaultValues: {
-      customerId: '',
+      customerId: initialCustomerId,
       paymentMethod: '',
-      orderStatus: '',
+      paymentDueDate: '',
+      orderStatus: OrderStatus.PENDENTE,
       items: [],
     },
   });
@@ -121,7 +124,7 @@ export default function OrderForm() {
         setProducts(productData);
       } catch (error) {
         console.error(error);
-        toast.error('Erro ao carregar dados do formulário.');
+        toast.error('Erro ao carregar dados do formulÃƒÂ¡rio.');
       } finally {
         setIsLoading(false);
       }
@@ -156,7 +159,7 @@ export default function OrderForm() {
 
     if (result.success) {
       toast.success(result.message);
-      router.push('/dashboard/vendas');
+      setCreatedOrderId(result.orderId ?? null);
       return;
     }
 
@@ -177,6 +180,43 @@ export default function OrderForm() {
     });
   }
 
+
+  const selectedCustomer = customers.find((customer) => customer.id === form.watch('customerId'));
+  const customerWhatsapp = selectedCustomer
+    ? `https://wa.me/55${selectedCustomer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+        `Ola ${selectedCustomer.name}, seu pedido na Gas Gasparzinho foi registrado e sera separado para entrega. Total: ${formatCurrency(grossValue)}.`
+      )}`
+    : '#';
+
+  if (createdOrderId) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Pedido criado</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Agora voce pode avisar o cliente pelo WhatsApp e acompanhar a entrega em andamento.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild className="gap-2" disabled={!selectedCustomer}>
+              <a href={customerWhatsapp} target="_blank" rel="noreferrer">
+                <MessageCircle className="h-4 w-4" />
+                Enviar WhatsApp ao cliente
+              </a>
+            </Button>
+            <Button className="gap-2" variant="outline" onClick={() => router.push('/dashboard/entregas')}>
+              <Truck className="h-4 w-4" />
+              Ir para entregas
+            </Button>
+            <Button variant="ghost" onClick={() => router.push(`/dashboard/vendas/${createdOrderId}`)}>
+              Ver pedido
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   if (isLoading) {
     return (
       <div className="flex h-40 items-center justify-center">
@@ -347,6 +387,23 @@ export default function OrderForm() {
 
                 <FormField
                   control={form.control}
+                  name="paymentDueDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data prevista de pagamento</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-slate-500">
+                        Use principalmente em pedidos fiados ou a prazo. Se ficar em branco, o sistema usa 30 dias.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="orderStatus"
                   render={({ field }) => (
                     <FormItem>
@@ -392,7 +449,7 @@ export default function OrderForm() {
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Valor Líquido (Lucro):</span>
+                  <span>Valor LÃƒÂ­quido (Lucro):</span>
                   <span>{formatCurrency(netValue)}</span>
                 </div>
               </CardContent>

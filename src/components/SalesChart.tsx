@@ -1,33 +1,86 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-interface SalesChartProps {
-  data: any[]; // Defina um tipo mais específico se souber a estrutura dos dados
+type ChartPoint = {
+  name: string;
+  total?: number;
+  Entradas?: number;
+  Saidas?: number;
+};
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+
+function normalizeData(data: ChartPoint[]) {
+  return data.map((item) => ({
+    ...item,
+    Saidas: item.Saidas,
+  }));
 }
 
-export default function SalesChart({ data }: SalesChartProps) {
+export default function SalesChart({
+  data,
+  labelPrefix = 'Dia',
+}: {
+  data: ChartPoint[];
+  labelPrefix?: string;
+}) {
+  const chartData = normalizeData(data);
+  const hasFinanceSeries = chartData.some(
+    (item) => item.Entradas !== undefined || item.Saidas !== undefined
+  );
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Vendas nos Últimos 6 Meses</CardTitle>
-        <CardDescription>Um resumo das vendas e lucros mensais.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis yAxisId="left" stroke="#8884d8" />
-            <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-            <Tooltip />
-            <Legend />
-            <Bar yAxisId="left" dataKey="sales" fill="#8884d8" name="Vendas" />
-            <Bar yAxisId="right" dataKey="profit" fill="#82ca9d" name="Lucro" />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+        <XAxis
+          dataKey="name"
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: '#475569', fontSize: 13 }}
+        />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: '#475569', fontSize: 13 }}
+          tickFormatter={(value) => `R$ ${value}`}
+          width={64}
+        />
+        <Tooltip
+          cursor={{ fill: '#f1f5f9' }}
+          contentStyle={{
+            border: '1px solid #cbd5e1',
+            borderRadius: 8,
+            boxShadow: '0 10px 30px rgb(15 23 42 / 0.12)',
+          }}
+          formatter={(value, name) => [
+            formatCurrency(Number(value)),
+            name === 'Saidas' ? 'Saidas' : name,
+          ]}
+          labelFormatter={(label) => `${labelPrefix}: ${label}`}
+        />
+        {hasFinanceSeries ? (
+          <>
+            <Bar dataKey="Entradas" fill="#047857" radius={[5, 5, 0, 0]} />
+            <Bar dataKey="Saidas" name="Saidas" fill="#dc2626" radius={[5, 5, 0, 0]} />
+          </>
+        ) : (
+          <Bar dataKey="total" name="Vendas" fill="#047857" radius={[5, 5, 0, 0]} />
+        )}
+      </BarChart>
+    </ResponsiveContainer>
   );
 }

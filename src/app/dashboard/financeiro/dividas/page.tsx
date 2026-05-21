@@ -32,12 +32,12 @@ import MarkAsPaidButton from './MarkAsPaidButton';
 
 const getStatusVariant = (status: string): BadgeProps['variant'] => {
   switch (status) {
-    case 'PAGA':
+    case 'PAGO':
       return 'default';
     case 'PENDENTE':
-    case 'ATRASADA':
+    case 'VENCIDO':
       return 'destructive';
-    case 'RENEGOCIADA':
+    case 'RENEGOCIADO':
       return 'secondary';
     default:
       return 'outline';
@@ -164,7 +164,7 @@ export default async function Page({ searchParams }: PageProps) {
                             phone={debt.customer.phone}
                             name={debt.customer.name}
                           />
-                          {debt.status !== 'PAGA' && <MarkAsPaidButton id={debt.id} />}
+                          {debt.status !== 'PAGO' && <MarkAsPaidButton id={debt.id} />}
                         </div>
                       </TableCell>
                     </TableRow>

@@ -1,38 +1,77 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { format } from 'date-fns';
 
-export interface MonthlySalesData {
+export type ReportPeriod = 'daily' | 'monthly';
+
+export interface SalesReportPoint {
   name: string;
   total: number;
 }
 
-export async function getMonthlySalesData(): Promise<MonthlySalesData[]> {
-  const orders = await prisma.order.findMany({
+function startOfDay(date: Date) {
+  const value = new Date(date);
+  value.setHours(0, 0, 0, 0);
+  return value;
+}
+
+function endOfDay(date: Date) {
+  const value = new Date(date);
+  value.setHours(23, 59, 59, 999);
+  return value;
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+
+async function sumOrders(start: Date, end: Date) {
+  const result = await prisma.order.aggregate({
+    _sum: { grossValue: true },
     where: {
-      status: 'ENTREGUE',
-    },
-    select: {
-      createdAt: true,
-      grossValue: true,
-    },
-    orderBy: {
-      createdAt: 'asc',
+      createdAt: { gte: start, lte: end },
+      status: { not: 'CANCELADO' },
     },
   });
 
-  const monthlySales = orders.reduce((acc, order) => {
-    const month = format(order.createdAt, 'MMM/yy');
-    const total = order.grossValue;
+  return result._sum.grossValue ?? 0;
+}
 
-    if (!acc[month]) {
-      acc[month] = { name: month, total: 0 };
-    }
+export async function getSalesReportData(period: ReportPeriod): Promise<SalesReportPoint[]> {
+  const now = new Date();
 
-    acc[month].total += total;
-    return acc;
-  }, {} as Record<string, { name: string; total: number }>);
+  if (period === 'monthly') {
+    const points = await Promise.all(
+      Array.from({ length: 6 }).map(async (_, index) => {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - index, 1);
+        const total = await sumOrders(startOfMonth(monthDate), endOfMonth(monthDate));
 
-  return Object.values(monthlySales);
+        return {
+          name: monthDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+          total,
+        };
+      })
+    );
+
+    return points.reverse();
+  }
+
+  const points = await Promise.all(
+    Array.from({ length: 7 }).map(async (_, index) => {
+      const day = new Date(now);
+      day.setDate(now.getDate() - index);
+      const total = await sumOrders(startOfDay(day), endOfDay(day));
+
+      return {
+        name: day.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
+        total,
+      };
+    })
+  );
+
+  return points.reverse();
 }

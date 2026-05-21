@@ -1,13 +1,24 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-// Previne múltiplas instâncias do PrismaClient em ambiente de desenvolvimento.
-declare global {
-  // Permite que `globalThis` seja usado para armazenar o `prisma`.
-  var prisma: PrismaClient | undefined;
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+};
+
+function getDatabaseSchema() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return undefined;
+
+  return new URL(url).searchParams.get('schema') ?? undefined;
 }
 
-export const prisma = globalThis.prisma || new PrismaClient();
+const adapter = new PrismaPg(
+  { connectionString: process.env.DATABASE_URL },
+  { schema: getDatabaseSchema() }
+);
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = prisma;
+  globalForPrisma.prisma = prisma;
 }

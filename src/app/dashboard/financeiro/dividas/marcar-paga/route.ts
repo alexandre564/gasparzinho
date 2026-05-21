@@ -20,7 +20,7 @@ export async function PATCH(request: Request) {
 
     await prisma.debt.update({
       where: { id },
-      data: { status: 'PAGA' },
+      data: { status: 'PAGO' },
     });
 
     revalidatePath('/dashboard/financeiro/dividas');

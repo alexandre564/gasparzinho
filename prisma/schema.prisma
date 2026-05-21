@@ -5,7 +5,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "client"
 }
 
 // --- Models ---
@@ -88,6 +89,7 @@ model Order {
   customer      Customer  @relation(fields: [customerId], references: [id])
   status        String    @default("PENDENTE")
   paymentMethod String
+  paymentDueDate DateTime?
   grossValue    Float
   totalCost     Float
   netValue      Float
@@ -129,6 +131,11 @@ model Debt {
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   value      Float
   dueDate    DateTime
+  originalDueDate DateTime?
+  paidAt     DateTime?
+  renegotiatedAt DateTime?
+  renegotiatedValue Float?
+  notes      String?
   status     String   @default("PENDENTE")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -175,4 +182,13 @@ model DailyClosing {
   closedBy       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -144,7 +144,7 @@ export async function getWeeklyChartData() {
         const revenue = await getRevenue(startOfDay(date), endOfDay(date));
         const expenses = await getExpenses(startOfDay(date), endOfDay(date));
         
-        data.push({ name: dayName, Entradas: revenue, Saídas: expenses });
+        data.push({ name: dayName, Entradas: revenue, Saidas: expenses });
     }
 
     return data;

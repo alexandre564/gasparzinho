@@ -1,0 +1,109 @@
+'use client';
+
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { CheckCircle2, MessageCircle, Truck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { confirmDeliveryPayment, markDeliverySentToDriver } from './actions';
+
+type DeliveryWorkflowActionsProps = {
+  deliveryId: string;
+  orderId: string;
+  status: string;
+  customer: {
+    name: string;
+    phone: string;
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    reference?: string | null;
+  };
+  items: Array<{ product: { name: string }; quantity: number }>;
+  total: number;
+  paymentMethod: string;
+  hasOpenDebt: boolean;
+};
+
+const currency = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+
+function whatsappNumber(phone: string) {
+  const digits = phone.replace(/\D/g, '');
+  return digits.startsWith('55') ? digits : `55${digits}`;
+}
+
+function itemsText(items: DeliveryWorkflowActionsProps['items']) {
+  return items.map((item) => `${item.quantity}x ${item.product.name}`).join(', ');
+}
+
+export default function DeliveryWorkflowActions({
+  deliveryId,
+  orderId,
+  status,
+  customer,
+  items,
+  total,
+  paymentMethod,
+  hasOpenDebt,
+}: DeliveryWorkflowActionsProps) {
+  const [pending, setPending] = useState(false);
+  const address = `${customer.street}, ${customer.number} - ${customer.neighborhood}, ${customer.city}`;
+  const orderSummary = itemsText(items);
+  const customerMessage = `Ola ${customer.name}, seu pedido na Gas Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentMethod}.`;
+  const driverMessage = `Entrega Gas Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereco: ${address}\nReferencia: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentMethod}${hasOpenDebt ? ' / A RECEBER' : ''}`;
+  const customerWhatsapp = `https://wa.me/${whatsappNumber(customer.phone)}?text=${encodeURIComponent(customerMessage)}`;
+  const driverWhatsapp = `https://wa.me/?text=${encodeURIComponent(driverMessage)}`;
+
+  async function sendToDriver() {
+    setPending(true);
+    const result = await markDeliverySentToDriver(deliveryId);
+    setPending(false);
+
+    if (result.success) {
+      toast.success(result.message);
+      window.open(driverWhatsapp, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    toast.error(result.message);
+  }
+
+  async function confirm(paymentResult: 'PAGO' | 'A_RECEBER') {
+    setPending(true);
+    const result = await confirmDeliveryPayment(deliveryId, paymentResult);
+    setPending(false);
+
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }
+
+  const delivered = status === 'ENTREGUE';
+
+  return (
+    <div className="flex flex-wrap justify-end gap-2">
+      <Button asChild size="sm" variant="outline" className="gap-2">
+        <a href={customerWhatsapp} target="_blank" rel="noreferrer">
+          <MessageCircle className="h-4 w-4" />
+          Cliente
+        </a>
+      </Button>
+      <Button size="sm" variant="outline" className="gap-2" onClick={sendToDriver} disabled={pending || delivered}>
+        <Truck className="h-4 w-4" />
+        Entregador
+      </Button>
+      <Button size="sm" className="gap-2" onClick={() => confirm('PAGO')} disabled={pending || delivered}>
+        <CheckCircle2 className="h-4 w-4" />
+        Entregue pago
+      </Button>
+      <Button size="sm" variant="secondary" onClick={() => confirm('A_RECEBER')} disabled={pending || delivered}>
+        Entregue a receber
+      </Button>
+    </div>
+  );
+}

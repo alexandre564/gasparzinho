@@ -41,7 +41,7 @@ const InventoryMovementType = {
 } as const;
 
 const OrderItemSchema = z.object({
-  productId: z.string().min(1, 'Produto é obrigatório.'),
+  productId: z.string().min(1, 'Produto ÃƒÂ© obrigatÃƒÂ³rio.'),
   quantity: z.coerce
     .number()
     .positive('Quantidade deve ser maior que zero.'),
@@ -50,9 +50,10 @@ const OrderItemSchema = z.object({
 });
 
 const OrderFormSchema = z.object({
-  customerId: z.string().min(1, 'Cliente é obrigatório.'),
-  paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória.'),
-  orderStatus: z.string().min(1, 'Status do pedido é obrigatório.'),
+  customerId: z.string().min(1, 'Cliente ÃƒÂ© obrigatÃƒÂ³rio.'),
+  paymentMethod: z.string().min(1, 'Forma de pagamento Ã© obrigatÃ³ria.'),
+  paymentDueDate: z.string().optional(),
+  orderStatus: z.string().min(1, 'Status do pedido Ã© obrigatÃ³rio.'),
   items: z
     .array(OrderItemSchema)
     .min(1, 'O pedido deve ter pelo menos um item.'),
@@ -61,6 +62,7 @@ const OrderFormSchema = z.object({
 export type OrderFormState = {
   success: boolean;
   message: string;
+  orderId?: string;
   errors?: z.ZodIssue[];
 };
 
@@ -72,16 +74,16 @@ export async function createOrder(
   if (!validatedFields.success) {
     return {
       success: false,
-      message: 'Erro de validação',
+      message: 'Erro de validaÃƒÂ§ÃƒÂ£o',
       errors: validatedFields.error.issues,
     };
   }
 
-  const { customerId, paymentMethod, orderStatus, items } =
+  const { customerId, paymentMethod, paymentDueDate, orderStatus, items } =
     validatedFields.data;
 
   try {
-    await prisma.$transaction(async (tx) => {
+    const createdOrder = await prisma.$transaction(async (tx) => {
       const totalCost = items.reduce(
         (sum, item) => sum + item.unitCost * item.quantity,
         0,
@@ -98,6 +100,7 @@ export async function createOrder(
         data: {
           customerId,
           paymentMethod,
+          paymentDueDate: paymentDueDate ? new Date(`${paymentDueDate}T12:00:00`) : null,
           status: orderStatus,
           totalCost,
           grossValue,
@@ -116,7 +119,7 @@ export async function createOrder(
         },
       });
 
-      if (orderStatus === OrderStatus.CONFIRMADO) {
+      if ([OrderStatus.CONFIRMADO, OrderStatus.PENDENTE].includes(orderStatus as any)) {
         await tx.delivery.create({
           data: {
             orderId: order.id,
@@ -126,8 +129,10 @@ export async function createOrder(
       }
 
       if (paymentMethod === PaymentMethod.FIADO) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 30);
+        const dueDate = paymentDueDate ? new Date(`${paymentDueDate}T12:00:00`) : new Date();
+        if (!paymentDueDate) {
+          dueDate.setDate(dueDate.getDate() + 30);
+        }
 
         await tx.debt.create({
           data: {
@@ -135,6 +140,7 @@ export async function createOrder(
             orderId: order.id,
             value: grossValue,
             dueDate,
+            originalDueDate: dueDate,
             status: DebtStatus.PENDENTE,
           },
         });
@@ -158,6 +164,8 @@ export async function createOrder(
           },
         });
       }
+
+      return order;
     });
 
     revalidatePath('/dashboard/vendas');
@@ -166,9 +174,10 @@ export async function createOrder(
     return {
       success: true,
       message: 'Venda criada com sucesso!',
+      orderId: createdOrder.id,
     };
   } catch (error) {
-    console.error('Erro na transação ao criar pedido:', error);
+    console.error('Erro na transaÃƒÂ§ÃƒÂ£o ao criar pedido:', error);
 
     return {
       success: false,
@@ -269,18 +278,18 @@ export async function deleteOrder(
   orderId: string,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await prisma.$transaction(async (tx) => {
+    const createdOrder = await prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({
         where: { id: orderId },
         include: { items: true },
       });
 
       if (!order) {
-        throw new Error('Pedido não encontrado.');
+        throw new Error('Pedido nÃƒÂ£o encontrado.');
       }
 
       if (order.status === OrderStatus.CANCELADO) {
-        throw new Error('Este pedido já foi cancelado.');
+        throw new Error('Este pedido jÃƒÂ¡ foi cancelado.');
       }
 
       await tx.order.update({

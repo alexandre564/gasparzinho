@@ -1,4 +1,16 @@
+import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+import { Download, MessageCircle, Pencil, PlusCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -6,128 +18,146 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import {
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PlusCircle, File, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
-import {Search} from "@/components/Search";
-import Pagination from "@/components/Pagination";
-import { getPaginatedCustomers } from "./actions";
-import { format, formatDistanceToNow, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import DeleteCustomerButton from "./DeleteCustomerButton";
+} from '@/components/ui/table';
+import Pagination from '@/components/Pagination';
+import { Search } from '@/components/Search';
+import DeleteCustomerButton from './DeleteCustomerButton';
+import ImportCustomersButton from './ImportCustomersButton';
+import { getPaginatedCustomers } from './actions';
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
 
-const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+function getDaysColor(days: number | null) {
+  if (days === null) return 'bg-muted text-muted-foreground';
+  if (days <= 7) return 'bg-emerald-600 text-white';
+  if (days <= 15) return 'bg-amber-500 text-white';
+  if (days <= 30) return 'bg-orange-500 text-white';
+  return 'bg-red-600 text-white';
+}
 
-export default async function CustomersPage({ searchParams }: { searchParams?: { query?: string; page?: string; } }) {
-  const query = searchParams?.query || '';
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams?: { query?: string; page?: string };
+}) {
+  const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
-
   const { customers, totalPages } = await getPaginatedCustomers(query, currentPage);
 
-  const getDaysColor = (days: number | null) => {
-    if (days === null) return 'bg-gray-500';
-    if (days <= 7) return 'bg-green-500';
-    if (days <= 15) return 'bg-yellow-500';
-    if (days <= 30) return 'bg-orange-500';
-    return 'bg-red-500';
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Clientes</h1>
-         <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="h-8 gap-1">
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Exportar</span>
-            </Button>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Clientes</h2>
+          <p className="text-sm text-muted-foreground">
+            Cadastre, pesquise e acompanhe o histórico de compras dos clientes.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild size="sm" variant="outline" className="gap-2">
+            <a href="/api/clientes/exportar" download>
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </a>
+          </Button>
+          <ImportCustomersButton />
+          <Button asChild size="sm" className="gap-2">
             <Link href="/dashboard/clientes/novo">
-                <Button size="sm" className="h-8 gap-1">
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Novo Cliente</span>
-                </Button>
+              <PlusCircle className="h-4 w-4" />
+              Novo cliente
             </Link>
+          </Button>
         </div>
       </div>
+
       <Card>
-        <CardHeader>
-            <CardTitle>Lista de Clientes</CardTitle>
-            <CardDescription>Gerencie seus clientes e visualize seus históricos de compras.</CardDescription>
-            <div className="pt-4">
-                 <Search placeholder="Buscar por nome ou telefone..." />
-            </div>
+        <CardHeader className="gap-4">
+          <div>
+            <CardTitle>Lista de clientes</CardTitle>
+            <CardDescription>
+              Use a busca para localizar clientes por nome ou telefone.
+            </CardDescription>
+          </div>
+          <Search placeholder="Digite nome, celular ou WhatsApp..." />
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead className="hidden md:table-cell">Cidade</TableHead>
-                <TableHead className="hidden lg:table-cell">Última Compra</TableHead>
-                <TableHead className="hidden lg:table-cell">Dias Sem Comprar</TableHead>
-                <TableHead className="text-right">Dívida</TableHead>
-                <TableHead><span className="sr-only">Ações</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customers.length > 0 ? customers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>
-                    <div className="font-medium">{customer.name}</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">{customer.phone}</div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">{customer.city}</TableCell>
-                   <TableCell className="hidden lg:table-cell">
-                    {customer.lastPurchase ? format(new Date(customer.lastPurchase), 'dd/MM/yyyy') : 'N/A'}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {customer.daysSinceLastPurchase !== null ? (
-                      <Badge variant="default" className={`${getDaysColor(customer.daysSinceLastPurchase)} text-white`}>
-                          {customer.daysSinceLastPurchase} dias
-                      </Badge>
-                     ) : (
-                      <Badge variant="secondary">Novo</Badge>
-                     )}
-                  </TableCell>
-                  <TableCell className={`text-right font-semibold ${customer.totalDebt > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                      {formatCurrency(customer.totalDebt)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                     <div className="flex justify-end gap-2">
-                          <Link href={`/dashboard/clientes/${customer.id}/editar`}>
-                            <Button variant="outline" size="icon" className="h-8 w-8">
-                                <Pencil className="h-4 w-4"/>
-                                <span className="sr-only">Editar</span>
-                            </Button>
-                           </Link>
-                           <DeleteCustomerButton id={customer.id} />
-                     </div>
-                  </TableCell>
+          <div className="overflow-hidden rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="hidden md:table-cell">Cidade</TableHead>
+                  <TableHead className="hidden lg:table-cell">Última compra</TableHead>
+                  <TableHead className="hidden lg:table-cell">Sem comprar</TableHead>
+                  <TableHead className="text-right">Dívida</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              )) : (
-                <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                        Nenhum cliente encontrado.
+              </TableHeader>
+              <TableBody>
+                {customers.length > 0 ? (
+                  customers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="font-medium">{customer.name}</div>
+                        <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200"><MessageCircle className="h-3 w-3" />{customer.phone}</div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{customer.city}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {customer.lastPurchase
+                          ? new Date(customer.lastPurchase).toLocaleDateString('pt-BR')
+                          : 'Sem compras'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {customer.daysSinceLastPurchase !== null ? (
+                          <Badge className={getDaysColor(customer.daysSinceLastPurchase)}>
+                            {customer.daysSinceLastPurchase} dias
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Novo</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right font-semibold ${
+                          customer.totalDebt > 0 ? 'text-destructive' : 'text-emerald-700'
+                        }`}
+                      >
+                        {formatCurrency(customer.totalDebt)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button asChild variant="outline" size="icon" className="h-8 w-8">
+                            <Link href={`/dashboard/clientes/${customer.id}/editar`}>
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Editar</span>
+                            </Link>
+                          </Button>
+                          <DeleteCustomerButton id={customer.id} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-32 text-center">
+                      <div className="mx-auto max-w-sm space-y-2">
+                        <p className="font-medium">Nenhum cliente encontrado</p>
+                        <p className="text-sm text-muted-foreground">
+                          Cadastre um novo cliente ou ajuste os termos da busca.
+                        </p>
+                      </div>
                     </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <Pagination totalPages={totalPages} />
         </CardContent>
       </Card>
-       <div className="flex justify-center">
-           <Pagination totalPages={totalPages} />
-      </div>
     </div>
   );
 }
