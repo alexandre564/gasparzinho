@@ -84,6 +84,30 @@ export async function createOrder(
 
   try {
     const createdOrder = await prisma.$transaction(async (tx) => {
+      const requestedByProduct = items.reduce<Record<string, number>>((acc, item) => {
+        acc[item.productId] = (acc[item.productId] ?? 0) + item.quantity;
+        return acc;
+      }, {});
+
+      const products = await tx.product.findMany({
+        where: { id: { in: Object.keys(requestedByProduct) } },
+        select: { id: true, name: true, inventory: true },
+      });
+
+      for (const [productId, requestedQuantity] of Object.entries(requestedByProduct)) {
+        const product = products.find((item) => item.id === productId);
+
+        if (!product) {
+          throw new Error('Produto nao encontrado no estoque.');
+        }
+
+        if (product.inventory < requestedQuantity) {
+          throw new Error(
+            `Estoque insuficiente para ${product.name}. Disponivel: ${product.inventory}, solicitado: ${requestedQuantity}.`
+          );
+        }
+      }
+
       const totalCost = items.reduce(
         (sum, item) => sum + item.unitCost * item.quantity,
         0,
@@ -170,6 +194,8 @@ export async function createOrder(
 
     revalidatePath('/dashboard/vendas');
     revalidatePath('/dashboard/estoque');
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/entregas');
 
     return {
       success: true,
@@ -181,7 +207,7 @@ export async function createOrder(
 
     return {
       success: false,
-      message: 'Erro no banco de dados ao criar a venda.',
+      message: error instanceof Error ? error.message : 'Erro no banco de dados ao criar a venda.',
     };
   }
 }

@@ -46,7 +46,7 @@ export async function calculateRepurchasePredictionForCustomer(customerId: strin
     const orders = await prisma.order.findMany({
         where: {
             customerId,
-            status: { in: ['ENTREGUE', 'PAGO'] } // Considering these as confirmed orders
+            status: { in: ['ENTREGUE', 'CONFIRMADO'] }
         },
         orderBy: { createdAt: 'asc' },
         include: {

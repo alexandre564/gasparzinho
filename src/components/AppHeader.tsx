@@ -11,7 +11,9 @@ import {
   Truck,
   Users,
 } from "lucide-react";
+import { auth } from "@/auth";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { BrandLogo } from "@/components/BrandLogo";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,15 +27,26 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const mobileLinks = [
-  { href: "/dashboard", icon: Home, label: "Pagina principal" },
+  { href: "/dashboard", icon: Home, label: "Página principal" },
   { href: "/dashboard/clientes", icon: Users, label: "Clientes" },
   { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas" },
   { href: "/dashboard/estoque", icon: Package, label: "Estoque" },
   { href: "/dashboard/entregas", icon: Truck, label: "Entregas" },
-  { href: "/dashboard/configuracoes", icon: Settings, label: "Configuracoes" },
+  { href: "/dashboard/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
-export default function Header() {
+const roleLabels: Record<string, string> = {
+  ADMIN: "Administrador",
+  VENDEDOR: "Vendedor",
+  ENTREGADOR: "Entregador",
+};
+
+export default async function Header() {
+  const session = await auth();
+  const userRole = session?.user?.role?.toUpperCase() || "";
+  const userName = session?.user?.name || session?.user?.email || "Usuário";
+  const roleLabel = roleLabels[userRole] ?? (userRole || "Sem autorização");
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 shadow-sm backdrop-blur lg:pl-6 lg:pr-8">
       <Sheet>
@@ -44,13 +57,13 @@ export default function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-72 border-slate-800 bg-slate-950 p-0 text-slate-100">
-          <div className="flex h-16 items-center gap-3 border-b border-slate-800 px-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500 text-white">
-              <Package className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold leading-none text-white">Gas Gasparzinho</p>
+          <div className="flex items-center gap-3 border-b border-slate-800 px-5 py-4">
+            <BrandLogo size={52} />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
               <p className="mt-1 text-xs text-emerald-100/75">Gestao de revenda</p>
+              <p className="mt-2 truncate text-sm font-semibold text-white">{userName}</p>
+              <p className="text-xs font-medium text-emerald-200">{roleLabel}</p>
             </div>
           </div>
           <nav className="space-y-1 p-3">
@@ -76,9 +89,16 @@ export default function Header() {
         </SheetContent>
       </Sheet>
 
-      <div className="min-w-0 border-l-4 border-emerald-500 pl-3">
-        <p className="text-xs font-semibold uppercase text-emerald-700">Pagina principal</p>
-        <h1 className="truncate text-lg font-semibold text-slate-950">Gasparzinho</h1>
+      <div className="flex min-w-0 items-center gap-3">
+        <BrandLogo size={44} />
+        <div className="min-w-0 border-l-4 border-emerald-500 pl-3">
+          <p className="truncate text-sm font-bold leading-none text-slate-950">Gás Gasparzinho</p>
+          <p className="mt-1 text-xs font-medium text-slate-600">Gestao de revenda</p>
+        </div>
+        <div className="hidden min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 sm:block">
+          <p className="truncate text-sm font-semibold leading-none text-slate-950">{userName}</p>
+          <p className="mt-1 text-xs font-medium text-emerald-700">{roleLabel}</p>
+        </div>
       </div>
 
       <div className="ml-auto hidden w-full max-w-md items-center md:flex">
@@ -101,7 +121,7 @@ export default function Header() {
           <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/configuracoes">Configuracoes</Link>
+            <Link href="/dashboard/configuracoes">Configurações</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <a href="/api/backup" download>Baixar backup</a>

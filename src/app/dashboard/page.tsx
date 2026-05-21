@@ -5,6 +5,7 @@ import SalesChart from '@/components/SalesChart';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { prisma } from '@/lib/prisma';
+import { getRepurchasePredictions } from './recompra/actions';
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -15,7 +16,7 @@ async function getDashboardData() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [salesToday, activeCustomers, debtors, criticalStock, deliveriesInProgress, recentOrders] =
+  const [salesToday, activeCustomers, debtors, criticalStock, deliveriesInProgress, recentOrders, repurchaseOpportunities] =
     await Promise.all([
       prisma.order.aggregate({
         _sum: { grossValue: true },
@@ -30,6 +31,7 @@ async function getDashboardData() {
         orderBy: { createdAt: 'desc' },
         include: { customer: true },
       }),
+      getRepurchasePredictions(3),
     ]);
 
   const salesData = await Promise.all(
@@ -63,6 +65,7 @@ async function getDashboardData() {
     criticalStock,
     deliveriesInProgress,
     recentOrders,
+    repurchaseOpportunities: repurchaseOpportunities.length,
     salesData,
   };
 }
@@ -173,8 +176,8 @@ export default async function DashboardPage() {
         />
         <MetricCard
           title="Recompra"
-          value="Em breve"
-          description="Previsoes serao calculadas apos mais vendas."
+          value={data.repurchaseOpportunities}
+          description="Clientes com previsao de recompra nos proximos 3 dias."
           icon={Repeat}
           tone="slate"
         />

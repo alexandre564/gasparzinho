@@ -1,6 +1,8 @@
 node_modules
 .npm-cache
 .next
+.next-local
+.next-verify
 .env
 .env.local
 dev.db
@@ -11,4 +13,7 @@ prisma/dev.db-journal
 *.db-journal
 *.log
 *.zip
+*.patch
 tsconfig.tsbuildinfo
+gasparzinho/
+/Gas.jpg
