@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Vehicle } from '@prisma/client'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { type Resolver, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -29,7 +29,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
   const isUpdate = !!vehicle?.id
 
   const form = useForm<VehicleFormValues>({
-    resolver: zodResolver(vehicleFormSchema) as any,
+    resolver: zodResolver(vehicleFormSchema) as unknown as Resolver<VehicleFormValues>,
     defaultValues: {
       placa: vehicle?.placa ?? '',
       modelo: vehicle?.modelo ?? '',

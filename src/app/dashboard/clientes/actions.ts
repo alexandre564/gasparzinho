@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-const DebtStatus = { PENDENTE: 'PENDENTE', PAGO: 'PAGO', VENCIDO: 'VENCIDO', CANCELADA: 'CANCELADA' } as const;
+const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
 
 const CustomerFormSchema = z.object({
   name: z.string().min(3, { message: "O nome precisa ter pelo menos 3 caracteres." }),
@@ -186,7 +186,7 @@ export async function getPaginatedCustomers(query: string, currentPage: number) 
                 select: { orders: true },
             },
             debts: {
-                where: { status: { in: [DebtStatus.PENDENTE, DebtStatus.VENCIDO] } },
+                where: { status: { in: [...OPEN_DEBT_STATUSES] } },
             },
         };
 

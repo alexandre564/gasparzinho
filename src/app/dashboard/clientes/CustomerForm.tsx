@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { type Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -53,7 +53,7 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
   const [createdCustomerId, setCreatedCustomerId] = useState<string | null>(null);
 
   const form = useForm<CustomerFormValues>({
-    resolver: zodResolver(CustomerFormSchema) as any,
+    resolver: zodResolver(CustomerFormSchema) as unknown as Resolver<CustomerFormValues>,
     defaultValues: {
       name: customer?.name || '',
       phone: customer?.phone || '',
@@ -63,7 +63,7 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
       complement: customer?.complement || '',
       neighborhood: customer?.neighborhood || '',
       city: customer?.city || 'Lavras',
-      reference: customer ? (customer as any).reference || '' : '',
+      reference: customer?.reference || '',
     },
   });
 

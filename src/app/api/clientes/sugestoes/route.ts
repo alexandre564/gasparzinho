@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
+
 function normalizeText(value: string | null | undefined) {
   return (value ?? '')
     .normalize('NFD')
@@ -65,7 +67,7 @@ export async function GET(request: Request) {
       street: true,
       reference: true,
       debts: {
-        where: { status: { in: ['PENDENTE', 'VENCIDO'] } },
+        where: { status: { in: [...OPEN_DEBT_STATUSES] } },
         select: { value: true },
       },
     },

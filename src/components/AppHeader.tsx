@@ -27,12 +27,12 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const mobileLinks = [
-  { href: "/dashboard", icon: Home, label: "Página principal" },
-  { href: "/dashboard/clientes", icon: Users, label: "Clientes" },
-  { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas" },
-  { href: "/dashboard/estoque", icon: Package, label: "Estoque" },
-  { href: "/dashboard/entregas", icon: Truck, label: "Entregas" },
-  { href: "/dashboard/configuracoes", icon: Settings, label: "Configurações" },
+  { href: "/dashboard", icon: Home, label: "Página principal", roles: ["ADMIN", "VENDEDOR"] },
+  { href: "/dashboard/clientes", icon: Users, label: "Clientes", roles: ["ADMIN", "VENDEDOR"] },
+  { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas", roles: ["ADMIN", "VENDEDOR"] },
+  { href: "/dashboard/estoque", icon: Package, label: "Estoque", roles: ["ADMIN", "VENDEDOR"] },
+  { href: "/dashboard/entregas", icon: Truck, label: "Entregas", roles: ["ADMIN", "ENTREGADOR"] },
+  { href: "/dashboard/configuracoes", icon: Settings, label: "Configurações", roles: ["ADMIN", "VENDEDOR", "ENTREGADOR"] },
 ];
 
 const roleLabels: Record<string, string> = {
@@ -46,6 +46,7 @@ export default async function Header() {
   const userRole = session?.user?.role?.toUpperCase() || "";
   const userName = session?.user?.name || session?.user?.email || "Usuário";
   const roleLabel = roleLabels[userRole] ?? (userRole || "Sem autorização");
+  const visibleMobileLinks = mobileLinks.filter((link) => link.roles.includes(userRole));
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 shadow-sm backdrop-blur lg:pl-6 lg:pr-8">
@@ -67,7 +68,7 @@ export default async function Header() {
             </div>
           </div>
           <nav className="space-y-1 p-3">
-            {mobileLinks.map((link) => (
+            {visibleMobileLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

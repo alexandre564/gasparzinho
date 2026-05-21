@@ -14,13 +14,15 @@ interface StatusUpdaterProps {
   currentStatus: DeliveryStatus;
 }
 
-const getStatusVariant = (status: DeliveryStatus) => {
-  switch (status as any) {
-    case 'ENTREGUE': return 'success';
-    case 'PENDENTE': return 'secondary';
-    case 'EM_ROTA': return 'default';
-    case 'FALHA': return 'destructive';
-    default: return 'outline';
+const getStatusClassName = (status: DeliveryStatus) => {
+  switch (status) {
+    case DeliveryStatus.EM_ROTA:
+      return 'border-emerald-200 bg-emerald-50 text-emerald-800';
+    case DeliveryStatus.CANCELADA:
+      return 'border-red-200 bg-red-50 text-red-700';
+    case DeliveryStatus.PENDENTE:
+    default:
+      return 'border-slate-200 bg-slate-50 text-slate-800';
   }
 };
 
@@ -51,7 +53,7 @@ export default function StatusUpdater({ deliveryId, currentStatus }: StatusUpdat
         <Badge variant="success">ENTREGUE</Badge>
       ) : (
         <Select onValueChange={handleStatusChange} defaultValue={currentStatus}>
-          <SelectTrigger className={`w-[140px] h-8 text-xs font-semibold border-0 focus:ring-0 focus:ring-offset-0 ${getStatusVariant(currentStatus)}`}>
+          <SelectTrigger className={`h-8 w-[140px] text-xs font-semibold focus:ring-0 focus:ring-offset-0 ${getStatusClassName(currentStatus)}`}>
              <SelectValue />
           </SelectTrigger>
           <SelectContent>

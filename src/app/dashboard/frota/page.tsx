@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Pencil, PlusCircle } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -31,7 +31,7 @@ async function getVehicles() {
   });
 }
 
-function getStatusVariant(status: string) {
+function getStatusVariant(status: string): BadgeProps['variant'] {
   if (status === 'ATIVO') return 'success';
   if (status === 'MANUTENCAO') return 'secondary';
   return 'outline';
@@ -76,7 +76,7 @@ export default async function VehiclesPage() {
                   <TableCell>{vehicle.modelo}</TableCell>
                   <TableCell>{vehicle.tipo}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(vehicle.status) as any}>{vehicle.status}</Badge>
+                    <Badge variant={getStatusVariant(vehicle.status)}>{vehicle.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">{currency.format(vehicle.custoMedioKm)}</TableCell>
                   <TableCell className="text-right">

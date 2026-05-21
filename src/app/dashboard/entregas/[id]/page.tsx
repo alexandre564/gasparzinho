@@ -5,7 +5,7 @@ import { ArrowLeft, Box, Calendar, CreditCard, Home, Truck, User } from 'lucide-
 import { getDriverWhatsappNumber } from '../../configuracoes/actions';
 import { getDeliveryDetails } from '../actions';
 import DeliveryWorkflowActions from '../DeliveryWorkflowActions';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +28,7 @@ const formatCurrency = (value: number) =>
     currency: 'BRL',
   }).format(value);
 
-function statusVariant(status: string) {
+function statusVariant(status: string): BadgeProps['variant'] {
   if (status === 'ENTREGUE') return 'success';
   if (status === 'CANCELADA') return 'destructive';
   if (status === 'EM_ROTA') return 'default';
@@ -75,7 +75,7 @@ export default async function DeliveryDetailsPage({
             <p className="text-sm text-slate-600">Pedido #{order.id.slice(-8).toUpperCase()}</p>
           </div>
         </div>
-        <Badge variant={statusVariant(delivery.status) as any} className="w-fit text-sm">
+        <Badge variant={statusVariant(delivery.status)} className="w-fit text-sm">
           {delivery.status}
         </Badge>
       </div>

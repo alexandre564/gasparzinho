@@ -143,7 +143,7 @@ export async function createOrder(
         },
       });
 
-      if ([OrderStatus.CONFIRMADO, OrderStatus.PENDENTE].includes(orderStatus as any)) {
+      if (orderStatus === OrderStatus.CONFIRMADO || orderStatus === OrderStatus.PENDENTE) {
         await tx.delivery.create({
           data: {
             orderId: order.id,

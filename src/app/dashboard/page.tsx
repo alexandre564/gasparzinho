@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma';
 import { getRepurchasePredictions } from './recompra/actions';
 
+const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
+
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -23,7 +25,7 @@ async function getDashboardData() {
         where: { createdAt: { gte: today }, status: { not: 'CANCELADO' } },
       }),
       prisma.customer.count(),
-      prisma.debt.count({ where: { status: { in: ['PENDENTE', 'VENCIDO'] } } }),
+      prisma.debt.count({ where: { status: { in: [...OPEN_DEBT_STATUSES] } } }),
       prisma.product.count({ where: { inventory: { lt: 10 } } }),
       prisma.delivery.count({ where: { status: { in: ['PENDENTE', 'EM_ROTA'] } } }),
       prisma.order.findMany({

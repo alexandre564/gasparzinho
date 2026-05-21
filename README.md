@@ -41,10 +41,10 @@ Instale as dependencias e prepare as tabelas:
 npm install
 npm run db:migrate
 npm run db:seed
-npm run dev
+npm run dev -- --port 3004
 ```
 
-Acesse `http://localhost:3000`.
+Acesse `http://localhost:3004`.
 
 ## Usuarios iniciais do seed
 
@@ -58,12 +58,12 @@ Acesse `http://localhost:3000`.
 Configure estas variaveis no projeto da Vercel:
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST-POOLER:PORT/DATABASE?sslmode=require"
-DIRECT_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST-POOLER:PORT/DATABASE?sslmode=verify-full&schema=gasparzinho_v2_dev"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=verify-full&schema=gasparzinho_v2_dev"
 AUTH_SECRET="um-segredo-forte-para-producao"
 NEXTAUTH_SECRET="um-segredo-forte-para-producao"
 ```
 
 `DATABASE_URL` recebe a URL pooled do Neon, normalmente com `-pooler` no host. `DIRECT_URL` recebe a URL direta do Neon, sem `-pooler`, e e usada pelo Prisma para migrations. `AUTH_SECRET` e `NEXTAUTH_SECRET` recebem uma chave secreta; nunca coloque a URL do banco em `NEXTAUTH_SECRET`.
 
-O script de build ja executa `prisma migrate deploy`, `prisma db seed`, `prisma generate` e `next build`.
+Antes do primeiro deploy, aplique as migrations com `npm run db:deploy` e rode o seed com `npm run db:seed` quando precisar recriar os usuarios iniciais. O build executa `prisma generate` e `next build`.

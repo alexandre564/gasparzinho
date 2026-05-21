@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { type Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -68,7 +68,7 @@ export default function ProductForm({ product }: ProductFormProps) {
   const isEditMode = Boolean(product);
 
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(ProductFormSchema) as any,
+    resolver: zodResolver(ProductFormSchema) as unknown as Resolver<ProductFormValues>,
     defaultValues: {
       name: product?.name || '',
       description: product?.description || '',
