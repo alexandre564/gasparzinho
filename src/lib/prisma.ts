@@ -5,11 +5,13 @@ const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
+const DEFAULT_DATABASE_SCHEMA = 'gasparzinho_v2_dev';
+
 function getDatabaseSchema() {
   const url = process.env.DATABASE_URL;
-  if (!url) return undefined;
+  if (!url) return DEFAULT_DATABASE_SCHEMA;
 
-  return new URL(url).searchParams.get('schema') ?? undefined;
+  return new URL(url).searchParams.get('schema') ?? DEFAULT_DATABASE_SCHEMA;
 }
 
 const adapter = new PrismaPg(
