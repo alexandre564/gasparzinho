@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Adicione futuras configurações aqui
+  experimental: {
+    outputFileTracingIncludes: {
+      '/*': [
+        './node_modules/.prisma/client/**/*',
+        './node_modules/@prisma/client/**/*',
+      ],
+    },
+  },
 };
 
 export default nextConfig;
