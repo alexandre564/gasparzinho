@@ -1,4 +1,4 @@
-import type { NextAuthConfig } from 'next-auth';
+﻿import type { NextAuthConfig } from 'next-auth';
 
 const authConfig = {
   pages: {
@@ -7,6 +7,8 @@ const authConfig = {
   session: {
     strategy: 'jwt',
   },
+  trustHost: true,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;

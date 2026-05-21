@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+﻿import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
@@ -8,6 +8,8 @@ import authConfig from './auth.config';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  trustHost: true,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       credentials: {
@@ -26,13 +28,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const { email, password } = parsedCredentials.data;
+        const email = parsedCredentials.data.email.trim().toLowerCase();
+        const { password } = parsedCredentials.data;
 
         const user = await prisma.user.findUnique({
           where: { email },
         });
 
-        if (!user) {
+        if (!user || !user.isActive) {
           return null;
         }
 
