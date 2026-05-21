@@ -90,7 +90,7 @@ export default async function DeliveriesPage({
                   <TableHead className="hidden md:table-cell">Endereco</TableHead>
                   <TableHead className="hidden xl:table-cell">Itens</TableHead>
                   <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right">Acoes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -129,6 +129,9 @@ export default async function DeliveriesPage({
                           <div className="flex justify-end">
                             <Button asChild variant="ghost" size="sm">
                               <Link href={`/dashboard/vendas/${delivery.orderId}`}>Ver pedido</Link>
+                            </Button>
+                            <Button asChild variant="ghost" size="sm">
+                              <Link href={`/dashboard/entregas/${delivery.id}`}>Detalhes</Link>
                             </Button>
                           </div>
                         </div>

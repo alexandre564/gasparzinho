@@ -8,6 +8,14 @@ import { prisma } from '@/lib/prisma';
 import type { User } from '@/types';
 import { TEAM_ROLE_VALUES } from './roles';
 
+type UserFormInput = {
+  name?: string;
+  email?: string;
+  role?: string;
+  isActive?: boolean;
+  password?: string;
+};
+
 const UserFormSchema = z.object({
   name: z.string().trim().min(3, { message: 'O nome deve ter no minimo 3 caracteres.' }),
   email: z.string().trim().email({ message: 'Email invalido.' }).transform((email) => email.toLowerCase()),
@@ -46,7 +54,7 @@ export async function getTeamMembers(): Promise<User[]> {
   }
 }
 
-export async function createUser(data: Partial<Omit<User, 'id' | 'password'>>) {
+export async function createUser(data: UserFormInput) {
   const validatedFields = UserFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -54,7 +62,16 @@ export async function createUser(data: Partial<Omit<User, 'id' | 'password'>>) {
   }
 
   try {
-    const hashedPassword = await bcrypt.hash('senha123', 10);
+    const existingUser = await prisma.user.findUnique({
+      where: { email: validatedFields.data.email },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      return { success: false, message: 'Ja existe um membro com este email.' };
+    }
+
+    const hashedPassword = await bcrypt.hash(validatedFields.data.password ?? 'senha123', 10);
 
     await prisma.user.create({
       data: {
@@ -68,14 +85,19 @@ export async function createUser(data: Partial<Omit<User, 'id' | 'password'>>) {
     });
 
     revalidatePath('/dashboard/equipe');
-    return { success: true, message: 'Usuario criado com sucesso. Senha inicial: senha123.' };
+    return {
+      success: true,
+      message: validatedFields.data.password
+        ? 'Usuario criado com sucesso.'
+        : 'Usuario criado com sucesso. Senha inicial: senha123.',
+    };
   } catch (error) {
     console.error('Database Error:', error);
     return { success: false, message: 'Falha ao criar o usuario no banco de dados.' };
   }
 }
 
-export async function updateUser(id: string, data: Partial<Omit<User, 'id' | 'password'>>) {
+export async function updateUser(id: string, data: UserFormInput) {
   const validatedFields = UserFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -83,6 +105,22 @@ export async function updateUser(id: string, data: Partial<Omit<User, 'id' | 'pa
   }
 
   try {
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: validatedFields.data.email,
+        NOT: { id },
+      },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      return { success: false, message: 'Este email ja esta em uso por outro membro.' };
+    }
+
+    const passwordUpdate = validatedFields.data.password
+      ? { password: await bcrypt.hash(validatedFields.data.password, 10) }
+      : {};
+
     await prisma.user.update({
       where: { id },
       data: {
@@ -91,14 +129,20 @@ export async function updateUser(id: string, data: Partial<Omit<User, 'id' | 'pa
         role: validatedFields.data.role,
         accessLevel: validatedFields.data.role,
         isActive: validatedFields.data.isActive,
-        ...(validatedFields.data.password
-          ? { password: await bcrypt.hash(validatedFields.data.password, 10) }
-          : {}),
+        ...passwordUpdate,
       },
     });
 
     revalidatePath('/dashboard/equipe');
-    return { success: true, message: 'Usuario atualizado com sucesso.' };
+    revalidatePath(`/dashboard/equipe/${id}/editar`);
+    revalidatePath('/login');
+
+    return {
+      success: true,
+      message: validatedFields.data.password
+        ? 'Usuario, email e senha atualizados com sucesso.'
+        : 'Usuario atualizado com sucesso.',
+    };
   } catch (error) {
     console.error('Database Error:', error);
     return { success: false, message: 'Falha ao atualizar o usuario no banco de dados.' };

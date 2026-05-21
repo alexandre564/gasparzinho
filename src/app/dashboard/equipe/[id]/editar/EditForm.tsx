@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { updateUser } from '../../actions';
+import { updateUserFromForm } from '../../actions';
 import { TEAM_ROLES } from '../../roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,14 @@ export function EditForm({ user }: EditFormProps) {
     event.preventDefault();
     setIsSaving(true);
 
-    const result = await updateUser(user.id, formData);
+    const payload = new FormData();
+    payload.set('name', formData.name);
+    payload.set('email', formData.email);
+    payload.set('role', formData.role);
+    payload.set('isActive', String(formData.isActive));
+    payload.set('password', formData.password);
+
+    const result = await updateUserFromForm(user.id, payload);
     setIsSaving(false);
 
     if (result?.success) {
@@ -60,7 +67,7 @@ export function EditForm({ user }: EditFormProps) {
       <div className="grid gap-2">
         <label htmlFor="email" className="text-sm font-bold text-slate-800">Email de login</label>
         <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
-        <p className="text-xs font-medium text-slate-500">Este email será usado para entrar no sistema.</p>
+        <p className="text-xs font-medium text-slate-500">Este email sera usado para entrar no sistema.</p>
       </div>
 
       <div className="grid gap-2">
@@ -75,7 +82,9 @@ export function EditForm({ user }: EditFormProps) {
           autoComplete="new-password"
           placeholder="Deixe em branco para manter a senha atual"
         />
-        <p className="text-xs font-medium text-slate-500">Preencha apenas quando quiser alterar a senha deste membro.</p>
+        <p className="text-xs font-medium text-slate-500">
+          Preencha apenas quando quiser alterar a senha deste membro. A nova senha passa a valer no proximo login.
+        </p>
       </div>
 
       <div className="grid gap-2">

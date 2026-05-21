@@ -41,7 +41,7 @@ const InventoryMovementType = {
 } as const;
 
 const OrderItemSchema = z.object({
-  productId: z.string().min(1, 'Produto ÃƒÂ© obrigatÃƒÂ³rio.'),
+  productId: z.string().min(1, 'Produto e obrigatorio.'),
   quantity: z.coerce
     .number()
     .positive('Quantidade deve ser maior que zero.'),
@@ -50,10 +50,10 @@ const OrderItemSchema = z.object({
 });
 
 const OrderFormSchema = z.object({
-  customerId: z.string().min(1, 'Cliente ÃƒÂ© obrigatÃƒÂ³rio.'),
-  paymentMethod: z.string().min(1, 'Forma de pagamento Ã© obrigatÃ³ria.'),
+  customerId: z.string().min(1, 'Cliente e obrigatorio.'),
+  paymentMethod: z.string().min(1, 'Forma de pagamento e obrigatoria.'),
   paymentDueDate: z.string().optional(),
-  orderStatus: z.string().min(1, 'Status do pedido Ã© obrigatÃ³rio.'),
+  orderStatus: z.string().min(1, 'Status do pedido e obrigatorio.'),
   items: z
     .array(OrderItemSchema)
     .min(1, 'O pedido deve ter pelo menos um item.'),
@@ -74,7 +74,7 @@ export async function createOrder(
   if (!validatedFields.success) {
     return {
       success: false,
-      message: 'Erro de validaÃƒÂ§ÃƒÂ£o',
+      message: 'Erro de validacao',
       errors: validatedFields.error.issues,
     };
   }
@@ -203,7 +203,7 @@ export async function createOrder(
       orderId: createdOrder.id,
     };
   } catch (error) {
-    console.error('Erro na transaÃƒÂ§ÃƒÂ£o ao criar pedido:', error);
+    console.error('Erro na transacao ao criar pedido:', error);
 
     return {
       success: false,
@@ -311,11 +311,11 @@ export async function deleteOrder(
       });
 
       if (!order) {
-        throw new Error('Pedido nÃƒÂ£o encontrado.');
+        throw new Error('Pedido nao encontrado.');
       }
 
       if (order.status === OrderStatus.CANCELADO) {
-        throw new Error('Este pedido jÃƒÂ¡ foi cancelado.');
+        throw new Error('Este pedido ja foi cancelado.');
       }
 
       await tx.order.update({

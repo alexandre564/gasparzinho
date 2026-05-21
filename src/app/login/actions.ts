@@ -36,13 +36,13 @@ export async function authenticate(
       console.error('Login AuthError:', error.type, error.cause);
 
       if (error.type === 'CredentialsSignin' || error.type === 'CallbackRouteError') {
-        return 'Email ou senha inválidos.';
+        return 'Email ou senha invalidos.';
       }
 
-      return 'Não foi possível entrar agora. Tente novamente.';
+      return 'Nao foi possivel entrar agora. Tente novamente.';
     }
 
     console.error('Login error:', error);
-    return 'Não foi possível entrar agora. Tente novamente.';
+    return 'Nao foi possivel entrar agora. Tente novamente.';
   }
 }
