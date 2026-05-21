@@ -41,7 +41,7 @@ const initialState: FormState = {
 };
 
 export function AddTransactionForm() {
-  const [state, dispatch] = useFormState(addTransaction as any, initialState);
+  const [state, dispatch] = useFormState(addTransaction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function AddTransactionForm() {
   return (
     <form ref={formRef} action={dispatch} className="space-y-4">
       <div>
-        <label htmlFor="description">Descrição</label>
+        <label htmlFor="description">Descricao</label>
         <Input
           id="description"
           name="description"
@@ -145,7 +145,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Histórico financeiro</CardTitle>
+        <CardTitle>Historico financeiro</CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="divide-y divide-gray-200">
@@ -154,8 +154,8 @@ export function TransactionList({ transactions }: TransactionListProps) {
               <div>
                 <p className="font-semibold">{t.description}</p>
                 <p className="text-sm text-gray-500">
-                  {t.category} · {formatDateTime(t.date)}
-                  {t.isRecurring ? ' · Recorrente' : ''}
+                  {t.category} - {formatDateTime(t.date)}
+                  {t.isRecurring ? ' - Recorrente' : ''}
                 </p>
               </div>
               <span className="font-semibold text-red-600">

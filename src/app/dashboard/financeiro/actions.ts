@@ -1,15 +1,16 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { z } from 'zod';
+
+import { prisma } from '@/lib/prisma';
 import type { DebtStatus } from './dividas/types';
 
 const expenseFormSchema = z.object({
   description: z
     .string()
-    .min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
+    .min(2, { message: 'A descricao deve ter pelo menos 2 caracteres.' }),
   category: z
     .string()
     .min(2, { message: 'A categoria deve ter pelo menos 2 caracteres.' }),
@@ -35,6 +36,7 @@ export async function createExpense(values: z.infer<typeof expenseFormSchema>) {
     });
 
     revalidatePath('/dashboard/financeiro');
+    revalidatePath('/dashboard/financeiro/despesas');
 
     return {
       success: true,
@@ -46,7 +48,7 @@ export async function createExpense(values: z.infer<typeof expenseFormSchema>) {
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        message: error.issues.map((e) => e.message).join(', '),
+        message: error.issues.map((issue) => issue.message).join(', '),
       };
     }
 
@@ -58,21 +60,58 @@ export async function createExpense(values: z.infer<typeof expenseFormSchema>) {
 }
 
 export async function getFinancialOverview() {
-  const expenses = await prisma.expense.findMany({
-    orderBy: { date: 'desc' },
-  });
+  const [expenses, revenue] = await Promise.all([
+    prisma.expense.findMany({
+      orderBy: { date: 'desc' },
+    }),
+    prisma.order.aggregate({
+      _sum: { grossValue: true },
+      where: { status: { not: 'CANCELADO' } },
+    }),
+  ]);
 
   const totalExpenses = expenses.reduce((acc, expense) => acc + expense.value, 0);
+  const totalRevenue = revenue._sum.grossValue ?? 0;
 
   return {
     expenses,
-    totalRevenue: 0,
+    totalRevenue,
     totalExpense: totalExpenses,
-    netBalance: -totalExpenses,
+    netBalance: totalRevenue - totalExpenses,
   };
 }
 
-export const addTransaction = createExpense;
+export async function addTransaction(
+  _previousState: {
+    success?: boolean;
+    message: string | null;
+    errors?: Record<string, string[]>;
+  },
+  formData: FormData,
+) {
+  const parsed = expenseFormSchema.safeParse({
+    description: formData.get('description'),
+    category: formData.get('category'),
+    value: formData.get('value'),
+    date: formData.get('date'),
+    isRecurring: formData.get('isRecurring') === 'true',
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: 'Verifique os dados da despesa.',
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const result = await createExpense(parsed.data);
+  return {
+    success: result.success,
+    message: result.message,
+    errors: {},
+  };
+}
 
 const DEBT_ITEMS_PER_PAGE = 10;
 
@@ -84,9 +123,7 @@ export async function getPaginatedDebts(
   const offset = (currentPage - 1) * DEBT_ITEMS_PER_PAGE;
 
   const where: Prisma.DebtWhereInput = {
-    customer: {
-      name: { contains: query },
-    },
+    ...(query ? { customer: { name: { contains: query } } } : {}),
     ...(status ? { status } : {}),
   };
 
@@ -110,9 +147,9 @@ export async function getPaginatedDebts(
       debts,
       totalPages: Math.ceil(totalDebts / DEBT_ITEMS_PER_PAGE),
     };
-  } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Falha ao buscar dívidas.');
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Falha ao buscar dividas.');
   }
 }
 
@@ -126,9 +163,9 @@ export async function getTotalOpenDebt() {
     return {
       totalOpen: total._sum.value ?? 0,
     };
-  } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Falha ao buscar o total de dívidas abertas.');
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Falha ao buscar o total de dividas abertas.');
   }
 }
 
@@ -147,14 +184,14 @@ export async function markDebtAsPaid(id: string) {
 
     return {
       success: true,
-      message: 'Dívida marcada como paga.',
+      message: 'Divida marcada como paga.',
     };
   } catch (error) {
     console.error('Database Error:', error);
 
     return {
       success: false,
-      message: 'Falha ao atualizar a dívida.',
+      message: 'Falha ao atualizar a divida.',
     };
   }
 }

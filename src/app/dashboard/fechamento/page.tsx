@@ -1,45 +1,41 @@
 import { Suspense } from 'react';
-import { getDailyClosingData, getClosingHistory } from './actions';
-import ClosingActions from './ClosingActions';
-import ClosingSummary from './ClosingSummary';
-import ClosingHistory from './ClosingHistory';
 import { Loader2 } from 'lucide-react';
 
+import { getClosingHistory, getDailyClosingData } from './actions';
+import ClosingActions from './ClosingActions';
+import ClosingHistory from './ClosingHistory';
+import ClosingSummary from './ClosingSummary';
+
 export default async function FechamentoPage() {
-    const closingData = await getDailyClosingData();
-    const history = await getClosingHistory();
+  const closingData = await getDailyClosingData();
+  const history = await getClosingHistory();
+  const { sales, stockForecast, isAlreadyClosed, ...summaryData } = closingData;
+  const clientData = {
+    summary: summaryData,
+    sales,
+    stockForecast,
+  };
 
-    const { sales, stockForecast, ...summaryData } = closingData;
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-950">Fechamento do dia</h1>
+        <p className="text-sm text-slate-600">
+          Confira vendas, despesas, saldo e estoque antes de fechar o caixa.
+        </p>
+      </div>
 
-    // Dados para os componentes de cliente
-    const clientData = {
-        summary: summaryData,
-        sales,
-        stockForecast: JSON.parse(stockForecast) // Passar o objeto JS, não a string
-    };
+      <div id="closing-content" className="space-y-6">
+        <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
+          <ClosingSummary data={{ ...summaryData, sales, stockForecast }} />
+        </Suspense>
+      </div>
 
-    return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold">Fechamento do Dia</h1>
-                <p className="text-muted-foreground">Resumo das atividades do dia e ações de fechamento.</p>
-            </div>
+      <ClosingActions data={clientData} isAlreadyClosed={isAlreadyClosed} />
 
-            <div id="closing-content" className="space-y-6"> 
-                <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin"/>}>
-                    <ClosingSummary data={summaryData as any} />
-                </Suspense>
-
-                <Suspense fallback={<p>Carregando vendas...</p>}>
-                    {/* A lista de vendas será renderizada dentro do ClosingSummary ou um componente específico se necessário */}
-                </Suspense>
-            </div>
-
-            <ClosingActions data={clientData} isAlreadyClosed={closingData.isAlreadyClosed} />
-
-            <Suspense fallback={<p>Carregando histórico...</p>}>
-                <ClosingHistory history={history} />
-            </Suspense>
-        </div>
-    );
+      <Suspense fallback={<p>Carregando historico...</p>}>
+        <ClosingHistory history={history} />
+      </Suspense>
+    </div>
+  );
 }

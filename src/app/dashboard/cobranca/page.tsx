@@ -122,6 +122,11 @@ export default async function CobrancaPage() {
                         </div>
                         <div className="text-xs text-slate-600">Em: {formatDate(debt.renegotiatedAt)}</div>
                         <div className="text-xs text-slate-600">Nova previsão: {formatDate(debt.dueDate)}</div>
+                        {debt.notes ? (
+                          <pre className="mt-2 whitespace-pre-wrap rounded-md bg-white p-2 text-xs text-slate-700">
+                            {debt.notes}
+                          </pre>
+                        ) : null}
                       </div>
                     ) : (
                       <span className="text-sm text-slate-500">Não</span>

@@ -10,9 +10,10 @@ const optionalDate = z.preprocess((value) => {
 }, z.coerce.date().optional());
 
 const DebtActionSchema = z.object({
-  renegotiatedValue: z.coerce.number().positive('Informe um valor para pagamento maior que zero.'),
+  paidAmount: z.coerce.number().min(0, 'O valor pago nao pode ser negativo.').default(0),
+  remainingValue: z.coerce.number().min(0, 'O restante a receber nao pode ser negativo.'),
   newDueDate: z.coerce.date({ message: 'Informe a nova data prevista.' }),
-  paidAt: optionalDate,
+  paymentDate: optionalDate,
   notes: z.string().trim().max(500, 'Use no máximo 500 caracteres.').optional(),
 });
 
@@ -34,19 +35,28 @@ export async function updateDebt(id: string, data: unknown) {
       return { success: false as const, message: 'Dívida não encontrada.' };
     }
 
-    const { renegotiatedValue, newDueDate, paidAt, notes } = validatedData.data;
+    const { paidAmount, remainingValue, newDueDate, paymentDate, notes } = validatedData.data;
+    const fullPayment = remainingValue <= 0;
+    const paymentInfo = [
+      `Valor pago nesta renegociacao: R$ ${paidAmount.toFixed(2)}`,
+      paymentDate ? `Data do pagamento parcial: ${paymentDate.toLocaleDateString('pt-BR')}` : null,
+      `Restante a receber: R$ ${remainingValue.toFixed(2)}`,
+      notes ? `Observacoes: ${notes}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n');
 
     await prisma.debt.update({
       where: { id },
       data: {
-        value: renegotiatedValue,
+        value: remainingValue,
         dueDate: newDueDate,
         originalDueDate: existingDebt.originalDueDate ?? existingDebt.dueDate,
         renegotiatedAt: new Date(),
-        renegotiatedValue,
-        paidAt: paidAt ?? null,
-        notes: notes || null,
-        status: paidAt ? 'PAGO' : 'RENEGOCIADO',
+        renegotiatedValue: remainingValue,
+        paidAt: fullPayment ? paymentDate ?? new Date() : null,
+        notes: paymentInfo,
+        status: fullPayment ? 'PAGO' : 'RENEGOCIADO',
       },
     });
 
@@ -54,7 +64,12 @@ export async function updateDebt(id: string, data: unknown) {
     revalidatePath(`/dashboard/cobranca/${id}`);
     revalidatePath('/dashboard/financeiro/dividas');
 
-    return { success: true as const, message: paidAt ? 'Dívida renegociada e marcada como paga.' : 'Dívida renegociada com sucesso!' };
+    return {
+      success: true as const,
+      message: fullPayment
+        ? 'Divida quitada e marcada como paga.'
+        : 'Renegociacao salva. O restante continua pendente de cobranca.',
+    };
   } catch (error) {
     console.error('Erro ao renegociar dívida:', error);
     return { success: false as const, message: 'Falha ao renegociar a dívida.' };

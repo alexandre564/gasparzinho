@@ -78,7 +78,7 @@ export default async function RenegotiateDebtPage({ params }: { params: { id: st
         <CardHeader>
           <CardTitle>Renegociar dívida</CardTitle>
           <CardDescription>
-            Defina o valor para pagamento, a nova data prevista e registre se já houve pagamento.
+            Registre pagamento parcial, restante a receber e nova data prevista sem quitar a dívida.
           </CardDescription>
         </CardHeader>
         <CardContent>
