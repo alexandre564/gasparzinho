@@ -28,9 +28,7 @@ export default function MarkAsPaidButton({ id }: { id: string }) {
 
       const response = await fetch('/api/financeiro/dividas/marcar-paga', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
 
@@ -52,7 +50,7 @@ export default function MarkAsPaidButton({ id }: { id: string }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-green-500 hover:text-green-600">
+        <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
           <DollarSign className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
@@ -61,7 +59,7 @@ export default function MarkAsPaidButton({ id }: { id: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar pagamento?</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta ação marcará a dívida como paga. A operação não pode ser desfeita facilmente.
+            Esta ação marcará a dívida como paga e registrará a data de pagamento de hoje.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

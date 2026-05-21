@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 204 32% 96%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -12,16 +12,16 @@
     --popover-foreground: 222 47% 11%;
     --primary: 166 84% 27%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 167 76% 94%;
-    --accent-foreground: 166 84% 18%;
-    --destructive: 0 72% 51%;
+    --secondary: 211 32% 90%;
+    --secondary-foreground: 222 47% 13%;
+    --muted: 212 30% 93%;
+    --muted-foreground: 215 22% 36%;
+    --accent: 168 70% 90%;
+    --accent-foreground: 166 84% 17%;
+    --destructive: 0 72% 47%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 213 25% 82%;
+    --input: 213 25% 82%;
     --ring: 166 84% 27%;
     --radius: 0.5rem;
   }
@@ -52,8 +52,30 @@
     @apply border-border;
   }
 
+  html {
+    background: hsl(var(--background));
+  }
+
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.04), rgba(255, 255, 255, 0) 260px),
+      radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 360px),
+      hsl(var(--background));
+  }
+
+  ::selection {
+    background: rgba(16, 185, 129, 0.24);
+  }
+}
+
+@layer components {
+  .surface-panel {
+    @apply border border-slate-200 bg-white shadow-sm ring-1 ring-slate-950/5;
+  }
+
+  .section-eyebrow {
+    @apply text-sm font-semibold text-emerald-800;
   }
 }
 

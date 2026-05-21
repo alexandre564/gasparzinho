@@ -56,7 +56,7 @@ export default async function RelatoriosPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Relatorios</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Relatórios</h2>
           <p className="text-sm text-slate-600">
             Analise as vendas por dia ou por mes, sem pedidos cancelados.
           </p>
@@ -74,7 +74,7 @@ export default async function RelatoriosPage({
         <SummaryCard
           title="Media"
           value={currency.format(average)}
-          description={period === 'monthly' ? 'Media mensal do periodo.' : 'Media diaria do periodo.'}
+          description={period === 'monthly' ? 'Média mensal do período.' : 'Média diária do período.'}
           icon={BarChart3}
         />
         <SummaryCard
@@ -87,10 +87,10 @@ export default async function RelatoriosPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{period === 'monthly' ? 'Vendas mensais' : 'Vendas diarias'}</CardTitle>
+          <CardTitle>{period === 'monthly' ? 'Vendas mensais' : 'Vendas diárias'}</CardTitle>
           <CardDescription>
             {period === 'monthly'
-              ? 'Comparativo dos ultimos 6 meses.'
+              ? 'Comparativo dos últimos 6 meses.'
               : 'Comparativo dos ultimos 7 dias.'}
           </CardDescription>
         </CardHeader>

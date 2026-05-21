@@ -59,9 +59,7 @@ export async function createExpense(values: z.infer<typeof expenseFormSchema>) {
 
 export async function getFinancialOverview() {
   const expenses = await prisma.expense.findMany({
-    orderBy: {
-      date: 'desc',
-    },
+    orderBy: { date: 'desc' },
   });
 
   const totalExpenses = expenses.reduce((acc, expense) => acc + expense.value, 0);
@@ -81,15 +79,13 @@ const DEBT_ITEMS_PER_PAGE = 10;
 export async function getPaginatedDebts(
   query: string,
   currentPage: number,
-  status?: DebtStatus
+  status?: DebtStatus,
 ) {
   const offset = (currentPage - 1) * DEBT_ITEMS_PER_PAGE;
 
   const where: Prisma.DebtWhereInput = {
     customer: {
-      name: {
-        contains: query,
-      },
+      name: { contains: query },
     },
     ...(status ? { status } : {}),
   };
@@ -123,14 +119,8 @@ export async function getPaginatedDebts(
 export async function getTotalOpenDebt() {
   try {
     const total = await prisma.debt.aggregate({
-      _sum: {
-        value: true,
-      },
-      where: {
-        status: {
-          in: ['PENDENTE', 'VENCIDO'],
-        },
-      },
+      _sum: { value: true },
+      where: { status: { in: ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] } },
     });
 
     return {
@@ -146,10 +136,14 @@ export async function markDebtAsPaid(id: string) {
   try {
     await prisma.debt.update({
       where: { id },
-      data: { status: 'PAGO' },
+      data: {
+        status: 'PAGO',
+        paidAt: new Date(),
+      },
     });
 
     revalidatePath('/dashboard/financeiro/dividas');
+    revalidatePath('/dashboard/cobranca');
 
     return {
       success: true,

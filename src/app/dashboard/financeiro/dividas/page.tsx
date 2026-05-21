@@ -33,7 +33,7 @@ import MarkAsPaidButton from './MarkAsPaidButton';
 const getStatusVariant = (status: string): BadgeProps['variant'] => {
   switch (status) {
     case 'PAGO':
-      return 'default';
+      return 'success';
     case 'PENDENTE':
     case 'VENCIDO':
       return 'destructive';
@@ -62,11 +62,11 @@ async function TotalOpenDebtCard() {
   const { totalOpen } = await getTotalOpenDebt();
 
   return (
-    <Card className="bg-destructive text-destructive-foreground">
+    <Card className="border-red-200 bg-red-600 text-white">
       <CardHeader>
         <CardTitle>Total em aberto</CardTitle>
-        <CardDescription className="text-destructive-foreground/80">
-          Soma de todas as dívidas pendentes e atrasadas.
+        <CardDescription className="text-red-50">
+          Soma de todas as dívidas pendentes, atrasadas e renegociadas.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -115,7 +115,7 @@ export default async function Page({ searchParams }: PageProps) {
         <CardContent>
           <Suspense
             fallback={
-              <div className="flex justify-center items-center py-10">
+              <div className="flex items-center justify-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             }
@@ -126,10 +126,10 @@ export default async function Page({ searchParams }: PageProps) {
                   <TableHead>Cliente</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="text-center hidden md:table-cell">
-                    Data Compra
+                  <TableHead className="hidden text-center md:table-cell">
+                    Data da compra
                   </TableHead>
-                  <TableHead className="text-center hidden lg:table-cell">
+                  <TableHead className="hidden text-center lg:table-cell">
                     Vencimento
                   </TableHead>
                   <TableHead>
@@ -152,10 +152,10 @@ export default async function Page({ searchParams }: PageProps) {
                           currency: 'BRL',
                         }).format(debt.value)}
                       </TableCell>
-                      <TableCell className="text-center hidden md:table-cell">
+                      <TableCell className="hidden text-center md:table-cell">
                         {new Date(debt.createdAt).toLocaleDateString('pt-BR')}
                       </TableCell>
-                      <TableCell className="text-center hidden lg:table-cell">
+                      <TableCell className="hidden text-center lg:table-cell">
                         {new Date(debt.dueDate).toLocaleDateString('pt-BR')}
                       </TableCell>
                       <TableCell className="text-right">

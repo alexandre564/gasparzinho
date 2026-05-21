@@ -19,15 +19,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save } from 'lucide-react';
 
-// Zod Schema para validação do formulário
+// Zod Schema para validaÃ§Ã£o do formulÃ¡rio
 const ProductFormSchema = z.object({
-  name: z.string().min(3, "O nome deve ter no mínimo 3 caracteres."),
+  name: z.string().min(3, "O nome deve ter no mÃ­nimo 3 caracteres."),
   description: z.string().optional(),
-  price: z.coerce.number().positive("O preço de venda deve ser positivo."),
-  cost: z.coerce.number().nonnegative("O custo não pode ser negativo."),
+  price: z.coerce.number().positive("O preÃ§o de venda deve ser positivo."),
+  cost: z.coerce.number().nonnegative("O custo nÃ£o pode ser negativo."),
   category: z.nativeEnum(ProductCategory),
   stockKind: z.nativeEnum(StockKind),
-  inventory: z.coerce.number().int().nonnegative("O estoque não pode ser negativo.").default(0),
+  inventory: z.coerce.number().int().nonnegative("O estoque nÃ£o pode ser negativo.").default(0),
 });
 
 type ProductFormValues = z.infer<typeof ProductFormSchema>;
@@ -46,7 +46,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       name: product?.name || '',
       description: product?.description || '',
       price: product?.price? Number(product.price) : 0,
-      cost: product?.cost? Number(product.price) : 0,
+      cost: product?.cost ? Number(product.cost) : 0,
       category: product?.category as any,
       stockKind: product?.stockKind as any,
       inventory: product?.inventory || 0,
@@ -81,7 +81,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Nome do Produto</FormLabel>
-                        <FormControl><Input {...field} placeholder="Ex: Botijão de Gás P13" /></FormControl>
+                        <FormControl><Input {...field} placeholder="Ex: BotijÃ£o de GÃ¡s P13" /></FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -91,7 +91,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Descrição (Opcional)</FormLabel>
+                        <FormLabel>DescriÃ§Ã£o (Opcional)</FormLabel>
                         <FormControl><Textarea {...field} placeholder="Detalhes sobre o produto..." /></FormControl>
                         <FormMessage />
                         </FormItem>
@@ -103,7 +103,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                         name="price"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Preço de Venda</FormLabel>
+                            <FormLabel>PreÃ§o de Venda</FormLabel>
                             <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
@@ -114,7 +114,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                         name="cost"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Preço de Custo</FormLabel>
+                            <FormLabel>PreÃ§o de Custo</FormLabel>
                             <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>

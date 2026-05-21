@@ -70,21 +70,33 @@ function MetricCard({
   value,
   description,
   icon: Icon,
+  tone = 'emerald',
 }: {
   title: string;
   value: string | number;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
+  tone?: 'emerald' | 'blue' | 'amber' | 'rose' | 'slate';
 }) {
+  const toneClass = {
+    emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    blue: 'bg-sky-50 text-sky-700 ring-sky-100',
+    amber: 'bg-amber-50 text-amber-700 ring-amber-100',
+    rose: 'bg-rose-50 text-rose-700 ring-rose-100',
+    slate: 'bg-slate-100 text-slate-700 ring-slate-200',
+  }[tone];
+
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <CardTitle className="text-sm font-semibold text-slate-600">{title}</CardTitle>
+        <div className={`rounded-md p-2 ring-1 ${toneClass}`}>
+          <Icon className="h-4 w-4" />
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-semibold tracking-tight">{value}</div>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <div className="text-2xl font-bold tracking-tight text-slate-950">{value}</div>
+        <p className="mt-1 text-xs font-medium text-slate-600">{description}</p>
       </CardContent>
     </Card>
   );
@@ -95,12 +107,27 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Resumo da operação</h2>
-        <p className="text-sm text-muted-foreground">
-          Acompanhe vendas, entregas, estoque e cobranças em um só lugar.
-        </p>
-      </div>
+      <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-xl shadow-slate-300/60">
+        <div className="grid gap-6 p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
+          <div>
+            <p className="text-sm font-semibold text-emerald-300">Resumo da operação</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Gás Gasparzinho em movimento</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+              Acompanhe vendas, entregas, estoque e cobranças em um painel mais claro para decidir rápido.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg border border-white/10 bg-white/10 p-4">
+              <p className="text-slate-300">Vendas hoje</p>
+              <p className="mt-1 text-xl font-bold text-white">{currency.format(data.totalSalesToday)}</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-emerald-500 p-4 text-white">
+              <p className="text-emerald-50">Entregas</p>
+              <p className="mt-1 text-xl font-bold">{data.deliveriesInProgress}</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricCard
@@ -108,36 +135,42 @@ export default async function DashboardPage() {
           value={currency.format(data.totalSalesToday)}
           description="Total bruto vendido desde o início do dia."
           icon={Banknote}
+          tone="emerald"
         />
         <MetricCard
           title="Clientes"
           value={data.activeCustomers}
           description="Cadastros disponíveis para venda e entrega."
           icon={Users}
+          tone="blue"
         />
         <MetricCard
           title="Dívidas abertas"
           value={data.debtors}
           description="Clientes com cobrança pendente ou vencida."
           icon={CreditCard}
+          tone="rose"
         />
         <MetricCard
           title="Estoque crítico"
           value={data.criticalStock}
           description="Produtos com menos de 10 unidades."
           icon={Package}
+          tone="amber"
         />
         <MetricCard
           title="Entregas em andamento"
           value={data.deliveriesInProgress}
           description="Entregas pendentes ou em rota."
           icon={Truck}
+          tone="blue"
         />
         <MetricCard
           title="Recompra"
           value="Em breve"
           description="Previsões serão calculadas após mais vendas."
           icon={Repeat}
+          tone="slate"
         />
       </div>
 
@@ -157,24 +190,24 @@ export default async function DashboardPage() {
             <CardTitle>Pedidos recentes</CardTitle>
             <CardDescription>Últimas movimentações registradas.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {data.recentOrders.length > 0 ? (
               data.recentOrders.map((order) => (
-                <div key={order.id} className="flex items-start justify-between gap-3 border-b pb-3 last:border-0 last:pb-0">
+                <div key={order.id} className="flex items-start justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-3 last:mb-0">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{order.customer.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-sm font-semibold text-slate-950">{order.customer.name}</p>
+                    <p className="text-xs text-slate-600">
                       {new Date(order.createdAt).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold">{currency.format(order.grossValue)}</p>
+                    <p className="text-sm font-bold text-slate-950">{currency.format(order.grossValue)}</p>
                     <Badge variant="secondary" className="mt-1">{order.status}</Badge>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600">
                 Nenhum pedido registrado ainda.
               </div>
             )}
