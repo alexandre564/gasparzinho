@@ -33,6 +33,13 @@ export async function GET() {
   });
 
   const header = [
+    'Name',
+    'Given Name',
+    'Phone 1 - Type',
+    'Phone 1 - Value',
+    'Address 1 - Street',
+    'Address 1 - City',
+    'Notes',
     'nome',
     'telefone',
     'cep',
@@ -46,6 +53,13 @@ export async function GET() {
   ];
 
   const rows = customers.map((customer) => [
+    customer.name,
+    customer.name,
+    'Mobile',
+    customer.phone,
+    [customer.street, customer.number, customer.complement, customer.neighborhood].filter(Boolean).join(', '),
+    customer.city,
+    customer.reference,
     customer.name,
     customer.phone,
     customer.cep,

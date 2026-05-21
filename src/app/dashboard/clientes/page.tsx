@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
-import { Download, MessageCircle, Pencil, PlusCircle } from 'lucide-react';
+import { Download, MessageCircle, Pencil, PlusCircle, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -102,7 +102,13 @@ export default async function CustomersPage({
                   customers.map((customer) => (
                     <TableRow key={customer.id}>
                       <TableCell>
-                        <div className="font-medium">{customer.name}</div>
+                        <Link
+                          href={`/dashboard/vendas/novo?customerId=${customer.id}`}
+                          className="font-bold text-slate-950 hover:text-emerald-700 hover:underline"
+                          title="Iniciar pedido para este cliente"
+                        >
+                          {customer.name}
+                        </Link>
                         <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200"><MessageCircle className="h-3 w-3" />{customer.phone}</div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">{customer.city}</TableCell>
@@ -129,8 +135,22 @@ export default async function CustomersPage({
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-2">
+                          <Button asChild size="sm" className="gap-2">
+                            <Link
+                              href={`/dashboard/vendas/novo?customerId=${customer.id}`}
+                              aria-label={`Novo pedido para ${customer.name}`}
+                              title="Novo pedido"
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                              <span className="hidden xl:inline">Pedido</span>
+                            </Link>
+                          </Button>
                           <Button asChild variant="outline" size="icon" className="h-8 w-8">
-                            <Link href={`/dashboard/clientes/${customer.id}/editar`}>
+                            <Link
+                              href={`/dashboard/clientes/${customer.id}/editar`}
+                              aria-label={`Editar ${customer.name}`}
+                              title="Editar"
+                            >
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Editar</span>
                             </Link>

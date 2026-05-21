@@ -55,7 +55,7 @@ export async function GET(request: Request) {
 
   const customers = await prisma.customer.findMany({
     orderBy: { name: 'asc' },
-    take: 80,
+    take: 300,
     select: {
       id: true,
       name: true,

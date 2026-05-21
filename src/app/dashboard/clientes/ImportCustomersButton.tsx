@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ function SubmitButton() {
 
 export default function ImportCustomersButton() {
   const formRef = useRef<HTMLFormElement>(null);
+  const [fileName, setFileName] = useState('');
   const [state, action] = useFormState(importCustomers, initialState);
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export default function ImportCustomersButton() {
     if (state.success) {
       toast.success(state.message);
       formRef.current?.reset();
+      setFileName('');
     } else {
       toast.error(state.message);
     }
@@ -42,9 +44,16 @@ export default function ImportCustomersButton() {
 
   return (
     <form ref={formRef} action={action} className="flex flex-wrap items-center gap-2">
-      <label className="flex h-9 cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
-        Escolher CSV
-        <input name="file" type="file" accept=".csv,text/csv" className="sr-only" required />
+      <label className="flex h-9 max-w-56 cursor-pointer items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+        <span className="truncate">{fileName || 'Escolher CSV/VCF'}</span>
+        <input
+          name="file"
+          type="file"
+          accept=".csv,.cdsv,.vcf,.txt,text/csv,text/vcard"
+          className="sr-only"
+          required
+          onChange={(event) => setFileName(event.target.files?.[0]?.name ?? '')}
+        />
       </label>
       <SubmitButton />
     </form>

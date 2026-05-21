@@ -240,6 +240,18 @@ type ImportCustomersState = {
   message: string;
 };
 
+type ImportedCustomer = {
+  name: string;
+  phone: string;
+  cep: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  reference: string;
+};
+
 function splitCsvLine(line: string, delimiter: string) {
   const result: string[] = [];
   let current = '';
@@ -276,6 +288,7 @@ function splitCsvLine(line: string, delimiter: string) {
 function normalizeHeader(value: string) {
   return value
     .replace(/^\uFEFF/, '')
+    .replace(/\s+/g, ' ')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -293,7 +306,86 @@ function pickValue(row: Record<string, string>, keys: string[]) {
   return '';
 }
 
-function parseCustomersCsv(text: string) {
+function pickPhoneValue(row: Record<string, string>) {
+  const directValue = pickValue(row, [
+    'telefone',
+    'phone',
+    'whatsapp',
+    'celular',
+    'fone',
+    'mobile',
+    'mobile phone',
+    'phone 1 - value',
+    'phone 2 - value',
+    'phone 3 - value',
+    'telefone 1 - valor',
+    'telefone 2 - valor',
+    'telefone 3 - valor',
+  ]);
+
+  if (directValue) {
+    return directValue;
+  }
+
+  const phoneEntry = Object.entries(row).find(([header, value]) => {
+    const normalizedHeader = normalizeHeader(header);
+    return (
+      value.trim() &&
+      (normalizedHeader.includes('phone') ||
+        normalizedHeader.includes('telefone') ||
+        normalizedHeader.includes('celular') ||
+        normalizedHeader.includes('mobile') ||
+        normalizedHeader.includes('whatsapp'))
+    );
+  });
+
+  return phoneEntry?.[1]?.trim() ?? '';
+}
+
+function normalizeImportedPhone(value: string) {
+  return value.replace(/^"+|"+$/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function getPhoneDigits(value: string) {
+  return value.replace(/\D/g, '');
+}
+
+function detectDelimiter(headerLine: string) {
+  const candidates = [';', ',', '\t'];
+  return candidates
+    .map((delimiter) => ({
+      delimiter,
+      count: splitCsvLine(headerLine, delimiter).length,
+    }))
+    .sort((a, b) => b.count - a.count)[0]?.delimiter ?? ',';
+}
+
+function buildNameFromRow(row: Record<string, string>) {
+  const fullName = pickValue(row, [
+    'nome',
+    'name',
+    'cliente',
+    'customer',
+    'display name',
+    'full name',
+    'nome completo',
+  ]);
+
+  if (fullName) {
+    return fullName;
+  }
+
+  return [
+    pickValue(row, ['given name', 'first name', 'primeiro nome', 'nome']),
+    pickValue(row, ['middle name', 'nome do meio']),
+    pickValue(row, ['family name', 'last name', 'sobrenome']),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+}
+
+function parseCustomersCsv(text: string): ImportedCustomer[] {
   const cleanText = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const rawLines = cleanText.split('\n').map((line) => line.trim()).filter(Boolean);
   const lines = rawLines[0]?.toLowerCase().startsWith('sep=') ? rawLines.slice(1) : rawLines;
@@ -302,7 +394,7 @@ function parseCustomersCsv(text: string) {
     return [];
   }
 
-  const delimiter = lines[0].includes(';') ? ';' : ',';
+  const delimiter = detectDelimiter(lines[0]);
   const headers = splitCsvLine(lines[0], delimiter).map(normalizeHeader);
 
   return lines.slice(1).map((line) => {
@@ -313,18 +405,78 @@ function parseCustomersCsv(text: string) {
       row[header] = values[index] ?? '';
     });
 
+    const name = buildNameFromRow(row);
+    const phone = normalizeImportedPhone(pickPhoneValue(row));
+    const notes = pickValue(row, ['notes', 'observacoes', 'observacao', 'nota']);
+    const address = pickValue(row, ['address 1 - street', 'address', 'endereco completo']);
+
     return {
-      name: pickValue(row, ['nome', 'name', 'cliente', 'customer']),
-      phone: pickValue(row, ['telefone', 'phone', 'whatsapp', 'celular', 'fone']),
-      cep: pickValue(row, ['cep']),
-      street: pickValue(row, ['rua', 'street', 'endereco', 'logradouro']),
+      name,
+      phone,
+      cep: pickValue(row, ['cep', 'postal code', 'address 1 - postal code']),
+      street: pickValue(row, ['rua', 'street', 'endereco', 'logradouro', 'address 1 - street']) || address,
       number: pickValue(row, ['numero', 'number', 'n', 'num']) || 'S/N',
       complement: pickValue(row, ['complemento', 'complement']),
       neighborhood: pickValue(row, ['bairro', 'neighborhood']),
-      city: pickValue(row, ['cidade', 'city']) || 'Lavras',
-      reference: pickValue(row, ['referencia', 'reference', 'ponto de referencia']),
+      city: pickValue(row, ['cidade', 'city', 'address 1 - city']) || 'Lavras',
+      reference: pickValue(row, ['referencia', 'reference', 'ponto de referencia']) || notes,
     };
   }).filter((customer) => customer.name && customer.phone);
+}
+
+function decodeVcardValue(value: string) {
+  return value
+    .replace(/\\n/gi, ' ')
+    .replace(/\\,/g, ',')
+    .replace(/\\;/g, ';')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseCustomersVcf(text: string): ImportedCustomer[] {
+  const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const cards = cleanText.split(/BEGIN:VCARD/i).slice(1);
+
+  return cards
+    .map((card) => {
+      const lines = card.split('\n').map((line) => line.trim()).filter(Boolean);
+      const fullNameLine = lines.find((line) => /^FN[:;]/i.test(line));
+      const nameLine = lines.find((line) => /^N[:;]/i.test(line));
+      const phoneLine = lines.find((line) => /^TEL[:;]/i.test(line));
+      const addressLine = lines.find((line) => /^ADR[:;]/i.test(line));
+      const noteLine = lines.find((line) => /^NOTE[:;]/i.test(line));
+
+      const fullName = fullNameLine ? decodeVcardValue(fullNameLine.split(':').slice(1).join(':')) : '';
+      const structuredName = nameLine ? nameLine.split(':').slice(1).join(':').split(';').filter(Boolean).reverse().join(' ') : '';
+      const phone = phoneLine ? normalizeImportedPhone(decodeVcardValue(phoneLine.split(':').slice(1).join(':'))) : '';
+      const addressParts = addressLine
+        ? addressLine.split(':').slice(1).join(':').split(';').map(decodeVcardValue).filter(Boolean)
+        : [];
+
+      return {
+        name: fullName || structuredName,
+        phone,
+        cep: '',
+        street: addressParts.join(' '),
+        number: 'S/N',
+        complement: '',
+        neighborhood: '',
+        city: 'Lavras',
+        reference: noteLine ? decodeVcardValue(noteLine.split(':').slice(1).join(':')) : '',
+      };
+    })
+    .filter((customer) => customer.name && customer.phone);
+}
+
+function parseCustomersFile(text: string, fileName: string) {
+  const lowerName = fileName.toLowerCase();
+  const looksLikeVcard = /BEGIN:VCARD/i.test(text) || lowerName.endsWith('.vcf');
+
+  if (looksLikeVcard) {
+    return parseCustomersVcf(text);
+  }
+
+  return parseCustomersCsv(text);
 }
 
 export async function importCustomers(
@@ -337,32 +489,56 @@ export async function importCustomers(
     return { success: false, message: 'Selecione uma planilha CSV para importar.' };
   }
 
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    return { success: false, message: 'Por enquanto, importe um arquivo CSV.' };
+  const lowerFileName = file.name.toLowerCase();
+  const isAllowedFile =
+    lowerFileName.endsWith('.csv') ||
+    lowerFileName.endsWith('.cdsv') ||
+    lowerFileName.endsWith('.vcf') ||
+    lowerFileName.endsWith('.txt');
+
+  if (!isAllowedFile) {
+    return { success: false, message: 'Importe um arquivo CSV, VCF ou o arquivo de contatos exportado pelo Android.' };
   }
 
   try {
     const text = await file.text();
-    const customers = parseCustomersCsv(text);
+    const customers = parseCustomersFile(text, file.name);
 
     if (customers.length === 0) {
       return {
         success: false,
-        message: 'Nenhum cliente valido encontrado. Use colunas como nome e telefone.',
+        message: 'Nenhum cliente valido encontrado. O arquivo precisa ter nome e telefone/celular.',
       };
     }
 
     let created = 0;
     let updated = 0;
+    const existingCustomers = await prisma.customer.findMany({
+      select: { id: true, phone: true },
+    });
+    const existingByPhoneDigits = new Map(
+      existingCustomers
+        .map((customer) => [getPhoneDigits(customer.phone), customer.id] as const)
+        .filter(([digits]) => digits.length >= 8)
+    );
+    const importedPhones = new Set<string>();
 
     for (const customer of customers) {
-      const existing = await prisma.customer.findUnique({ where: { phone: customer.phone } });
+      const phoneDigits = getPhoneDigits(customer.phone);
 
-      if (existing) {
-        await prisma.customer.update({ where: { id: existing.id }, data: customer });
+      if (phoneDigits.length < 8 || importedPhones.has(phoneDigits)) {
+        continue;
+      }
+
+      importedPhones.add(phoneDigits);
+      const existingId = existingByPhoneDigits.get(phoneDigits);
+
+      if (existingId) {
+        await prisma.customer.update({ where: { id: existingId }, data: customer });
         updated += 1;
       } else {
-        await prisma.customer.create({ data: customer });
+        const createdCustomer = await prisma.customer.create({ data: customer });
+        existingByPhoneDigits.set(phoneDigits, createdCustomer.id);
         created += 1;
       }
     }
