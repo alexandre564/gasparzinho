@@ -1,91 +1,156 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
+import {
+  ArrowRight,
+  Calendar,
+  Hourglass,
+  MessageCircle,
+  Phone,
+  Repeat,
+  ShoppingBag,
+} from 'lucide-react';
+import { format } from 'date-fns';
+
 import { getRepurchasePredictions } from './actions';
 import { RepurchasePrediction } from '@/services/recompra';
-
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, Calendar, Repeat, ArrowRight, Hourglass, ShoppingBag, MessageCircle } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
-const FilterButton = ({ days, currentDays }: { days: number, currentDays: number }) => {
-    const isActive = days === currentDays;
-    return (
-        <Link href={`/dashboard/recompra?days=${days}`} passHref>
-             <Button variant={isActive ? 'default' : 'outline'}>
-                PrÃ³ximos {days} dias
-            </Button>
-        </Link>
-    );
-};
+const periodOptions = [3, 7, 15];
 
-const PredictionCard = ({ prediction }: { prediction: RepurchasePrediction }) => {
-    const { customer, lastOrder, avgInterval, predictedNextPurchaseDate, daysUntilNextPurchase } = prediction;
-    const lastOrderProduct = lastOrder?.items[0]?.product.name || 'N/A';
+function FilterButton({ days, currentDays }: { days: number; currentDays: number }) {
+  const isActive = days === currentDays;
 
-    const cleanPhone = customer.phone.replace(/\D/g, '');
-    const whatsappMessage = `OlÃ¡ ${customer.name.split(' ')[0]}, tudo bem? Notei que estÃ¡ chegando a hora de renovar seu estoque de ${lastOrderProduct}. Que tal fazermos um novo pedido?`;
-    const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}`;
-
-    const daysText = daysUntilNextPurchase === 0 ? 'hoje' : `em ${daysUntilNextPurchase} dia(s)`;
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">{customer.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-                <div className="flex items-center"><Phone className="w-4 h-4 mr-2 text-muted-foreground" /> {customer.phone}</div>
-                <div className="flex items-center"><ShoppingBag className="w-4 h-4 mr-2 text-muted-foreground" /> Ãšltimo Pedido: {lastOrder ? `${format(lastOrder.createdAt, 'dd/MM/yyyy')} (${lastOrderProduct})` : 'N/A'}</div>
-                <div className="flex items-center"><Repeat className="w-4 h-4 mr-2 text-muted-foreground" /> Intervalo MÃ©dio: {avgInterval} dias</div>
-                <div className="flex items-center font-semibold"><Calendar className="w-4 h-4 mr-2 text-primary" /> Recompra prevista para {format(predictedNextPurchaseDate, 'dd/MM/yyyy')}</div>
-                 <div className="flex items-center text-muted-foreground"><Hourglass className="w-4 h-4 mr-2" /> Vence {daysText}</div>
-            </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" size="sm"><MessageCircle className="h-4 w-4 mr-2"/> WhatsApp</Button>
-                </a>
-                <Link href={`/dashboard/vendas/novo?customerId=${customer.id}`} passHref>
-                    <Button size="sm">Iniciar Venda <ArrowRight className="h-4 w-4 ml-2" /></Button>
-                </Link>
-            </CardFooter>
-        </Card>
-    );
+  return (
+    <Button asChild variant={isActive ? 'default' : 'outline'} size="sm">
+      <Link href={`/dashboard/recompra?days=${days}`}>Proximos {days} dias</Link>
+    </Button>
+  );
 }
 
-export default async function RecompraPreditivaPage({ searchParams }: { searchParams?: { days?: string } }) {
-    const days = Number(searchParams?.days) || 3;
-    const predictions = await getRepurchasePredictions(days);
+function getUrgencyBadge(daysUntilNextPurchase: number) {
+  if (daysUntilNextPurchase <= 0) {
+    return <Badge variant="destructive">Comprar hoje</Badge>;
+  }
 
-    return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">Recompra Preditiva</h1>
-                <p className="text-muted-foreground">Clientes com maior probabilidade de comprar novamente em breve.</p>
-            </div>
+  if (daysUntilNextPurchase <= 3) {
+    return <Badge className="bg-amber-500 text-white">Muito proximo</Badge>;
+  }
 
-            <div className="flex items-center gap-2">
-                <FilterButton days={3} currentDays={days} />
-                <FilterButton days={7} currentDays={days} />
-                <FilterButton days={15} currentDays={days} />
-            </div>
+  return <Badge variant="secondary">Em breve</Badge>;
+}
 
-            <Suspense fallback={<p>Carregando previsÃµes...</p>}>
-                {predictions.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {predictions.map(prediction => (
-                            <PredictionCard key={prediction.customer.id} prediction={prediction} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                        <Hourglass className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-2 text-sm font-semibold">Nenhum cliente previsto</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">Nenhum cliente corresponde aos critÃ©rios de recompra para os prÃ³ximos {days} dias.</p>
-                    </div>
-                )}
-            </Suspense>
+function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
+  const {
+    customer,
+    lastOrder,
+    avgInterval,
+    predictedNextPurchaseDate,
+    daysUntilNextPurchase,
+  } = prediction;
+  const firstName = customer.name.split(' ')[0] || customer.name;
+  const lastOrderProduct = lastOrder?.items[0]?.product.name || 'produto';
+  const cleanPhone = customer.phone.replace(/\D/g, '');
+  const daysText = daysUntilNextPurchase <= 0 ? 'hoje' : `em ${daysUntilNextPurchase} dia(s)`;
+  const whatsappMessage = `Ola ${firstName}, tudo bem? Vi aqui que talvez esteja chegando a hora de repor ${lastOrderProduct}. Posso separar um novo pedido para voce?`;
+  const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+
+  return (
+    <Card className="overflow-hidden border-slate-200 shadow-sm">
+      <CardHeader className="border-b bg-slate-50/80">
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="text-lg font-bold text-slate-950">{customer.name}</CardTitle>
+          {getUrgencyBadge(daysUntilNextPurchase)}
         </div>
-    );
+      </CardHeader>
+      <CardContent className="space-y-3 pt-4 text-sm">
+        <div className="flex items-center gap-2 text-slate-700">
+          <Phone className="h-4 w-4 text-slate-500" />
+          {customer.phone}
+        </div>
+        <div className="flex items-center gap-2 text-slate-700">
+          <ShoppingBag className="h-4 w-4 text-slate-500" />
+          Ultimo pedido:{' '}
+          {lastOrder ? `${format(lastOrder.createdAt, 'dd/MM/yyyy')} (${lastOrderProduct})` : 'sem pedido'}
+        </div>
+        <div className="flex items-center gap-2 text-slate-700">
+          <Repeat className="h-4 w-4 text-slate-500" />
+          Intervalo medio: {avgInterval} dias
+        </div>
+        <div className="flex items-center gap-2 font-semibold text-emerald-800">
+          <Calendar className="h-4 w-4" />
+          Previsao: {format(predictedNextPurchaseDate, 'dd/MM/yyyy')}
+        </div>
+        <div className="flex items-center gap-2 text-slate-600">
+          <Hourglass className="h-4 w-4" />
+          Oportunidade {daysText}
+        </div>
+      </CardContent>
+      <CardFooter className="flex flex-col gap-2 border-t bg-white sm:flex-row sm:justify-end">
+        <Button asChild variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="h-4 w-4" />
+            WhatsApp
+          </a>
+        </Button>
+        <Button asChild size="sm" className="w-full gap-2 sm:w-auto">
+          <Link href={`/dashboard/vendas/novo?customerId=${customer.id}`}>
+            Iniciar venda
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export default async function RecompraPreditivaPage({
+  searchParams,
+}: {
+  searchParams?: { days?: string };
+}) {
+  const requestedDays = Number(searchParams?.days) || 3;
+  const days = periodOptions.includes(requestedDays) ? requestedDays : 3;
+  const predictions = await getRepurchasePredictions(days);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">Recompra</h1>
+          <p className="text-sm text-slate-600">
+            Clientes com maior chance de comprar novamente, calculados pelo historico de pedidos.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {periodOptions.map((option) => (
+            <FilterButton key={option} days={option} currentDays={days} />
+          ))}
+        </div>
+      </div>
+
+      {predictions.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {predictions.map((prediction) => (
+            <PredictionCard key={prediction.customer.id} prediction={prediction} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border-2 border-dashed bg-white py-12 text-center">
+          <Hourglass className="mx-auto h-12 w-12 text-slate-400" />
+          <h3 className="mt-3 text-sm font-semibold text-slate-950">Nenhuma recompra prevista</h3>
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
+            Nenhum cliente entrou nos criterios de recompra para os proximos {days} dias.
+            Conforme novas vendas forem registradas, esta lista fica mais precisa.
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
