@@ -11,7 +11,13 @@ function getDatabaseSchema() {
   const url = process.env.DATABASE_URL;
   if (!url) return DEFAULT_DATABASE_SCHEMA;
 
-  return new URL(url).searchParams.get('schema') ?? DEFAULT_DATABASE_SCHEMA;
+  const schema = new URL(url).searchParams.get('schema');
+
+  if (!schema || schema === 'public') {
+    return DEFAULT_DATABASE_SCHEMA;
+  }
+
+  return schema;
 }
 
 const adapter = new PrismaPg(
