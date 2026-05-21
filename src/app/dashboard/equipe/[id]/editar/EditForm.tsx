@@ -20,6 +20,7 @@ export function EditForm({ user }: EditFormProps) {
   const [formData, setFormData] = useState({
     name: user.name,
     email: user.email,
+    password: '',
     role: user.role || user.accessLevel || 'VENDEDOR',
     isActive: user.isActive,
   });
@@ -57,8 +58,24 @@ export function EditForm({ user }: EditFormProps) {
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="email" className="text-sm font-bold text-slate-800">Email</label>
+        <label htmlFor="email" className="text-sm font-bold text-slate-800">Email de login</label>
         <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+        <p className="text-xs font-medium text-slate-500">Este email será usado para entrar no sistema.</p>
+      </div>
+
+      <div className="grid gap-2">
+        <label htmlFor="password" className="text-sm font-bold text-slate-800">Nova senha</label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          minLength={6}
+          autoComplete="new-password"
+          placeholder="Deixe em branco para manter a senha atual"
+        />
+        <p className="text-xs font-medium text-slate-500">Preencha apenas quando quiser alterar a senha deste membro.</p>
       </div>
 
       <div className="grid gap-2">

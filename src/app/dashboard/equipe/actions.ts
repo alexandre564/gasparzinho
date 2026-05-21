@@ -13,6 +13,12 @@ const UserFormSchema = z.object({
   email: z.string().trim().email({ message: 'Email invalido.' }).transform((email) => email.toLowerCase()),
   role: z.enum(TEAM_ROLE_VALUES),
   isActive: z.boolean().default(true),
+  password: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined)
+    .pipe(z.string().min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }).optional()),
 });
 
 function normalizeFormData(formData: FormData) {
@@ -23,6 +29,7 @@ function normalizeFormData(formData: FormData) {
     email: String(formData.get('email') ?? ''),
     role: String(formData.get('role') ?? ''),
     isActive: isActiveValue === null ? true : isActiveValue === 'true',
+    password: String(formData.get('password') ?? ''),
   };
 }
 
@@ -84,6 +91,9 @@ export async function updateUser(id: string, data: Partial<Omit<User, 'id' | 'pa
         role: validatedFields.data.role,
         accessLevel: validatedFields.data.role,
         isActive: validatedFields.data.isActive,
+        ...(validatedFields.data.password
+          ? { password: await bcrypt.hash(validatedFields.data.password, 10) }
+          : {}),
       },
     });
 
