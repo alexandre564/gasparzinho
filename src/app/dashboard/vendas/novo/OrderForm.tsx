@@ -6,10 +6,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import {
+  Loader2,
+  MessageCircle,
+  PlusCircle,
+  Save,
+  Trash2,
+  Truck,
+} from 'lucide-react';
 
+import { getDriverWhatsappNumber } from '../../configuracoes/actions';
 import { createOrder, getCustomersForSelect, getProductsForSelect } from '../actions';
 import { OrderStatus } from '@/types/enums';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,7 +42,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Loader2, MessageCircle, PlusCircle, Save, Trash2, Truck } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 type CustomerSelectItem = {
@@ -60,11 +67,23 @@ const PaymentMethod = {
 } as const;
 
 const paymentMethods = Object.values(PaymentMethod);
-const orderStatusOptions = Object.values(OrderStatus);
+const paymentMethodLabels: Record<string, string> = {
+  DINHEIRO: 'Dinheiro',
+  PIX: 'Pix',
+  CARTAO_CREDITO: 'Cartao de credito',
+  CARTAO_DEBITO: 'Cartao de debito',
+  FIADO: 'Fiado / a prazo',
+};
+
+const orderStatusOptions = [OrderStatus.PENDENTE, OrderStatus.CONFIRMADO];
+const orderStatusLabels: Record<string, string> = {
+  PENDENTE: 'Pedido feito',
+  CONFIRMADO: 'Confirmado para entrega',
+};
 
 const OrderItemSchema = z.object({
   productId: z.string().min(1, 'Selecione um produto.'),
-  quantity: z.number().positive('A qtd deve ser positiva.'),
+  quantity: z.number().positive('A quantidade deve ser maior que zero.'),
   unitPrice: z.number(),
   unitCost: z.number(),
 });
@@ -85,10 +104,17 @@ const formatCurrency = (value: number) =>
     currency: 'BRL',
   }).format(value);
 
+function buildWhatsappUrl(phone: string, message: string) {
+  const digits = phone.replace(/\D/g, '');
+  const target = digits.length >= 10 ? `55${digits}` : '';
+  return `https://wa.me/${target}?text=${encodeURIComponent(message)}`;
+}
+
 export default function OrderForm({ initialCustomerId = '' }: { initialCustomerId?: string }) {
   const router = useRouter();
   const [customers, setCustomers] = useState<CustomerSelectItem[]>([]);
   const [products, setProducts] = useState<ProductSelectItem[]>([]);
+  const [driverWhatsapp, setDriverWhatsapp] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
@@ -96,7 +122,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
     resolver: zodResolver(OrderFormSchema),
     defaultValues: {
       customerId: initialCustomerId,
-      paymentMethod: '',
+      paymentMethod: PaymentMethod.DINHEIRO,
       paymentDueDate: '',
       orderStatus: OrderStatus.PENDENTE,
       items: [],
@@ -109,22 +135,26 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   });
 
   const watchedItems = form.watch('items');
+  const selectedPaymentMethod = form.watch('paymentMethod');
+  const selectedCustomerId = form.watch('customerId');
 
   useEffect(() => {
     async function loadInitialData() {
       try {
         setIsLoading(true);
 
-        const [customerData, productData] = await Promise.all([
+        const [customerData, productData, driverWhatsappData] = await Promise.all([
           getCustomersForSelect(),
           getProductsForSelect(),
+          getDriverWhatsappNumber(),
         ]);
 
         setCustomers(customerData);
         setProducts(productData);
+        setDriverWhatsapp(driverWhatsappData);
       } catch (error) {
         console.error(error);
-        toast.error('Erro ao carregar dados do formulÃƒÂ¡rio.');
+        toast.error('Erro ao carregar dados do formulario.');
       } finally {
         setIsLoading(false);
       }
@@ -154,6 +184,28 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
     };
   }, [watchedItems]);
 
+  const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
+
+  const selectedItemsSummary = watchedItems
+    .map((item) => {
+      const product = products.find((currentProduct) => currentProduct.id === item.productId);
+      return product ? `${item.quantity || 0}x ${product.name}` : null;
+    })
+    .filter(Boolean)
+    .join(', ');
+
+  const customerWhatsapp = selectedCustomer
+    ? buildWhatsappUrl(
+        selectedCustomer.phone,
+        `Ola ${selectedCustomer.name}, seu pedido na Gas Gasparzinho foi registrado e sera separado para entrega. Total: ${formatCurrency(grossValue)}.`,
+      )
+    : '#';
+
+  const driverMessage = selectedCustomer
+    ? `Nova entrega Gas Gasparzinho\nCliente: ${selectedCustomer.name}\nTelefone: ${selectedCustomer.phone}\nItens: ${selectedItemsSummary || 'Ver pedido no sistema'}\nTotal: ${formatCurrency(grossValue)}`
+    : 'Nova entrega Gas Gasparzinho. Confira os detalhes do pedido no sistema.';
+  const driverWhatsappUrl = buildWhatsappUrl(driverWhatsapp, driverMessage);
+
   async function onSubmit(values: OrderFormValues) {
     const result = await createOrder(values);
 
@@ -167,9 +219,11 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   }
 
   function handleProductChange(productId: string, index: number) {
-    const product = products.find((p) => p.id === productId);
+    const product = products.find((currentProduct) => currentProduct.id === productId);
 
-    if (!product) return;
+    if (!product) {
+      return;
+    }
 
     update(index, {
       ...form.getValues(`items.${index}`),
@@ -180,14 +234,6 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
     });
   }
 
-
-  const selectedCustomer = customers.find((customer) => customer.id === form.watch('customerId'));
-  const customerWhatsapp = selectedCustomer
-    ? `https://wa.me/55${selectedCustomer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-        `Ola ${selectedCustomer.name}, seu pedido na Gas Gasparzinho foi registrado e sera separado para entrega. Total: ${formatCurrency(grossValue)}.`
-      )}`
-    : '#';
-
   if (createdOrderId) {
     return (
       <Card>
@@ -196,13 +242,19 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-600">
-            Agora voce pode avisar o cliente pelo WhatsApp e acompanhar a entrega em andamento.
+            Agora voce pode avisar o cliente, encaminhar a entrega e acompanhar o andamento.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button asChild className="gap-2" disabled={!selectedCustomer}>
               <a href={customerWhatsapp} target="_blank" rel="noreferrer">
                 <MessageCircle className="h-4 w-4" />
                 Enviar WhatsApp ao cliente
+              </a>
+            </Button>
+            <Button asChild className="gap-2" variant="secondary">
+              <a href={driverWhatsappUrl} target="_blank" rel="noreferrer">
+                <Truck className="h-4 w-4" />
+                Enviar ao entregador
               </a>
             </Button>
             <Button className="gap-2" variant="outline" onClick={() => router.push('/dashboard/entregas')}>
@@ -217,6 +269,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
       </Card>
     );
   }
+
   if (isLoading) {
     return (
       <div className="flex h-40 items-center justify-center">
@@ -232,7 +285,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
           <div className="space-y-6 lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Itens do Pedido</CardTitle>
+                <CardTitle>Itens do pedido</CardTitle>
               </CardHeader>
 
               <CardContent>
@@ -240,18 +293,18 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                   {fields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="flex items-start gap-4 rounded-lg border p-4"
+                      className="flex items-start gap-4 rounded-lg border bg-white p-4 shadow-sm"
                     >
                       <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField
                           control={form.control}
                           name={`items.${index}.productId`}
-                          render={({ field }) => (
+                          render={({ field: productField }) => (
                             <FormItem>
                               <FormLabel>Produto</FormLabel>
                               <Select
                                 onValueChange={(value) => handleProductChange(value, index)}
-                                value={field.value}
+                                value={productField.value}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -261,8 +314,12 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
 
                                 <SelectContent>
                                   {products.map((product) => (
-                                    <SelectItem key={product.id} value={product.id}>
-                                      {product.name}
+                                    <SelectItem
+                                      key={product.id}
+                                      value={product.id}
+                                      disabled={product.inventory <= 0}
+                                    >
+                                      {product.name} - estoque: {product.inventory}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -275,15 +332,15 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <FormField
                           control={form.control}
                           name={`items.${index}.quantity`}
-                          render={({ field }) => (
+                          render={({ field: quantityField }) => (
                             <FormItem>
                               <FormLabel>Quantidade</FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
                                   min={1}
-                                  value={field.value ?? 1}
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                  value={quantityField.value ?? 1}
+                                  onChange={(event) => quantityField.onChange(Number(event.target.value))}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -298,6 +355,8 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         size="icon"
                         onClick={() => remove(index)}
                         className="mt-8"
+                        aria-label="Remover item"
+                        title="Remover item"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -320,7 +379,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                   }
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Adicionar Item
+                  Adicionar item
                 </Button>
               </CardContent>
             </Card>
@@ -329,7 +388,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Detalhes da Venda</CardTitle>
+                <CardTitle>Detalhes da venda</CardTitle>
               </CardHeader>
 
               <CardContent className="space-y-4">
@@ -349,7 +408,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <SelectContent>
                           {customers.map((customer) => (
                             <SelectItem key={customer.id} value={customer.id}>
-                              {customer.name}
+                              {customer.name} - {customer.phone}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -364,7 +423,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                   name="paymentMethod"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Forma de Pagamento</FormLabel>
+                      <FormLabel>Forma de pagamento</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -375,7 +434,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <SelectContent>
                           {paymentMethods.map((method) => (
                             <SelectItem key={method} value={method}>
-                              {method}
+                              {paymentMethodLabels[method] ?? method}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -395,7 +454,9 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <Input type="date" {...field} />
                       </FormControl>
                       <p className="text-xs text-slate-500">
-                        Use principalmente em pedidos fiados ou a prazo. Se ficar em branco, o sistema usa 30 dias.
+                        {selectedPaymentMethod === PaymentMethod.FIADO
+                          ? 'Informe a data combinada com o cliente. Se ficar em branco, o sistema usa 30 dias.'
+                          : 'Use quando houver prazo combinado mesmo fora do fiado.'}
                       </p>
                       <FormMessage />
                     </FormItem>
@@ -407,7 +468,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                   name="orderStatus"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status do Pedido</FormLabel>
+                      <FormLabel>Status do pedido</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -418,7 +479,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <SelectContent>
                           {orderStatusOptions.map((status) => (
                             <SelectItem key={status} value={status}>
-                              {status}
+                              {orderStatusLabels[status] ?? status}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -432,24 +493,24 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
 
             <Card>
               <CardHeader>
-                <CardTitle>Resumo Financeiro</CardTitle>
+                <CardTitle>Resumo financeiro</CardTitle>
               </CardHeader>
 
               <CardContent className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Valor Bruto:</span>
+                  <span>Valor bruto:</span>
                   <span className="font-medium">{formatCurrency(grossValue)}</span>
                 </div>
 
                 <div className="flex justify-between">
-                  <span>Custo Total:</span>
+                  <span>Custo total:</span>
                   <span className="font-medium">{formatCurrency(totalCost)}</span>
                 </div>
 
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Valor LÃƒÂ­quido (Lucro):</span>
+                  <span>Valor liquido:</span>
                   <span>{formatCurrency(netValue)}</span>
                 </div>
               </CardContent>
@@ -468,7 +529,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      Finalizar Venda
+                      Finalizar venda
                     </>
                   )}
                 </Button>
