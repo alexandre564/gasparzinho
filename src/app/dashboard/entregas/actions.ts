@@ -1,134 +1,141 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { DeliveryStatus } from '@/types/enums';
 import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { DeliveryStatus } from '@/types/enums';
 
 const ITEMS_PER_PAGE = 15;
 
-export async function getPaginatedDeliveries(query: string, currentPage: number, status?: DeliveryStatus) {
-    const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+export async function getPaginatedDeliveries(
+  query: string,
+  currentPage: number,
+  status?: DeliveryStatus,
+) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
-    const where: Prisma.DeliveryWhereInput = {
-        ...(status && { status }),
-        ...(query && {
-            OR: [
-                { order: { customer: { name: { contains: query } } } },
-                { orderId: { contains: query } },
-            ],
-        }),
-    };
+  const where: Prisma.DeliveryWhereInput = {
+    ...(status && { status }),
+    ...(query && {
+      OR: [
+        { order: { customer: { name: { contains: query } } } },
+        { orderId: { contains: query } },
+      ],
+    }),
+  };
 
-    if (status === DeliveryStatus.ENTREGUE) {
-        return {
-            success: false,
-            message: 'Use os botoes "Entregue pago" ou "Entregue a receber" para registrar o financeiro corretamente.',
-        };
-    }
+  try {
+    const deliveries = await prisma.delivery.findMany({
+      where,
+      include: {
+        order: {
+          include: {
+            customer: true,
+            items: { include: { product: true } },
+            debt: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: ITEMS_PER_PAGE,
+      skip: offset,
+    });
 
-    try {
-        const deliveries = await prisma.delivery.findMany({
-            where,
-            include: {
-                order: {
-                    include: {
-                        customer: true,
-                        items: { include: { product: true } },
-                        debt: true,
-                    },
-                },
-            },
-            orderBy: { createdAt: 'desc' },
-            take: ITEMS_PER_PAGE,
-            skip: offset,
-        });
+    const totalDeliveries = await prisma.delivery.count({ where });
 
-        const totalDeliveries = await prisma.delivery.count({ where });
-
-        return { deliveries, totalPages: Math.ceil(totalDeliveries / ITEMS_PER_PAGE) };
-
-    } catch (err) {
-        console.error('Database Error:', err);
-        throw new Error('Falha ao buscar entregas.');
-    }
+    return { deliveries, totalPages: Math.ceil(totalDeliveries / ITEMS_PER_PAGE) };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Falha ao buscar entregas.');
+  }
 }
 
-export async function updateDeliveryStatus(deliveryId: string, status: DeliveryStatus): Promise<{ success: boolean; message: string }> {
-    if (!deliveryId || !status) {
-        return { success: false, message: "ID da entrega e status sÃƒÆ’Ã‚Â£o obrigatÃƒÆ’Ã‚Â³rios." };
-    }
+export async function updateDeliveryStatus(
+  deliveryId: string,
+  status: DeliveryStatus,
+): Promise<{ success: boolean; message: string }> {
+  if (!deliveryId || !status) {
+    return { success: false, message: 'ID da entrega e status sao obrigatorios.' };
+  }
 
-    try {
-        await prisma.delivery.update({
-            where: { id: deliveryId },
-            data: { status },
-        });
+  if (status === DeliveryStatus.ENTREGUE) {
+    return {
+      success: false,
+      message: 'Use os botoes "Entregue pago" ou "Entregue a receber" para registrar o financeiro corretamente.',
+    };
+  }
 
-        revalidatePath('/dashboard/entregas');
-        revalidatePath(`/dashboard/entregas/${deliveryId}`); // Se houver pÃƒÆ’Ã‚Â¡gina de detalhe
-        return { success: true, message: `Status da entrega atualizado para ${status}.` };
+  try {
+    await prisma.delivery.update({
+      where: { id: deliveryId },
+      data: { status },
+    });
 
-    } catch (error) {
-        console.error('Database Error:', error);
-        return { success: false, message: "Falha ao atualizar o status da entrega." };
-    }
+    revalidatePath('/dashboard/entregas');
+    revalidatePath(`/dashboard/entregas/${deliveryId}`);
+
+    return { success: true, message: `Status da entrega atualizado para ${status}.` };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { success: false, message: 'Falha ao atualizar o status da entrega.' };
+  }
 }
 
 export async function getDeliveryDetails(id: string) {
-    try {
-        const delivery = await prisma.delivery.findUnique({
-             where: { id },
-             include: {
-                order: {
-                    include: {
-                        customer: true,
-                        items: { include: { product: true } },
-                        debt: true,
-                    },
-                },
-            },
-        });
-        return delivery;
-    } catch (error) {
-        console.error('Database Error:', error);
-        throw new Error('Failed to fetch delivery details.');
-    }
+  try {
+    return await prisma.delivery.findUnique({
+      where: { id },
+      include: {
+        order: {
+          include: {
+            customer: true,
+            items: { include: { product: true } },
+            debt: true,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Falha ao buscar detalhes da entrega.');
+  }
 }
 
 export async function getOrderById(id: string) {
-    try {
-        const order = await prisma.order.findUnique({
-            where: { id },
-            include: {
-                customer: true,
-                items: { include: { product: true } },
-                        debt: true,
-                delivery: true,
-            },
-        });
-        return order;
-    } catch (error) {
-        console.error('Database Error:', error);
-        throw new Error('Failed to fetch order.');
-    }
+  try {
+    return await prisma.order.findUnique({
+      where: { id },
+      include: {
+        customer: true,
+        items: { include: { product: true } },
+        debt: true,
+        delivery: true,
+      },
+    });
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Falha ao buscar pedido.');
+  }
 }
 
-export async function updateDelivery(id: string, data: any) {
-    try {
-        await prisma.delivery.update({
-            where: { id },
-            data,
-        });
-        revalidatePath('/dashboard/entregas');
-        revalidatePath(`/dashboard/entregas/${id}`);
-    } catch (error) {
-        console.error('Database Error:', error);
-        throw new Error('Failed to update delivery.');
-    }
+export async function updateDelivery(id: string, data: Prisma.DeliveryUpdateInput) {
+  try {
+    await prisma.delivery.update({
+      where: { id },
+      data,
+    });
+
+    revalidatePath('/dashboard/entregas');
+    revalidatePath(`/dashboard/entregas/${id}`);
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Falha ao atualizar entrega.');
+  }
 }
 
-export async function markDeliverySentToDriver(deliveryId: string): Promise<{ success: boolean; message: string }> {
+export async function markDeliverySentToDriver(
+  deliveryId: string,
+): Promise<{ success: boolean; message: string }> {
   try {
     const delivery = await prisma.delivery.update({
       where: { id: deliveryId },
@@ -143,6 +150,7 @@ export async function markDeliverySentToDriver(deliveryId: string): Promise<{ su
 
     revalidatePath('/dashboard/entregas');
     revalidatePath('/dashboard/vendas');
+
     return { success: true, message: 'Entrega marcada como enviada ao entregador.' };
   } catch (error) {
     console.error('Database Error:', error);
@@ -152,7 +160,7 @@ export async function markDeliverySentToDriver(deliveryId: string): Promise<{ su
 
 export async function confirmDeliveryPayment(
   deliveryId: string,
-  paymentResult: 'PAGO' | 'A_RECEBER'
+  paymentResult: 'PAGO' | 'A_RECEBER',
 ): Promise<{ success: boolean; message: string }> {
   try {
     await prisma.$transaction(async (tx) => {
@@ -182,10 +190,12 @@ export async function confirmDeliveryPayment(
             data: { status: 'PAGO', paidAt: new Date() },
           });
         }
+
         return;
       }
 
       const dueDate = delivery.order.paymentDueDate ?? new Date();
+
       if (!delivery.order.paymentDueDate) {
         dueDate.setDate(dueDate.getDate() + 30);
       }
@@ -193,7 +203,12 @@ export async function confirmDeliveryPayment(
       if (delivery.order.debt) {
         await tx.debt.update({
           where: { id: delivery.order.debt.id },
-          data: { status: 'PENDENTE', dueDate, originalDueDate: delivery.order.debt.originalDueDate ?? delivery.order.debt.dueDate, paidAt: null },
+          data: {
+            status: 'PENDENTE',
+            dueDate,
+            originalDueDate: delivery.order.debt.originalDueDate ?? delivery.order.debt.dueDate,
+            paidAt: null,
+          },
         });
       } else {
         await tx.debt.create({
@@ -216,9 +231,10 @@ export async function confirmDeliveryPayment(
 
     return {
       success: true,
-      message: paymentResult === 'PAGO'
-        ? 'Entrega confirmada e pagamento marcado como pago.'
-        : 'Entrega confirmada e valor registrado a receber.',
+      message:
+        paymentResult === 'PAGO'
+          ? 'Entrega confirmada e pagamento marcado como pago.'
+          : 'Entrega confirmada e valor registrado a receber.',
     };
   } catch (error) {
     console.error('Database Error:', error);

@@ -39,16 +39,17 @@ export type DeliveryStatus =
   (typeof DeliveryStatus)[keyof typeof DeliveryStatus];
 
 export const StockKind = {
-  ENTRADA: 'ENTRADA',
-  SAIDA: 'SAIDA',
+  UNIDADE: 'UNIDADE',
+  CHEIO_VAZIO: 'CHEIO_VAZIO',
 } as const;
 
 export type StockKind = (typeof StockKind)[keyof typeof StockKind];
 
 export const ProductCategory = {
-  INSUMO: 'INSUMO',
-  PRODUTO: 'PRODUTO',
-  EMBALAGEM: 'EMBALAGEM',
+  BOTIJAO: 'BOTIJAO',
+  AGUA: 'AGUA',
+  ACESSORIO: 'ACESSORIO',
+  OUTROS: 'OUTROS',
 } as const;
 
 export type ProductCategory =
