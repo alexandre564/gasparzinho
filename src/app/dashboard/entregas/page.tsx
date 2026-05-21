@@ -23,6 +23,7 @@ import StatusFilter from './StatusFilter';
 import StatusUpdater from './StatusUpdater';
 import DeliveryWorkflowActions from './DeliveryWorkflowActions';
 import { getPaginatedDeliveries } from './actions';
+import { getDriverWhatsappNumber } from '../configuracoes/actions';
 
 function ItemsSummary({
   items,
@@ -50,7 +51,12 @@ export default async function DeliveriesPage({
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const status = searchParams?.status;
-  const { deliveries, totalPages } = await getPaginatedDeliveries(query, currentPage, status);
+  const [deliveryData, driverWhatsapp] = await Promise.all([
+    getPaginatedDeliveries(query, currentPage, status),
+    getDriverWhatsappNumber(),
+  ]);
+  const deliveries = deliveryData.deliveries ?? [];
+  const totalPages = deliveryData.totalPages ?? 1;
 
   return (
     <div className="space-y-6">
@@ -118,6 +124,7 @@ export default async function DeliveriesPage({
                             total={delivery.order.grossValue}
                             paymentMethod={delivery.order.paymentMethod}
                             hasOpenDebt={Boolean(delivery.order.debt && delivery.order.debt.status !== 'PAGO')}
+                            driverWhatsapp={driverWhatsapp}
                           />
                           <div className="flex justify-end">
                             <Button asChild variant="ghost" size="sm">

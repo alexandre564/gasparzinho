@@ -23,6 +23,7 @@ type DeliveryWorkflowActionsProps = {
   total: number;
   paymentMethod: string;
   hasOpenDebt: boolean;
+  driverWhatsapp: string;
 };
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -48,6 +49,7 @@ export default function DeliveryWorkflowActions({
   total,
   paymentMethod,
   hasOpenDebt,
+  driverWhatsapp,
 }: DeliveryWorkflowActionsProps) {
   const [pending, setPending] = useState(false);
   const address = `${customer.street}, ${customer.number} - ${customer.neighborhood}, ${customer.city}`;
@@ -55,7 +57,9 @@ export default function DeliveryWorkflowActions({
   const customerMessage = `Ola ${customer.name}, seu pedido na Gas Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentMethod}.`;
   const driverMessage = `Entrega Gas Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereço: ${address}\nReferência: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentMethod}${hasOpenDebt ? ' / A RECEBER' : ''}`;
   const customerWhatsapp = `https://wa.me/${whatsappNumber(customer.phone)}?text=${encodeURIComponent(customerMessage)}`;
-  const driverWhatsapp = `https://wa.me/?text=${encodeURIComponent(driverMessage)}`;
+  const driverWhatsappLink = driverWhatsapp
+    ? `https://wa.me/${whatsappNumber(driverWhatsapp)}?text=${encodeURIComponent(driverMessage)}`
+    : `https://wa.me/?text=${encodeURIComponent(driverMessage)}`;
 
   async function sendToDriver() {
     setPending(true);
@@ -64,7 +68,7 @@ export default function DeliveryWorkflowActions({
 
     if (result.success) {
       toast.success(result.message);
-      window.open(driverWhatsapp, '_blank', 'noopener,noreferrer');
+      window.open(driverWhatsappLink, '_blank', 'noopener,noreferrer');
       return;
     }
 

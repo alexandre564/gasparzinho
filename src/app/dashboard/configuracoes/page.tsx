@@ -16,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import CollectionMessageForm from './CollectionMessageForm';
-import { getCollectionMessageTemplate } from './actions';
+import DriverWhatsappForm from './DriverWhatsappForm';
+import { getCollectionMessageTemplate, getDriverWhatsappNumber } from './actions';
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -24,7 +25,7 @@ const currency = new Intl.NumberFormat('pt-BR', {
 });
 
 async function getSettingsData() {
-  const [products, recentExpenses, productCount, expenseMonth, stockValue, collectionMessage] = await Promise.all([
+  const [products, recentExpenses, productCount, expenseMonth, stockValue, collectionMessage, driverWhatsapp] = await Promise.all([
     prisma.product.findMany({
       orderBy: { name: 'asc' },
       take: 8,
@@ -45,6 +46,7 @@ async function getSettingsData() {
     }),
     prisma.product.findMany({ select: { inventory: true, cost: true } }),
     getCollectionMessageTemplate(),
+    getDriverWhatsappNumber(),
   ]);
 
   return {
@@ -54,6 +56,7 @@ async function getSettingsData() {
     monthExpenses: expenseMonth._sum.value ?? 0,
     stockCostValue: stockValue.reduce((sum, product) => sum + product.inventory * product.cost, 0),
     collectionMessage,
+    driverWhatsapp,
   };
 }
 
@@ -211,6 +214,21 @@ export default async function ConfiguracoesPage() {
             </CardHeader>
             <CardContent>
               <CollectionMessageForm defaultValue={data.collectionMessage} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-emerald-700" />
+                WhatsApp do entregador
+              </CardTitle>
+              <CardDescription>
+                Número padrão usado para enviar pedidos ao entregador pelo módulo Entregas.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DriverWhatsappForm defaultValue={data.driverWhatsapp} />
             </CardContent>
           </Card>
 

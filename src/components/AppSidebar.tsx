@@ -51,7 +51,7 @@ export default async function Sidebar() {
           <BrandLogo size={56} />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
-            <p className="mt-1 text-xs text-emerald-100/75">Gestao de revenda</p>
+            <p className="mt-1 text-xs text-emerald-100/75">Gestão de revenda</p>
             <div className="mt-3 rounded-md border border-white/10 bg-white/5 px-3 py-2">
               <p className="truncate text-sm font-semibold text-white">{userName}</p>
               <p className="mt-0.5 text-xs font-medium text-emerald-200">{roleLabel}</p>

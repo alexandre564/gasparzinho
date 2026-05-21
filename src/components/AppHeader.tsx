@@ -61,7 +61,7 @@ export default async function Header() {
             <BrandLogo size={52} />
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
-              <p className="mt-1 text-xs text-emerald-100/75">Gestao de revenda</p>
+              <p className="mt-1 text-xs text-emerald-100/75">Gestão de revenda</p>
               <p className="mt-2 truncate text-sm font-semibold text-white">{userName}</p>
               <p className="text-xs font-medium text-emerald-200">{roleLabel}</p>
             </div>
@@ -93,7 +93,7 @@ export default async function Header() {
         <BrandLogo size={44} />
         <div className="min-w-0 border-l-4 border-emerald-500 pl-3">
           <p className="truncate text-sm font-bold leading-none text-slate-950">Gás Gasparzinho</p>
-          <p className="mt-1 text-xs font-medium text-slate-600">Gestao de revenda</p>
+          <p className="mt-1 text-xs font-medium text-slate-600">Gestão de revenda</p>
         </div>
         <div className="hidden min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 sm:block">
           <p className="truncate text-sm font-semibold leading-none text-slate-950">{userName}</p>

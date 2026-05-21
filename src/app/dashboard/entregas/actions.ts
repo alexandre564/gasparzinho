@@ -20,6 +20,13 @@ export async function getPaginatedDeliveries(query: string, currentPage: number,
         }),
     };
 
+    if (status === DeliveryStatus.ENTREGUE) {
+        return {
+            success: false,
+            message: 'Use os botoes "Entregue pago" ou "Entregue a receber" para registrar o financeiro corretamente.',
+        };
+    }
+
     try {
         const deliveries = await prisma.delivery.findMany({
             where,

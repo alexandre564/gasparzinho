@@ -26,6 +26,9 @@ const getStatusVariant = (status: DeliveryStatus) => {
 
 export default function StatusUpdater({ deliveryId, currentStatus }: StatusUpdaterProps) {
   const [isPending, setIsPending] = useState(false);
+  const editableStatuses = Object.values(DeliveryStatus).filter(
+    (status) => status !== DeliveryStatus.ENTREGUE,
+  );
 
   const handleStatusChange = async (newStatus: DeliveryStatus) => {
     if (newStatus === currentStatus) return;
@@ -44,13 +47,15 @@ export default function StatusUpdater({ deliveryId, currentStatus }: StatusUpdat
     <div className="flex items-center justify-center gap-2">
       {isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
+      ) : currentStatus === DeliveryStatus.ENTREGUE ? (
+        <Badge variant="success">ENTREGUE</Badge>
       ) : (
         <Select onValueChange={handleStatusChange} defaultValue={currentStatus}>
           <SelectTrigger className={`w-[140px] h-8 text-xs font-semibold border-0 focus:ring-0 focus:ring-offset-0 ${getStatusVariant(currentStatus)}`}>
              <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(DeliveryStatus).map(status => (
+            {editableStatuses.map(status => (
               <SelectItem key={status} value={status} className="text-xs">
                   {status.replace('_', ' ')}
               </SelectItem>
