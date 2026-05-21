@@ -1,8 +1,10 @@
 'use client';
 
 import { useTransition } from 'react';
-import { updateUserstring } from './actions';
 import { toast } from 'sonner';
+
+import { updateUserRole } from './actions';
+import { TEAM_ROLES } from './roles';
 
 interface AccessLevelSelectProps {
   userId: string;
@@ -10,17 +12,20 @@ interface AccessLevelSelectProps {
 }
 
 export function AccessLevelSelect({ userId, currentLevel }: AccessLevelSelectProps) {
-  let [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
-  const onLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newstring = e.target.value as string;
+  const onLevelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newRole = event.target.value;
+
     startTransition(async () => {
-      const result = await updateUserstring(userId, newstring);
+      const result = await updateUserRole(userId, newRole);
+
       if (result.success) {
-        toast.success(`Nível de acesso atualizado para ${newstring}`);
-      } else {
-        toast.error(result.message);
+        toast.success('Nivel de acesso atualizado.');
+        return;
       }
+
+      toast.error(result.message);
     });
   };
 
@@ -29,11 +34,11 @@ export function AccessLevelSelect({ userId, currentLevel }: AccessLevelSelectPro
       value={currentLevel}
       onChange={onLevelChange}
       disabled={isPending}
-      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+      className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-950 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
     >
-      {["ADMIN","GERENTE","VENDEDOR","OPERADOR"].map((level) => (
-        <option key={level} value={level}>
-          {level}
+      {TEAM_ROLES.map((role) => (
+        <option key={role.value} value={role.value}>
+          {role.label}
         </option>
       ))}
     </select>

@@ -1,65 +1,76 @@
-import { prisma } from '@/lib/prisma';
-
-import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-async function createUser(formData: FormData) {
-    'use server'
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const accessLevel = formData.get('accessLevel') as string;
+import { createUserFromForm } from '../actions';
+import { TEAM_ROLES } from '../roles';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
-    if (!name || !email || !accessLevel) {
-        // Handle missing fields appropriately
-        return;
-    }
+async function createMember(formData: FormData) {
+  'use server';
 
-    try {
-        await prisma.user.create({
-            data: {
-                name,
-                email,
-                accessLevel,
-                password: 'temporary-password', // TODO: Implement proper password creation
-            },
-        });
-    } catch (error) {
-        console.error('Error creating user:', error);
-        // Handle errors, e.g., user already exists
-    }
+  const result = await createUserFromForm(formData);
 
-    revalidatePath('/dashboard/equipe');
+  if (result.success) {
     redirect('/dashboard/equipe');
+  }
 }
 
 export default function NovoMembroPage() {
-    return (
-        <div className="max-w-xl mx-auto p-8">
-            <div className="bg-white p-8 rounded-xl shadow-md">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6">Adicionar Novo Membro</h1>
-                
-                <form action={createUser} className="space-y-6">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome</label>
-                        <input type="text" name="name" id="name" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" id="email" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="accessLevel" className="block text-sm font-medium text-gray-700">Nível de Acesso</label>
-                        <select name="accessLevel" id="accessLevel" defaultValue={''} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                            {['ADMIN','GERENTE','VENDEDOR','OPERADOR'].map(level => (
-                                <option key={level} value={level}>{level}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="flex justify-end pt-4">
-                        <button type="submit" className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors">Adicionar Membro</button>
-                    </div>
-                </form>
+  return (
+    <div className="mx-auto max-w-2xl">
+      <Card className="border-slate-300">
+        <CardHeader className="border-b border-slate-200 bg-slate-50">
+          <CardTitle className="text-2xl font-extrabold text-slate-950">Adicionar membro</CardTitle>
+          <CardDescription>
+            Cadastre um membro da equipe. A senha inicial sera senha123 e podera ser alterada depois.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form action={createMember} className="space-y-5">
+            <div className="grid gap-2">
+              <label htmlFor="name" className="text-sm font-bold text-slate-800">Nome</label>
+              <Input id="name" type="text" name="name" required />
             </div>
-        </div>
-    );
+
+            <div className="grid gap-2">
+              <label htmlFor="email" className="text-sm font-bold text-slate-800">Email</label>
+              <Input id="email" type="email" name="email" required />
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="role" className="text-sm font-bold text-slate-800">Nivel de acesso</label>
+              <select
+                name="role"
+                id="role"
+                defaultValue="VENDEDOR"
+                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              >
+                {TEAM_ROLES.map((role) => (
+                  <option key={role.value} value={role.value}>{role.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="isActive" className="text-sm font-bold text-slate-800">Situacao</label>
+              <select
+                name="isActive"
+                id="isActive"
+                defaultValue="true"
+                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              >
+                <option value="true">Ativo</option>
+                <option value="false">Inativo</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end border-t border-slate-200 pt-5">
+              <Button type="submit">Adicionar membro</Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

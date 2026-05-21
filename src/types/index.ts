@@ -5,7 +5,9 @@ export interface User {
   name: string;
   email: string;
   password: string;
+  role: string;
   accessLevel: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,30 +1,29 @@
-import { getTeamMembers } from './actions';
+import Link from 'next/link';
+
 import { columns } from './columns';
 import { DataTable } from './data-table';
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { getTeamMembers } from './actions';
+import { Button } from '@/components/ui/button';
 
 export default async function TeamPage() {
-    // TODO: Adicionar tratamento de erro caso a busca falhe
-    const members = await getTeamMembers();
+  const members = await getTeamMembers();
 
-    return (
-        <div className="container mx-auto py-10">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-3xl font-bold">Gestão de Equipe</h1>
-                    <p className="text-sm text-muted-foreground">Visualize e gerencie os membros da sua equipe.</p>
-                </div>
-                <Button asChild>
-                    <Link href="/dashboard/equipe/novo">Adicionar Membro</Link>
-                </Button>
-            </div>
-            {/* 
-                A propriedade `members` do objeto retornado por `getTeamMembers` 
-                não é do tipo `User[]`, mas sim `any[]`. 
-                Adicione o tipo correto para a variável `members`.
-            */}
-            <DataTable columns={columns} data={members} />
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 rounded-lg border border-slate-800 bg-slate-950 p-6 text-white shadow-xl shadow-slate-300/60 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-emerald-300">Equipe</p>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight">Membros e acessos</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+            Altere dados dos membros e defina quem atua como administrador, vendedor ou entregador.
+          </p>
         </div>
-    );
+        <Button asChild className="bg-emerald-500 hover:bg-emerald-400">
+          <Link href="/dashboard/equipe/novo">Adicionar membro</Link>
+        </Button>
+      </div>
+
+      <DataTable columns={columns} data={members} />
+    </div>
+  );
 }

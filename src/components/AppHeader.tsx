@@ -25,12 +25,12 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const mobileLinks = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
+  { href: "/dashboard", icon: Home, label: "Pagina principal" },
   { href: "/dashboard/clientes", icon: Users, label: "Clientes" },
   { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas" },
   { href: "/dashboard/estoque", icon: Package, label: "Estoque" },
   { href: "/dashboard/entregas", icon: Truck, label: "Entregas" },
-  { href: "/dashboard/configuracoes", icon: Settings, label: "Configurações" },
+  { href: "/dashboard/configuracoes", icon: Settings, label: "Configuracoes" },
 ];
 
 export default function Header() {
@@ -49,8 +49,8 @@ export default function Header() {
               <Package className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
-              <p className="mt-1 text-xs text-emerald-100/75">Gestão de revenda</p>
+              <p className="text-sm font-semibold leading-none text-white">Gas Gasparzinho</p>
+              <p className="mt-1 text-xs text-emerald-100/75">Gestao de revenda</p>
             </div>
           </div>
           <nav className="space-y-1 p-3">
@@ -77,8 +77,8 @@ export default function Header() {
       </Sheet>
 
       <div className="min-w-0 border-l-4 border-emerald-500 pl-3">
-        <p className="text-xs font-semibold uppercase text-emerald-700">Dashboard</p>
-        <h1 className="truncate text-lg font-semibold text-slate-950">Operação Gasparzinho</h1>
+        <p className="text-xs font-semibold uppercase text-emerald-700">Pagina principal</p>
+        <h1 className="truncate text-lg font-semibold text-slate-950">Gasparzinho</h1>
       </div>
 
       <div className="ml-auto hidden w-full max-w-md items-center md:flex">
@@ -87,7 +87,7 @@ export default function Header() {
 
       <Button size="icon" variant="outline" className="hidden border-slate-300 bg-white md:inline-flex">
         <Bell className="h-4 w-4" />
-        <span className="sr-only">Notificações</span>
+        <span className="sr-only">Notificacoes</span>
       </Button>
 
       <DropdownMenu>
@@ -101,7 +101,7 @@ export default function Header() {
           <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/configuracoes">Configurações</Link>
+            <Link href="/dashboard/configuracoes">Configuracoes</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <a href="/api/backup" download>Baixar backup</a>

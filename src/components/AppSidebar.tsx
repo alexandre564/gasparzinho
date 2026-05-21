@@ -16,15 +16,15 @@ import {
 import { auth } from "@/auth";
 
 const navLinks = [
-  { href: "/dashboard", icon: Home, label: "Dashboard", roles: ["ADMIN", "VENDEDOR"] },
+  { href: "/dashboard", icon: Home, label: "Pagina principal", roles: ["ADMIN", "VENDEDOR"] },
   { href: "/dashboard/clientes", icon: Users2, label: "Clientes", roles: ["ADMIN", "VENDEDOR"] },
   { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas", roles: ["ADMIN", "VENDEDOR"] },
   { href: "/dashboard/estoque", icon: Package, label: "Estoque", roles: ["ADMIN", "VENDEDOR"] },
   { href: "/dashboard/entregas", icon: Truck, label: "Entregas", roles: ["ADMIN", "ENTREGADOR"] },
   { href: "/dashboard/recompra", icon: Building2, label: "Recompra", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/cobranca", icon: AlertCircle, label: "Cobrança", roles: ["ADMIN"] },
+  { href: "/dashboard/cobranca", icon: AlertCircle, label: "Cobranca", roles: ["ADMIN"] },
   { href: "/dashboard/financeiro", icon: Banknote, label: "Financeiro", roles: ["ADMIN"] },
-  { href: "/dashboard/relatorios", icon: FileText, label: "Relatórios", roles: ["ADMIN"] },
+  { href: "/dashboard/relatorios", icon: FileText, label: "Relatorios", roles: ["ADMIN"] },
   { href: "/dashboard/equipe", icon: Users2, label: "Equipe", roles: ["ADMIN"] },
   { href: "/dashboard/frota", icon: Truck, label: "Frota", roles: ["ADMIN"] },
   { href: "/dashboard/fechamento", icon: ClipboardPen, label: "Fechamento", roles: ["ADMIN"] },
@@ -43,12 +43,12 @@ export default async function Sidebar() {
             <Package className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
-            <p className="mt-1 text-xs text-emerald-100/75">Gestão de revenda</p>
+            <p className="text-sm font-semibold leading-none text-white">Gas Gasparzinho</p>
+            <p className="mt-1 text-xs text-emerald-100/75">Gestao de revenda</p>
           </div>
         </div>
         <div className="mt-4 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-50">
-          Operação, entregas e cobrança em um só painel.
+          Operacao, entregas e cobranca em um so painel.
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default async function Sidebar() {
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-slate-400 group-hover:bg-emerald-500 group-hover:text-white">
             <Settings className="h-4 w-4" />
           </span>
-          Configurações
+          Configuracoes
         </Link>
         <a
           href="/api/backup"

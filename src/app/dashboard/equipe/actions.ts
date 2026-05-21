@@ -1,107 +1,149 @@
 'use server';
 
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 import { revalidatePath } from 'next/cache';
-import type { User } from '@/types';
+import { z } from 'zod';
 
-// Action to fetch all team members
-export async function getTeamMembers(): Promise<any[]> {
-    try {
-        const users = await prisma.user.findMany({
-            orderBy: {
-                name: 'asc',
-            },
-        });
-        return users as any[];
-    } catch (error) {
-        console.error("Database Error:", error);
-        throw new Error('Failed to fetch team members.');
-    }
-}
+import { prisma } from '@/lib/prisma';
+import type { User } from '@/types';
+import { TEAM_ROLE_VALUES } from './roles';
 
 const UserFormSchema = z.object({
-    name: z.string().min(3, { message: "O nome deve ter no mínimo 3 caracteres." }),
-    email: z.string().email({ message: "Email inválido." }),
-    accessLevel: z.string(),
+  name: z.string().trim().min(3, { message: 'O nome deve ter no minimo 3 caracteres.' }),
+  email: z.string().trim().email({ message: 'Email invalido.' }).transform((email) => email.toLowerCase()),
+  role: z.enum(TEAM_ROLE_VALUES),
+  isActive: z.boolean().default(true),
 });
 
-// Action to create a new user
+function normalizeFormData(formData: FormData) {
+  const isActiveValue = formData.get('isActive');
+
+  return {
+    name: String(formData.get('name') ?? ''),
+    email: String(formData.get('email') ?? ''),
+    role: String(formData.get('role') ?? ''),
+    isActive: isActiveValue === null ? true : isActiveValue === 'true',
+  };
+}
+
+export async function getTeamMembers(): Promise<User[]> {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { name: 'asc' },
+    });
+
+    return users as User[];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Falha ao buscar membros da equipe.');
+  }
+}
+
 export async function createUser(data: Partial<Omit<User, 'id' | 'password'>>) {
-    const validatedFields = UserFormSchema.safeParse(data);
+  const validatedFields = UserFormSchema.safeParse(data);
 
-    if (!validatedFields.success) {
-        return { success: false, message: validatedFields.error.issues.map(e => e.message).join(", ") };
-    }
+  if (!validatedFields.success) {
+    return { success: false, message: validatedFields.error.issues.map((e) => e.message).join(', ') };
+  }
 
-    try {
-        const user = await prisma.user.create({
-          data: {
-                ...validatedFields.data,
-                password: 'temporary-password', // TODO: Add password field to form and hash password
-            },
-        });
-        revalidatePath('/dashboard/equipe');
-        return { success: true, message: "Usuário criado com sucesso." };
-    } catch (error) {
-        console.error("Database Error:", error);
-        return { success: false, message: "Falha ao criar o usuário no banco de dados." };
-    }
+  try {
+    const hashedPassword = await bcrypt.hash('senha123', 10);
+
+    await prisma.user.create({
+      data: {
+        name: validatedFields.data.name,
+        email: validatedFields.data.email,
+        role: validatedFields.data.role,
+        accessLevel: validatedFields.data.role,
+        isActive: validatedFields.data.isActive,
+        password: hashedPassword,
+      },
+    });
+
+    revalidatePath('/dashboard/equipe');
+    return { success: true, message: 'Usuario criado com sucesso. Senha inicial: senha123.' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { success: false, message: 'Falha ao criar o usuario no banco de dados.' };
+  }
 }
 
-// Action to update a user
 export async function updateUser(id: string, data: Partial<Omit<User, 'id' | 'password'>>) {
-    const validatedFields = UserFormSchema.safeParse(data);
+  const validatedFields = UserFormSchema.safeParse(data);
 
-    if (!validatedFields.success) {
-        return { success: false, message: validatedFields.error.issues.map(e => e.message).join(", ") };
-    }
+  if (!validatedFields.success) {
+    return { success: false, message: validatedFields.error.issues.map((e) => e.message).join(', ') };
+  }
 
-    try {
-        await prisma.user.update({
-          where: { id },
-          data: validatedFields.data,
-        });
-        revalidatePath('/dashboard/equipe');
-        return { success: true, message: "Usuário atualizado com sucesso." };
-    } catch (error) {
-        console.error("Database Error:", error);
-        return { success: false, message: "Falha ao atualizar o usuário no banco de dados." };
-    }
+  try {
+    await prisma.user.update({
+      where: { id },
+      data: {
+        name: validatedFields.data.name,
+        email: validatedFields.data.email,
+        role: validatedFields.data.role,
+        accessLevel: validatedFields.data.role,
+        isActive: validatedFields.data.isActive,
+      },
+    });
+
+    revalidatePath('/dashboard/equipe');
+    return { success: true, message: 'Usuario atualizado com sucesso.' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { success: false, message: 'Falha ao atualizar o usuario no banco de dados.' };
+  }
 }
 
-// Action to delete a user
+export async function createUserFromForm(formData: FormData) {
+  return createUser(normalizeFormData(formData));
+}
+
+export async function updateUserFromForm(id: string, formData: FormData) {
+  return updateUser(id, normalizeFormData(formData));
+}
+
 export async function deleteUser(formData: FormData) {
-    const id = formData.get('id') as string;
+  const id = formData.get('id') as string;
 
-    if (!id) {
-        return { success: false, message: 'ID do usuário não fornecido.' };
-    }
+  if (!id) {
+    return { success: false, message: 'ID do usuario nao fornecido.' };
+  }
 
-    try {
-        await prisma.user.delete({
-            where: { id },
-        });
-        revalidatePath('/dashboard/equipe');
-        return { success: true, message: 'Usuário excluído com sucesso.' };
-    } catch (error) {
-        console.error("Database Error:", error);
-        return { success: false, message: 'Falha ao excluir o usuário.' };
-    }
+  try {
+    await prisma.user.delete({ where: { id } });
+    revalidatePath('/dashboard/equipe');
+    return { success: true, message: 'Usuario excluido com sucesso.' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { success: false, message: 'Falha ao excluir o usuario.' };
+  }
 }
 
-export async function updateUserstring(userId: string, accessLevel: string): Promise<{ success: boolean; message: string; }> {
-    try {
-        await prisma.user.update({
-          where: { id: userId },
-            data: {
-                accessLevel: accessLevel,
-            },
-        });
-        revalidatePath('/dashboard/equipe');
-        return { success: true, message: 'Nível de acesso atualizado com sucesso.' };
-    } catch (error) {
-        console.error("Database Error:", error);
-        return { success: false, message: 'Falha ao atualizar o nível de acesso.' };
-    }
+export async function updateUserRole(userId: string, role: string) {
+  const parsedRole = z.enum(TEAM_ROLE_VALUES).safeParse(role);
+
+  if (!parsedRole.success) {
+    return { success: false, message: 'Nivel de acesso invalido.' };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        role: parsedRole.data,
+        accessLevel: parsedRole.data,
+      },
+    });
+
+    revalidatePath('/dashboard/equipe');
+    return { success: true, message: 'Nivel de acesso atualizado com sucesso.' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { success: false, message: 'Falha ao atualizar o nivel de acesso.' };
+  }
+}
+
+export async function updateUserstring(userId: string, role: string) {
+  return updateUserRole(userId, role);
 }
