@@ -1,4 +1,5 @@
 import { BarChart3, DollarSign, ShoppingCart } from 'lucide-react';
+
 import SalesChart from '@/components/SalesChart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSalesReportData, type ReportPeriod } from './actions';
@@ -49,14 +50,14 @@ export default async function RelatoriosPage({
   const average = salesData.length ? total / salesData.length : 0;
   const bestPoint = salesData.reduce(
     (best, item) => (item.total > best.total ? item : best),
-    { name: '-', total: 0 }
+    { name: '-', total: 0 },
   );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Relatórios</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Relatorios</h2>
           <p className="text-sm text-slate-600">
             Analise as vendas por dia ou por mes, sem pedidos cancelados.
           </p>
@@ -74,7 +75,7 @@ export default async function RelatoriosPage({
         <SummaryCard
           title="Media"
           value={currency.format(average)}
-          description={period === 'monthly' ? 'Média mensal do período.' : 'Média diária do período.'}
+          description={period === 'monthly' ? 'Media mensal do periodo.' : 'Media diaria do periodo.'}
           icon={BarChart3}
         />
         <SummaryCard
@@ -87,10 +88,10 @@ export default async function RelatoriosPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{period === 'monthly' ? 'Vendas mensais' : 'Vendas diárias'}</CardTitle>
+          <CardTitle>{period === 'monthly' ? 'Vendas mensais' : 'Vendas diarias'}</CardTitle>
           <CardDescription>
             {period === 'monthly'
-              ? 'Comparativo dos últimos 6 meses.'
+              ? 'Comparativo dos ultimos 6 meses.'
               : 'Comparativo dos ultimos 7 dias.'}
           </CardDescription>
         </CardHeader>

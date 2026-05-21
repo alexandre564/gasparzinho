@@ -1,8 +1,3 @@
-// TODO: [Dívida Técnica] Os valores abaixo formam uma camada temporária
-// de compatibilidade. Eles preservam contratos antigos do projeto enquanto
-// a modelagem real ainda usa strings soltas no banco e em partes do frontend.
-// Não adicione novos valores aqui sem revisar todos os consumidores.
-
 export const OrderStatus = {
   PENDENTE: 'PENDENTE',
   CONFIRMADO: 'CONFIRMADO',
