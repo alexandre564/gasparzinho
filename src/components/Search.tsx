@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
@@ -45,11 +45,18 @@ export function Search({ placeholder }: { placeholder: string }) {
     updateSearch('');
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    debouncedSearch.cancel();
+    updateSearch(value);
+  };
+
   return (
-    <div className="relative w-full max-w-xl">
+    <form className="relative w-full max-w-xl" role="search" onSubmit={handleSubmit}>
       <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
       <Input
         type="search"
+        name="query"
         placeholder={placeholder}
         className="h-11 rounded-md border-slate-300 bg-white pl-10 pr-10 text-slate-950 shadow-sm placeholder:text-slate-500 focus-visible:ring-emerald-600"
         onChange={(event) => handleChange(event.target.value)}
@@ -67,6 +74,6 @@ export function Search({ placeholder }: { placeholder: string }) {
           <span className="sr-only">Limpar busca</span>
         </Button>
       ) : null}
-    </div>
+    </form>
   );
 }
