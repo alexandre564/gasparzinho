@@ -114,6 +114,16 @@ export async function deleteCustomer(id: string) {
 
 const ITEMS_PER_PAGE = 10;
 
+export type CustomerSortKey = 'name' | 'city' | 'lastPurchase' | 'daysSinceLastPurchase';
+export type SortDirection = 'asc' | 'desc';
+
+const customerSortKeys: CustomerSortKey[] = [
+    'name',
+    'city',
+    'lastPurchase',
+    'daysSinceLastPurchase',
+];
+
 type CustomerWithRelations = Awaited<ReturnType<typeof prisma.customer.findMany>>[number] & {
     orders: Array<{ createdAt: Date }>;
     _count: { orders: number };
@@ -172,9 +182,71 @@ function enhanceCustomer(customer: CustomerWithRelations) {
     };
 }
 
-export async function getPaginatedCustomers(query: string, currentPage: number) {
+type EnhancedCustomer = ReturnType<typeof enhanceCustomer>;
+
+function normalizeSortKey(sort?: string): CustomerSortKey {
+    return customerSortKeys.includes(sort as CustomerSortKey)
+        ? (sort as CustomerSortKey)
+        : 'lastPurchase';
+}
+
+function normalizeSortDirection(direction?: string): SortDirection {
+    return direction === 'asc' ? 'asc' : 'desc';
+}
+
+function compareNullableNumber(
+    left: number | null | undefined,
+    right: number | null | undefined,
+    direction: SortDirection,
+) {
+    const leftMissing = left === null || left === undefined;
+    const rightMissing = right === null || right === undefined;
+
+    if (leftMissing && rightMissing) return 0;
+    if (leftMissing) return 1;
+    if (rightMissing) return -1;
+
+    const result = left === right ? 0 : left < right ? -1 : 1;
+    return direction === 'asc' ? result : -result;
+}
+
+function compareCustomers(
+    left: EnhancedCustomer,
+    right: EnhancedCustomer,
+    sort: CustomerSortKey,
+    direction: SortDirection,
+) {
+    if (sort === 'name') {
+        const result = left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' });
+        return direction === 'asc' ? result : -result;
+    }
+
+    if (sort === 'city') {
+        const result = left.city.localeCompare(right.city, 'pt-BR', { sensitivity: 'base' });
+        return direction === 'asc' ? result : -result;
+    }
+
+    if (sort === 'daysSinceLastPurchase') {
+        return compareNullableNumber(left.daysSinceLastPurchase, right.daysSinceLastPurchase, direction);
+    }
+
+    return compareNullableNumber(
+        left.lastPurchase ? left.lastPurchase.getTime() : null,
+        right.lastPurchase ? right.lastPurchase.getTime() : null,
+        direction,
+    );
+}
+
+export async function getPaginatedCustomers(
+    query: string,
+    currentPage: number,
+    sort?: string,
+    direction?: string,
+) {
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
     const normalizedQuery = query.trim();
+    const sortKey = normalizeSortKey(sort);
+    const sortDirection = normalizeSortDirection(direction);
 
     try {
         const include = {
@@ -190,35 +262,30 @@ export async function getPaginatedCustomers(query: string, currentPage: number) 
             },
         };
 
-        if (normalizedQuery) {
-            const allCustomers = await prisma.customer.findMany({
-                include,
-                orderBy: { name: 'asc' },
+        const allCustomers = await prisma.customer.findMany({
+            include,
+            orderBy: { name: 'asc' },
+        });
+
+        const filteredCustomers = normalizedQuery
+            ? allCustomers.filter((customer) => customerMatchesSearch(customer, normalizedQuery))
+            : allCustomers;
+
+        const sortedCustomers = filteredCustomers
+            .map(enhanceCustomer)
+            .sort((left, right) => {
+                const result = compareCustomers(left, right, sortKey, sortDirection);
+
+                if (result !== 0) {
+                    return result;
+                }
+
+                return left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' });
             });
 
-            const filteredCustomers = allCustomers.filter((customer) =>
-                customerMatchesSearch(customer, normalizedQuery)
-            );
-
-            return {
-                customers: filteredCustomers.slice(offset, offset + ITEMS_PER_PAGE).map(enhanceCustomer),
-                totalPages: Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE),
-            };
-        }
-
-        const [customers, count] = await Promise.all([
-            prisma.customer.findMany({
-                include,
-                orderBy: { name: 'asc' },
-                take: ITEMS_PER_PAGE,
-                skip: offset,
-            }),
-            prisma.customer.count(),
-        ]);
-
         return {
-            customers: customers.map(enhanceCustomer),
-            totalPages: Math.ceil(count / ITEMS_PER_PAGE),
+            customers: sortedCustomers.slice(offset, offset + ITEMS_PER_PAGE),
+            totalPages: Math.ceil(sortedCustomers.length / ITEMS_PER_PAGE),
         };
     } catch (err) {
         console.error('Database Error:', err);

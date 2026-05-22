@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
-import { Download, MessageCircle, Pencil, PlusCircle, ShoppingCart } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, MessageCircle, Pencil, PlusCircle, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,7 @@ import { Search } from '@/components/Search';
 import DeleteCustomerButton from './DeleteCustomerButton';
 import ImportCustomersButton from './ImportCustomersButton';
 import { getPaginatedCustomers } from './actions';
+import type { CustomerSortKey, SortDirection } from './actions';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', {
@@ -39,14 +40,85 @@ function getDaysColor(days: number | null) {
   return 'bg-red-600 text-white';
 }
 
+const sortLabels: Record<CustomerSortKey, string> = {
+  name: 'Cliente',
+  city: 'Cidade',
+  lastPurchase: '\u00daltima compra',
+  daysSinceLastPurchase: 'Sem comprar',
+};
+
+function normalizeSort(sort?: string): CustomerSortKey {
+  if (sort === 'name' || sort === 'city' || sort === 'daysSinceLastPurchase') {
+    return sort;
+  }
+
+  return 'lastPurchase';
+}
+
+function normalizeDirection(direction?: string): SortDirection {
+  return direction === 'asc' ? 'asc' : 'desc';
+}
+
+function getDefaultDirection(sort: CustomerSortKey): SortDirection {
+  return sort === 'name' || sort === 'city' ? 'asc' : 'desc';
+}
+
+function SortableHeader({
+  field,
+  activeSort,
+  activeDirection,
+  searchParams,
+  className = '',
+}: {
+  field: CustomerSortKey;
+  activeSort: CustomerSortKey;
+  activeDirection: SortDirection;
+  searchParams: { query?: string };
+  className?: string;
+}) {
+  const isActive = activeSort === field;
+  const nextDirection = isActive
+    ? activeDirection === 'asc'
+      ? 'desc'
+      : 'asc'
+    : getDefaultDirection(field);
+  const params = new URLSearchParams();
+
+  if (searchParams.query) {
+    params.set('query', searchParams.query);
+  }
+
+  params.set('page', '1');
+  params.set('sort', field);
+  params.set('direction', nextDirection);
+
+  const Icon = isActive ? (activeDirection === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+  return (
+    <TableHead className={className}>
+      <Link
+        href={`/dashboard/clientes?${params.toString()}`}
+        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-slate-950 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        aria-label={`Ordenar por ${sortLabels[field]}`}
+        title={`Ordenar por ${sortLabels[field]}`}
+      >
+        {sortLabels[field]}
+        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
+      </Link>
+    </TableHead>
+  );
+}
+
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams?: { query?: string; page?: string };
+  searchParams?: { query?: string; page?: string; sort?: string; direction?: string };
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
-  const { customers, totalPages } = await getPaginatedCustomers(query, currentPage);
+  const sort = normalizeSort(searchParams?.sort);
+  const direction = normalizeDirection(searchParams?.direction);
+  const { customers, totalPages } = await getPaginatedCustomers(query, currentPage, sort, direction);
 
   return (
     <div className="space-y-6">
@@ -89,10 +161,33 @@ export default async function CustomersPage({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="hidden md:table-cell">Cidade</TableHead>
-                  <TableHead className="hidden lg:table-cell">Última compra</TableHead>
-                  <TableHead className="hidden lg:table-cell">Sem comprar</TableHead>
+                  <SortableHeader
+                    field="name"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                  />
+                  <SortableHeader
+                    field="city"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden md:table-cell"
+                  />
+                  <SortableHeader
+                    field="lastPurchase"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden lg:table-cell"
+                  />
+                  <SortableHeader
+                    field="daysSinceLastPurchase"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden lg:table-cell"
+                  />
                   <TableHead className="text-right">Dívida</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
