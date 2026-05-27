@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckCircle2, MessageCircle, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { confirmDeliveryPayment, markDeliverySentToDriver } from './actions';
 
 type DeliveryWorkflowActionsProps = {
@@ -31,11 +32,6 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-function whatsappNumber(phone: string) {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('55') ? digits : `55${digits}`;
-}
-
 function itemsText(items: DeliveryWorkflowActionsProps['items']) {
   return items.map((item) => `${item.quantity}x ${item.product.name}`).join(', ');
 }
@@ -56,10 +52,8 @@ export default function DeliveryWorkflowActions({
   const orderSummary = itemsText(items);
   const customerMessage = `Ola ${customer.name}, seu pedido na Gas Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentMethod}.`;
   const driverMessage = `Entrega Gas Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereco: ${address}\nReferencia: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentMethod}${hasOpenDebt ? ' / A RECEBER' : ''}`;
-  const customerWhatsapp = `https://wa.me/${whatsappNumber(customer.phone)}?text=${encodeURIComponent(customerMessage)}`;
-  const driverWhatsappLink = driverWhatsapp
-    ? `https://wa.me/${whatsappNumber(driverWhatsapp)}?text=${encodeURIComponent(driverMessage)}`
-    : `https://wa.me/?text=${encodeURIComponent(driverMessage)}`;
+  const customerWhatsapp = buildWhatsAppUrl(customer.phone, customerMessage);
+  const driverWhatsappLink = buildWhatsAppUrl(driverWhatsapp, driverMessage);
 
   async function sendToDriver() {
     setPending(true);

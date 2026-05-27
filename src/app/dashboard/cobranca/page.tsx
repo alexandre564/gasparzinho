@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { format } from 'date-fns';
 import {
   ArrowDown,
@@ -25,6 +26,7 @@ import { getCollectionMessageTemplate } from '../configuracoes/actions';
 import { DebtSortKey, SortDirection, getPaginatedDebts } from './actions';
 import ImportDebtsButton from './ImportDebtsButton';
 import type { DebtStatus } from '@/types/enums';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +46,6 @@ const sortLabels: Record<DebtSortKey, string> = {
 };
 
 const formatDate = (date?: Date | null) => (date ? format(date, 'dd/MM/yyyy') : '-');
-const formatPhoneForWhatsApp = (phone: string) => phone.replace(/\D/g, '');
 
 function normalizeSort(sort?: string): DebtSortKey {
   if (
@@ -132,12 +133,10 @@ function SortableHeader({
 type DebtListItem = Awaited<ReturnType<typeof getPaginatedDebts>>['debts'][number];
 
 function buildCollectionMessage(template: string, debt: DebtListItem) {
-  return encodeURIComponent(
-    template
-      .replaceAll('{cliente}', debt.customer.name)
-      .replaceAll('{valor}', currency.format(debt.paymentValue))
-      .replaceAll('{vencimento}', formatDate(debt.dueDate)),
-  );
+  return template
+    .replaceAll('{cliente}', debt.customer.name)
+    .replaceAll('{valor}', currency.format(debt.paymentValue))
+    .replaceAll('{vencimento}', formatDate(debt.dueDate));
 }
 
 function getDelayText(debt: DebtListItem) {
@@ -185,7 +184,9 @@ export default async function CobrancaPage({
           </div>
         </div>
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-          <Search placeholder="Buscar por cliente, telefone, status ou observação..." />
+          <Suspense fallback={<div className="h-11 w-full max-w-xl rounded-md border bg-white" />}>
+            <Search placeholder="Buscar por cliente, telefone, status ou observação..." />
+          </Suspense>
           <span className="text-sm font-semibold text-slate-600">
             {totalDebts} registro(s) de cobrança
           </span>
@@ -306,7 +307,7 @@ export default async function CobrancaPage({
                         <div className="flex justify-end gap-2">
                           <Button asChild size="sm" variant="outline" className="gap-2">
                             <Link
-                              href={`https://wa.me/55${formatPhoneForWhatsApp(debt.customer.phone)}?text=${buildCollectionMessage(messageTemplate, debt)}`}
+                              href={buildWhatsAppUrl(debt.customer.phone, buildCollectionMessage(messageTemplate, debt))}
                               target="_blank"
                               aria-label={`Enviar WhatsApp para ${debt.customer.name}`}
                               title="Enviar WhatsApp"
@@ -345,7 +346,9 @@ export default async function CobrancaPage({
             </TableBody>
           </Table>
         </div>
-        <Pagination totalPages={totalPages} />
+        <Suspense fallback={null}>
+          <Pagination totalPages={totalPages} />
+        </Suspense>
       </CardContent>
     </Card>
   );

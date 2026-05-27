@@ -43,6 +43,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 type CustomerSelectItem = {
   id: string;
@@ -103,12 +104,6 @@ const formatCurrency = (value: number) =>
     style: 'currency',
     currency: 'BRL',
   }).format(value);
-
-function buildWhatsappUrl(phone: string, message: string) {
-  const digits = phone.replace(/\D/g, '');
-  const target = digits.length >= 10 ? `55${digits}` : '';
-  return `https://wa.me/${target}?text=${encodeURIComponent(message)}`;
-}
 
 export default function OrderForm({ initialCustomerId = '' }: { initialCustomerId?: string }) {
   const router = useRouter();
@@ -195,7 +190,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
     .join(', ');
 
   const customerWhatsapp = selectedCustomer
-    ? buildWhatsappUrl(
+    ? buildWhatsAppUrl(
         selectedCustomer.phone,
         `Ola ${selectedCustomer.name}, seu pedido na Gas Gasparzinho foi registrado e sera separado para entrega. Total: ${formatCurrency(grossValue)}.`,
       )
@@ -204,7 +199,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   const driverMessage = selectedCustomer
     ? `Nova entrega Gas Gasparzinho\nCliente: ${selectedCustomer.name}\nTelefone: ${selectedCustomer.phone}\nItens: ${selectedItemsSummary || 'Ver pedido no sistema'}\nTotal: ${formatCurrency(grossValue)}`
     : 'Nova entrega Gas Gasparzinho. Confira os detalhes do pedido no sistema.';
-  const driverWhatsappUrl = buildWhatsappUrl(driverWhatsapp, driverMessage);
+  const driverWhatsappUrl = buildWhatsAppUrl(driverWhatsapp, driverMessage);
 
   async function onSubmit(values: OrderFormValues) {
     const result = await createOrder(values);

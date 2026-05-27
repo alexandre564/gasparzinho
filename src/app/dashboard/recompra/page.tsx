@@ -14,6 +14,7 @@ import { getRepurchasePredictions } from './actions';
 import { RepurchasePrediction } from '@/services/recompra';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import {
   Card,
   CardContent,
@@ -56,10 +57,9 @@ function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
   } = prediction;
   const firstName = customer.name.split(' ')[0] || customer.name;
   const lastOrderProduct = lastOrder?.items[0]?.product.name || 'produto';
-  const cleanPhone = customer.phone.replace(/\D/g, '');
   const daysText = daysUntilNextPurchase <= 0 ? 'hoje' : `em ${daysUntilNextPurchase} dia(s)`;
   const whatsappMessage = `Ola ${firstName}, tudo bem? Vi aqui que talvez esteja chegando a hora de repor ${lastOrderProduct}. Posso separar um novo pedido para voce?`;
-  const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = buildWhatsAppUrl(customer.phone, whatsappMessage);
 
   return (
     <Card className="overflow-hidden border-slate-200 shadow-sm">
