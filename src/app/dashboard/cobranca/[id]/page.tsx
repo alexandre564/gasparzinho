@@ -47,7 +47,7 @@ export default async function RenegotiateDebtPage({ params }: { params: { id: st
             <p className="text-slate-500">Telefone</p>
             <p className="font-semibold">{debt.customer.phone}</p>
           </div>
-          <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2">
             <div>
               <p className="text-slate-500">Valor atual</p>
               <p className="font-semibold text-emerald-700">{currency.format(debt.value)}</p>

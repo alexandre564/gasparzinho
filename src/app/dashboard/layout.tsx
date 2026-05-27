@@ -5,8 +5,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Gás Gasparzinho - Dashboard",
-  description: "Sistema de gestão para revendedores de Gás e água.",
+  title: "Gasparzinho",
+  description: "Sistema de gestão para revendedores de gás e água.",
 };
 
 export default async function DashboardLayout({
@@ -21,11 +21,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       <Sidebar />
-      <div className="min-h-screen lg:pl-64">
+      <div className="min-h-screen min-w-0 lg:pl-64">
         <Header />
-        <main className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1600px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
           {children}
         </main>
       </div>

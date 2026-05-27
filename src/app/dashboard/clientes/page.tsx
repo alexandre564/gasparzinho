@@ -1,6 +1,5 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
-
-export const dynamic = 'force-dynamic';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, MessageCircle, Pencil, PlusCircle, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,9 @@ import DeleteCustomerButton from './DeleteCustomerButton';
 import ImportCustomersButton from './ImportCustomersButton';
 import { getPaginatedCustomers } from './actions';
 import type { CustomerSortKey, SortDirection } from './actions';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', {
@@ -96,7 +98,7 @@ function SortableHeader({
 
   return (
     <TableHead className={className}>
-      <Link
+      <a
         href={`/dashboard/clientes?${params.toString()}`}
         className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-slate-950 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         aria-label={`Ordenar por ${sortLabels[field]}`}
@@ -104,7 +106,7 @@ function SortableHeader({
       >
         {sortLabels[field]}
         <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
-      </Link>
+      </a>
     </TableHead>
   );
 }
@@ -154,7 +156,9 @@ export default async function CustomersPage({
               Use a busca para localizar clientes por nome ou telefone.
             </CardDescription>
           </div>
-          <Search placeholder="Digite nome, celular ou WhatsApp..." />
+          <Suspense fallback={<div className="h-11 w-full max-w-xl rounded-md border bg-white" />}>
+            <Search placeholder="Digite nome, celular ou WhatsApp..." />
+          </Suspense>
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-md border">
@@ -270,7 +274,9 @@ export default async function CustomersPage({
               </TableBody>
             </Table>
           </div>
-          <Pagination totalPages={totalPages} />
+          <Suspense fallback={null}>
+            <Pagination totalPages={totalPages} />
+          </Suspense>
         </CardContent>
       </Card>
     </div>

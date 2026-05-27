@@ -53,7 +53,7 @@ export default function StatusUpdater({ deliveryId, currentStatus }: StatusUpdat
         <Badge variant="success">ENTREGUE</Badge>
       ) : (
         <Select onValueChange={handleStatusChange} defaultValue={currentStatus}>
-          <SelectTrigger className={`h-8 w-[140px] text-xs font-semibold focus:ring-0 focus:ring-offset-0 ${getStatusClassName(currentStatus)}`}>
+          <SelectTrigger className={`h-10 w-full min-w-[140px] text-xs font-semibold focus:ring-0 focus:ring-offset-0 sm:h-8 sm:w-[140px] ${getStatusClassName(currentStatus)}`}>
              <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -117,17 +117,17 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-xl shadow-slate-300/60">
-        <div className="grid gap-6 p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
+        <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
           <div>
-            <p className="text-sm font-semibold text-emerald-300">Pagina principal</p>
+            <p className="text-sm font-semibold text-emerald-300">Página principal</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-              Gas Gasparzinho em movimento
+              Gás Gasparzinho em movimento
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              Acompanhe vendas, entregas, estoque e cobrancas em um painel mais claro para decidir rapido.
+              Acompanhe vendas, entregas, estoque e cobranças em um painel mais claro para decidir rápido.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <div className="rounded-lg border border-white/10 bg-white/10 p-4">
               <p className="font-bold uppercase text-slate-100">Vendas hoje</p>
               <p className="mt-1 text-xl font-bold text-white">{currency.format(data.totalSalesToday)}</p>
@@ -144,26 +144,26 @@ export default async function DashboardPage() {
         <MetricCard
           title="Vendas hoje"
           value={currency.format(data.totalSalesToday)}
-          description="Total bruto vendido desde o inicio do dia."
+          description="Total bruto vendido desde o início do dia."
           icon={Banknote}
           tone="emerald"
         />
         <MetricCard
           title="Clientes"
           value={data.activeCustomers}
-          description="Cadastros disponiveis para venda e entrega."
+          description="Cadastros disponíveis para venda e entrega."
           icon={Users}
           tone="blue"
         />
         <MetricCard
-          title="Dividas abertas"
+          title="Dívidas abertas"
           value={data.debtors}
-          description="Clientes com cobranca pendente ou vencida."
+          description="Clientes com cobrança pendente ou vencida."
           icon={CreditCard}
           tone="rose"
         />
         <MetricCard
-          title="Estoque critico"
+          title="Estoque crítico"
           value={data.criticalStock}
           description="Produtos com menos de 10 unidades."
           icon={Package}
@@ -179,7 +179,7 @@ export default async function DashboardPage() {
         <MetricCard
           title="Recompra"
           value={data.repurchaseOpportunities}
-          description="Clientes com previsao de recompra nos proximos 3 dias."
+          description="Clientes com previsão de recompra nos próximos 3 dias."
           icon={Repeat}
           tone="slate"
         />
@@ -188,7 +188,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
         <Card className="border-slate-300">
           <CardHeader className="border-b border-slate-200 bg-slate-50">
-            <CardTitle className="text-xl font-extrabold text-slate-950">Vendas dos ultimos 7 dias</CardTitle>
+            <CardTitle className="text-xl font-extrabold text-slate-950">Vendas dos últimos 7 dias</CardTitle>
             <CardDescription>Valor bruto por dia, sem pedidos cancelados.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
@@ -199,7 +199,7 @@ export default async function DashboardPage() {
         <Card className="border-slate-300">
           <CardHeader className="border-b border-slate-200 bg-slate-50">
             <CardTitle className="text-xl font-extrabold text-slate-950">Pedidos recentes</CardTitle>
-            <CardDescription>Ultimas movimentacoes registradas.</CardDescription>
+            <CardDescription>Últimas movimentações registradas.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-6">
             {data.recentOrders.length > 0 ? (

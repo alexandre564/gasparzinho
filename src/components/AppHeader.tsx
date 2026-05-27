@@ -1,8 +1,13 @@
 import Link from "next/link";
 import {
+  AlertCircle,
+  Banknote,
+  Building2,
   Bell,
   CircleUser,
+  ClipboardPen,
   Download,
+  FileText,
   Home,
   Menu,
   Package,
@@ -24,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const mobileLinks = [
   { href: "/dashboard", icon: Home, label: "Página principal", roles: ["ADMIN", "VENDEDOR"] },
@@ -32,6 +37,13 @@ const mobileLinks = [
   { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas", roles: ["ADMIN", "VENDEDOR"] },
   { href: "/dashboard/estoque", icon: Package, label: "Estoque", roles: ["ADMIN", "VENDEDOR"] },
   { href: "/dashboard/entregas", icon: Truck, label: "Entregas", roles: ["ADMIN", "ENTREGADOR"] },
+  { href: "/dashboard/recompra", icon: Building2, label: "Recompra", roles: ["ADMIN", "VENDEDOR"] },
+  { href: "/dashboard/cobranca", icon: AlertCircle, label: "Cobrança", roles: ["ADMIN"] },
+  { href: "/dashboard/financeiro", icon: Banknote, label: "Financeiro", roles: ["ADMIN"] },
+  { href: "/dashboard/relatorios", icon: FileText, label: "Relatórios", roles: ["ADMIN"] },
+  { href: "/dashboard/equipe", icon: Users, label: "Equipe", roles: ["ADMIN"] },
+  { href: "/dashboard/frota", icon: Truck, label: "Frota", roles: ["ADMIN"] },
+  { href: "/dashboard/fechamento", icon: ClipboardPen, label: "Fechamento", roles: ["ADMIN"] },
   { href: "/dashboard/configuracoes", icon: Settings, label: "Configurações", roles: ["ADMIN", "VENDEDOR", "ENTREGADOR"] },
 ];
 
@@ -49,16 +61,21 @@ export default async function Header() {
   const visibleMobileLinks = mobileLinks.filter((link) => link.roles.includes(userRole));
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 shadow-sm backdrop-blur lg:pl-6 lg:pr-8">
+    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur sm:gap-3 sm:px-4 lg:flex-nowrap lg:pl-6 lg:pr-8">
       <Sheet>
         <SheetTrigger asChild>
-          <Button size="icon" variant="outline" className="lg:hidden">
+          <Button size="icon" variant="outline" className="shrink-0 lg:hidden" aria-label="Abrir menu">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Abrir menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 border-slate-800 bg-slate-950 p-0 text-slate-100">
-          <div className="flex items-center gap-3 border-b border-slate-800 px-5 py-4">
+        <SheetContent
+          side="left"
+          className="flex w-[min(20rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] flex-col overflow-y-auto border-slate-800 bg-slate-950 p-0 text-slate-100"
+        >
+          <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
+          <SheetDescription className="sr-only">Acesse as seções principais do sistema.</SheetDescription>
+          <div className="flex items-center gap-3 border-b border-slate-800 px-4 py-4">
             <BrandLogo size={52} />
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
@@ -67,21 +84,22 @@ export default async function Header() {
               <p className="text-xs font-medium text-emerald-200">{roleLabel}</p>
             </div>
           </div>
-          <nav className="space-y-1 p-3">
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
             {visibleMobileLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white"
-              >
-                <link.icon className="h-4 w-4" />
-                {link.label}
-              </Link>
+              <SheetClose key={link.href} asChild>
+                <Link
+                  href={link.href}
+                  className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                >
+                  <link.icon className="h-4 w-4 shrink-0" />
+                  {link.label}
+                </Link>
+              </SheetClose>
             ))}
             <a
               href="/api/backup"
               download
-              className="flex h-10 items-center gap-3 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-white hover:bg-emerald-400"
+              className="flex min-h-11 items-center gap-3 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-white hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
             >
               <Download className="h-4 w-4" />
               Baixar backup
@@ -90,9 +108,9 @@ export default async function Header() {
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-w-0 items-center gap-3">
-        <BrandLogo size={44} />
-        <div className="min-w-0 border-l-4 border-emerald-500 pl-3">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 lg:flex-none">
+        <BrandLogo size={40} />
+        <div className="min-w-0 max-w-[calc(100vw-8.5rem)] border-l-4 border-emerald-500 pl-2 sm:pl-3">
           <p className="truncate text-sm font-bold leading-none text-slate-950">Gás Gasparzinho</p>
           <p className="mt-1 text-xs font-medium text-slate-600">Gestão de revenda</p>
         </div>
@@ -100,6 +118,10 @@ export default async function Header() {
           <p className="truncate text-sm font-semibold leading-none text-slate-950">{userName}</p>
           <p className="mt-1 text-xs font-medium text-emerald-700">{roleLabel}</p>
         </div>
+      </div>
+
+      <div className="order-last w-full md:hidden">
+        <HeaderSearch />
       </div>
 
       <div className="ml-auto hidden w-full max-w-md items-center md:flex">
@@ -113,7 +135,7 @@ export default async function Header() {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="rounded-full border-slate-300 bg-white">
+          <Button variant="outline" size="icon" className="shrink-0 rounded-full border-slate-300 bg-white">
             <CircleUser className="h-5 w-5" />
             <span className="sr-only">Abrir conta</span>
           </Button>

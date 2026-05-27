@@ -45,7 +45,7 @@ export function DateFilter() {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={`w-[240px] justify-start text-left font-normal ${
+          className={`w-full justify-start text-left font-normal sm:w-[240px] ${
             !date ? 'text-muted-foreground' : ''
           }`}
         >

@@ -22,7 +22,7 @@ export function StatusFilter() {
 
     return (
         <Select onValueChange={handleStatusChange} defaultValue={searchParams.get('status') || 'ALL'}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent>

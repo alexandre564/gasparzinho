@@ -1,14 +1,20 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'Gas Gasparzinho',
-  description: 'Sistema de vendas, entregas, estoque e financeiro para revenda de gas.',
+  title: {
+    default: 'Gasparzinho',
+    template: '%s | Gasparzinho',
+  },
+  description: 'Sistema de vendas, entregas, estoque e financeiro para revenda de gás.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -18,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.className} bg-gray-50`}>
+      <body className="overflow-x-hidden bg-gray-50 font-sans">
         <ThemeProvider
             attribute="class"
             defaultTheme="system"

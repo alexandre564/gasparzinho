@@ -24,7 +24,7 @@ export default function StatusFilter() {
 
   return (
     <Select onValueChange={handleFilterChange} defaultValue={searchParams.get('status') || 'TODOS'}>
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className="w-full sm:w-[180px]">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
