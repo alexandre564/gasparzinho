@@ -4,11 +4,18 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
-  title: {
-    default: 'Gasparzinho',
-    template: '%s | Gasparzinho',
-  },
+  title: 'Gasparzinho',
   description: 'Sistema de vendas, entregas, estoque e financeiro para revenda de gás.',
+  icons: {
+    icon: [
+      {
+        url: '/Gas-logo.png',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/Gas-logo.png',
+    apple: '/Gas-logo.png',
+  },
 };
 
 export const viewport: Viewport = {

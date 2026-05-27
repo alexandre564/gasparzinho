@@ -5,7 +5,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Gasparzinho",
+  title: {
+    absolute: "Gasparzinho",
+  },
   description: "Sistema de gestão para revendedores de gás e água.",
 };
 
