@@ -27,6 +27,7 @@ import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import StatusFilter from './StatusFilter';
 import MarkAsPaidButton from './MarkAsPaidButton';
+import ImportDebtsButton from '../../cobranca/ImportDebtsButton';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
 
@@ -125,6 +126,11 @@ export default async function Page({ searchParams }: PageProps) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page ?? '1');
   const status = searchParams?.status as DebtStatus | undefined;
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+
+  const exportHref = `/api/cobranca/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
   const [{ debts, totalPages }, messageTemplate] = await Promise.all([
     getPaginatedDebts(query, currentPage, status),
@@ -140,12 +146,20 @@ export default async function Page({ searchParams }: PageProps) {
             Acompanhe valores em aberto, pagos, renegociações, vencimentos e pagamentos.
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <a href="/api/cobranca/exportar" download>
-            <Download className="mr-2 h-4 w-4" />
-            Exportar CSV
-          </a>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline" size="sm">
+            <a href={exportHref} download>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar CSV
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <a href="/api/cobranca/modelo" download>
+              Modelo CSV
+            </a>
+          </Button>
+          <ImportDebtsButton />
+        </div>
       </div>
 
       <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>

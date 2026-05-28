@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 
 import { auth } from '@/auth'
 import { deliveryStatusLabels, labelFrom, paymentMethodLabels } from '@/lib/labels'
@@ -11,14 +12,30 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth()
 
   if (!session?.user) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
+  const query = request.nextUrl.searchParams.get('query')?.trim() ?? ''
+  const status = request.nextUrl.searchParams.get('status')?.trim() ?? ''
+  const where: Prisma.DeliveryWhereInput = {
+    ...(status && status !== 'TODOS' && { status }),
+    ...(query && {
+      OR: [
+        { order: { customer: { name: { contains: query } } } },
+        { order: { customer: { phone: { contains: query } } } },
+        { order: { customer: { street: { contains: query } } } },
+        { order: { customer: { neighborhood: { contains: query } } } },
+        { orderId: { contains: query } },
+      ],
+    }),
+  }
+
   const deliveries = await prisma.delivery.findMany({
+    where,
     include: {
       order: {
         include: {

@@ -37,6 +37,8 @@ export function DateFilter() {
       params.delete('date');
     }
 
+    params.set('page', '1');
+
     replace(`${pathname}?${params.toString()}`);
   };
 

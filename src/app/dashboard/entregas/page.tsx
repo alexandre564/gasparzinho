@@ -54,6 +54,12 @@ export default async function DeliveriesPage({
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const status = searchParams?.status;
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+  if (status) exportParams.set('status', status);
+
+  const exportHref = `/api/entregas/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
   const [deliveryData, driverWhatsapp] = await Promise.all([
     getPaginatedDeliveries(query, currentPage, status),
     getDriverWhatsappNumber(),
@@ -71,7 +77,7 @@ export default async function DeliveriesPage({
           </p>
         </div>
         <Button asChild variant="outline" size="sm" className="gap-2">
-          <a href="/api/entregas/exportar" download>
+          <a href={exportHref} download>
             <Download className="h-4 w-4" />
             Exportar CSV
           </a>

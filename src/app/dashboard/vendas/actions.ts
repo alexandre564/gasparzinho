@@ -40,6 +40,15 @@ const InventoryMovementType = {
   CANCELAMENTO: 'CANCELAMENTO',
 } as const;
 
+function parseFilterDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 const OrderItemSchema = z.object({
   productId: z.string().min(1, 'Produto é obrigatório.'),
   quantity: z.coerce
@@ -252,7 +261,7 @@ export async function getPaginatedOrders(
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const selectedDate = date ? new Date(`${date}T00:00:00`) : null;
+    const selectedDate = parseFilterDate(date);
     const dayEnd = selectedDate ? new Date(selectedDate) : null;
 
     if (dayEnd) {

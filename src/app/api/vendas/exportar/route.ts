@@ -12,6 +12,15 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`
 }
 
+function parseFilterDate(value: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null
+  }
+
+  const date = new Date(`${value}T00:00:00`)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 export async function GET(request: NextRequest) {
   const session = await auth()
 
@@ -22,7 +31,7 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? ''
   const status = request.nextUrl.searchParams.get('status')?.trim() ?? ''
   const date = request.nextUrl.searchParams.get('date')?.trim() ?? ''
-  const selectedDate = date ? new Date(`${date}T00:00:00`) : null
+  const selectedDate = parseFilterDate(date)
   const dayEnd = selectedDate ? new Date(selectedDate) : null
 
   if (dayEnd) {

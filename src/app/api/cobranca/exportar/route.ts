@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -22,13 +22,45 @@ function daysLate(dueDate: Date, paidAt?: Date | null) {
   return Math.max(Math.floor((reference.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)), 0);
 }
 
-export async function GET() {
+function normalizeText(value: string | null | undefined) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function onlyDigits(value: string | null | undefined) {
+  return (value ?? '').replace(/\D/g, '');
+}
+
+type ExportDebt = Awaited<ReturnType<typeof prisma.debt.findMany>>[number] & {
+  customer: { name: string; phone: string };
+  order: { id: string; createdAt: Date; paymentMethod: string } | null;
+};
+
+function debtMatchesSearch(debt: ExportDebt, query: string) {
+  const term = normalizeText(query);
+  const digits = onlyDigits(query);
+
+  if (!term && !digits) return true;
+
+  const textMatch = [debt.customer.name, debt.customer.phone, debt.status, debt.notes, debt.id]
+    .map(normalizeText)
+    .some((value) => value.includes(term));
+  const phoneMatch = Boolean(digits) && onlyDigits(debt.customer.phone).includes(digits);
+
+  return textMatch || phoneMatch;
+}
+
+export async function GET(request: NextRequest) {
   const session = await auth();
 
   if (!session?.user) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
   }
 
+  const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
   const debts = await prisma.debt.findMany({
     orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
     include: {
@@ -36,6 +68,7 @@ export async function GET() {
       order: { select: { id: true, createdAt: true, paymentMethod: true } },
     },
   });
+  const filteredDebts = debts.filter((debt) => debtMatchesSearch(debt, query));
 
   const header = [
     'id',
@@ -53,7 +86,7 @@ export async function GET() {
     'observacoes',
   ];
 
-  const rows = debts.map((debt) => [
+  const rows = filteredDebts.map((debt) => [
     debt.id,
     debt.orderId,
     debt.customer.name,

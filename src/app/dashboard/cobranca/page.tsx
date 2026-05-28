@@ -160,6 +160,11 @@ export default async function CobrancaPage({
   const currentPage = Number(searchParams?.page) || 1;
   const sort = normalizeSort(searchParams?.sort);
   const direction = normalizeDirection(searchParams?.direction);
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+
+  const exportHref = `/api/cobranca/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
   const [{ debts, totalPages, totalDebts }, messageTemplate] = await Promise.all([
     getPaginatedDebts(query, currentPage, sort, direction),
     getCollectionMessageTemplate(),
@@ -177,7 +182,7 @@ export default async function CobrancaPage({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild size="sm" variant="outline" className="gap-2">
-              <a href="/api/cobranca/exportar" download>
+              <a href={exportHref} download>
                 <Download className="h-4 w-4" />
                 Exportar Excel
               </a>
