@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { FileUp, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { importDebts } from './actions';
+import { importProducts, type ImportProductsState } from './actions';
 
-const initialState = {
+const initialState: ImportProductsState = {
   success: false,
   message: '',
 };
@@ -24,21 +24,21 @@ function ImportButton({ onClick, fileName }: { onClick: () => void; fileName: st
       className="gap-2"
       disabled={pending}
       onClick={onClick}
-      aria-label="Importar cobranças de arquivo CSV compatível com Excel"
-      title="Importar cobranças"
+      aria-label="Importar produtos de arquivo CSV, CDSV ou TXT"
+      title="Importar produtos"
     >
       {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
-      {pending ? 'Importando...' : fileName || 'Importar cobranças'}
+      {pending ? 'Importando...' : fileName || 'Importar produtos'}
     </Button>
   );
 }
 
-export default function ImportDebtsButton() {
+export default function ImportProductsButton() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
-  const [state, action] = useFormState(importDebts, initialState);
+  const [state, action] = useFormState(importProducts, initialState);
 
   useEffect(() => {
     if (!state.message) {

@@ -5,10 +5,11 @@ import { useFormState, useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { FileUp, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { importDebts } from './actions';
 
-const initialState = {
+import { importTeamMembers, type ImportTeamState } from './actions';
+import { Button } from '@/components/ui/button';
+
+const initialState: ImportTeamState = {
   success: false,
   message: '',
 };
@@ -19,26 +20,25 @@ function ImportButton({ onClick, fileName }: { onClick: () => void; fileName: st
   return (
     <Button
       type="button"
-      size="sm"
       variant="outline"
-      className="gap-2"
+      className="w-full gap-2 border-white/25 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
       disabled={pending}
       onClick={onClick}
-      aria-label="Importar cobranças de arquivo CSV compatível com Excel"
-      title="Importar cobranças"
+      aria-label="Importar equipe de arquivo CSV, CDSV ou TXT"
+      title="Importar equipe"
     >
       {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
-      {pending ? 'Importando...' : fileName || 'Importar cobranças'}
+      {pending ? 'Importando...' : fileName || 'Importar equipe'}
     </Button>
   );
 }
 
-export default function ImportDebtsButton() {
+export default function ImportTeamButton() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
-  const [state, action] = useFormState(importDebts, initialState);
+  const [state, action] = useFormState(importTeamMembers, initialState);
 
   useEffect(() => {
     if (!state.message) {

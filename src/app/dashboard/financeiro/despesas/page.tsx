@@ -1,13 +1,16 @@
 import { Suspense } from 'react';
 import { Expense } from '@prisma/client';
-import { Loader2, Repeat } from 'lucide-react';
+import { Download, FileSpreadsheet, Loader2, Repeat } from 'lucide-react';
+import Link from 'next/link';
 
 import { getPaginatedExpenses } from './actions';
 import DeleteExpenseButton from './DeleteExpenseButton';
 import ExpenseForm from './ExpenseForm';
+import ImportExpensesButton from './ImportExpensesButton';
 import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -45,7 +48,29 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Gerenciamento de despesas</h1>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Gerenciamento de despesas</h1>
+          <p className="text-sm text-muted-foreground">
+            Registre gastos, importe planilhas e acompanhe despesas recorrentes.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href="/api/financeiro/despesas/exportar">
+              <Download className="mr-2 h-4 w-4" />
+              Exportar CSV
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href="/api/financeiro/despesas/modelo">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Modelo CSV
+            </Link>
+          </Button>
+          <ImportExpensesButton />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">

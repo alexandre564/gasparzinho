@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Pencil, PlusCircle } from 'lucide-react';
+import { Download, Pencil, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import { CategoryFilter } from './CategoryFilter';
 import DeleteProductButton from './DeleteProductButton';
+import ImportProductsButton from './ImportProductsButton';
 import { getPaginatedProducts } from './actions';
 
 
@@ -62,12 +63,27 @@ export default async function StockPage({
             Controle saldos, custos e preços dos produtos vendidos.
           </p>
         </div>
-        <Button asChild size="sm" className="gap-2">
-          <Link href="/dashboard/estoque/novo">
-            <PlusCircle className="h-4 w-4" />
-            Novo produto
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild size="sm" variant="outline" className="gap-2">
+            <a href="/api/estoque/exportar" download>
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </a>
+          </Button>
+          <Button asChild size="sm" variant="outline" className="gap-2">
+            <a href="/api/estoque/modelo" download>
+              <Download className="h-4 w-4" />
+              Modelo CSV
+            </a>
+          </Button>
+          <ImportProductsButton />
+          <Button asChild size="sm" className="gap-2">
+            <Link href="/dashboard/estoque/novo">
+              <PlusCircle className="h-4 w-4" />
+              Novo produto
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>

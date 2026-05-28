@@ -19,15 +19,108 @@ export type CreateExpenseState = {
   };
 };
 
+export type ImportExpensesState = {
+  success: boolean;
+  message: string;
+};
+
 const ExpenseSchema = z.object({
   description: z.string().min(3, { message: 'Descrição deve ter no mínimo 3 caracteres.' }),
   value: z.coerce.number().positive({ message: 'Valor deve ser positivo.' }),
-  date: z.coerce.date({ error: 'Data invalida.' }),
+  date: z.coerce.date({ error: 'Data inválida.' }),
   category: z.string().min(1, { message: 'Por favor, selecione uma categoria.' }),
   isRecurring: z.preprocess((value) => value === 'true', z.boolean().default(false)),
 });
 
 const ITEMS_PER_PAGE = 10;
+
+function normalizeHeader(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function detectDelimiter(line: string) {
+  const delimiters = [';', ',', '\t'];
+  return delimiters.reduce((selected, delimiter) => {
+    const currentCount = line.split(delimiter).length;
+    const selectedCount = line.split(selected).length;
+    return currentCount > selectedCount ? delimiter : selected;
+  }, ';');
+}
+
+function parseCsvLine(line: string, delimiter: string) {
+  const cells: string[] = [];
+  let current = '';
+  let insideQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const nextChar = line[index + 1];
+
+    if (char === '"' && nextChar === '"') {
+      current += '"';
+      index += 1;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === delimiter && !insideQuotes) {
+      cells.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  cells.push(current.trim());
+  return cells.map((cell) => cell.replace(/^"|"$/g, '').trim());
+}
+
+function parseMoneyValue(value: string) {
+  const normalized = value
+    .replace(/\s/g, '')
+    .replace(/[R$]/gi, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+
+  const number = Number(normalized);
+  return Number.isFinite(number) ? number : null;
+}
+
+function parseDateValue(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const isoDate = new Date(`${trimmed}T00:00:00`);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !Number.isNaN(isoDate.getTime())) {
+    return isoDate;
+  }
+
+  const brMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (brMatch) {
+    const [, day, month, year] = brMatch;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+
+  const fallback = new Date(trimmed);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function parseBooleanValue(value: string) {
+  const normalized = normalizeHeader(value);
+  return ['sim', 's', 'true', '1', 'recorrente', 'yes'].includes(normalized);
+}
+
+function pickValue(row: Record<string, string>, options: string[]) {
+  for (const option of options) {
+    const value = row[normalizeHeader(option)];
+    if (value !== undefined && value.trim() !== '') return value.trim();
+  }
+  return '';
+}
 
 export async function getPaginatedExpenses(query: string, currentPage: number, category?: string) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -84,6 +177,89 @@ export async function createExpense(
     console.error('Database Error:', error);
     return { success: false, message: 'Falha ao criar despesa no banco de dados.' };
   }
+}
+
+export async function importExpenses(
+  _previousState: ImportExpensesState,
+  formData: FormData,
+): Promise<ImportExpensesState> {
+  const file = formData.get('file');
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { success: false, message: 'Selecione um arquivo CSV, CDSV ou TXT para importar.' };
+  }
+
+  const validExtension = /\.(csv|cdsv|txt)$/i.test(file.name);
+  if (!validExtension) {
+    return { success: false, message: 'Use um arquivo CSV, CDSV ou TXT compatível com Excel.' };
+  }
+
+  const content = (await file.text()).replace(/^\uFEFF/, '');
+  const rawLines = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (rawLines.length < 2) {
+    return { success: false, message: 'A planilha precisa ter cabeçalho e pelo menos uma despesa.' };
+  }
+
+  const dataLines = rawLines[0].toLowerCase().startsWith('sep=') ? rawLines.slice(1) : rawLines;
+  const delimiter = rawLines[0].toLowerCase().startsWith('sep=')
+    ? rawLines[0].slice(4, 5)
+    : detectDelimiter(dataLines[0]);
+  const headers = parseCsvLine(dataLines[0], delimiter).map(normalizeHeader);
+
+  let imported = 0;
+  let ignored = 0;
+
+  for (const line of dataLines.slice(1)) {
+    const cells = parseCsvLine(line, delimiter);
+    const row = headers.reduce<Record<string, string>>((accumulator, header, index) => {
+      accumulator[header] = cells[index] ?? '';
+      return accumulator;
+    }, {});
+
+    const description = pickValue(row, ['descricao', 'descrição', 'despesa', 'description']);
+    const value = parseMoneyValue(pickValue(row, ['valor', 'value']));
+    const date = parseDateValue(pickValue(row, ['data', 'date', 'competencia', 'competência']));
+    const category = pickValue(row, ['categoria', 'category']) || 'Outros';
+    const isRecurring = parseBooleanValue(
+      pickValue(row, ['recorrente', 'fixa', 'mensal', 'is recurring']),
+    );
+
+    if (!description || value === null || value <= 0 || !date) {
+      ignored += 1;
+      continue;
+    }
+
+    await prisma.expense.create({
+      data: {
+        description,
+        value,
+        date,
+        category,
+        isRecurring,
+      },
+    });
+
+    imported += 1;
+  }
+
+  revalidatePath('/dashboard/financeiro');
+  revalidatePath('/dashboard/financeiro/despesas');
+
+  if (imported === 0) {
+    return {
+      success: false,
+      message: `Nenhuma despesa foi importada. Verifique se as colunas de descrição, valor e data estão preenchidas. Linhas ignoradas: ${ignored}.`,
+    };
+  }
+
+  return {
+    success: true,
+    message: `${imported} despesa(s) importada(s). Linhas ignoradas: ${ignored}.`,
+  };
 }
 
 export async function deleteExpense(id: string): Promise<{ success: boolean; message: string }> {

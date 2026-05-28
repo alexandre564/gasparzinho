@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { Download, FileSpreadsheet } from 'lucide-react';
 
 import { columns } from './columns';
 import { DataTable } from './data-table';
 import { getTeamMembers } from './actions';
+import ImportTeamButton from './ImportTeamButton';
 import { Button } from '@/components/ui/button';
 
 
@@ -20,9 +22,24 @@ export default async function TeamPage() {
             Altere dados dos membros e defina quem atua como administrador, vendedor ou entregador.
           </p>
         </div>
-        <Button asChild className="bg-emerald-500 hover:bg-emerald-400">
-          <Link href="/dashboard/equipe/novo">Adicionar membro</Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline" className="w-full border-white/25 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
+            <Link href="/api/equipe/exportar">
+              <Download className="mr-2 h-4 w-4" />
+              Exportar CSV
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full border-white/25 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
+            <Link href="/api/equipe/modelo">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Modelo CSV
+            </Link>
+          </Button>
+          <ImportTeamButton />
+          <Button asChild className="w-full bg-emerald-500 hover:bg-emerald-400 sm:w-auto">
+            <Link href="/dashboard/equipe/novo">Adicionar membro</Link>
+          </Button>
+        </div>
       </div>
 
       <DataTable columns={columns} data={members} />
