@@ -102,12 +102,20 @@ export default async function ConfiguracoesPage() {
             Ajuste produtos, preços, custos, gastos, mensagens e baixe uma cópia dos dados.
           </p>
         </div>
-        <Button asChild className="gap-2">
-          <a href="/api/backup" download>
-            <Download className="h-4 w-4" />
-            Baixar backup
-          </a>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline" className="gap-2">
+            <a href="/api/backup/planilha" download>
+              <Download className="h-4 w-4" />
+              Backup planilha
+            </a>
+          </Button>
+          <Button asChild className="gap-2">
+            <a href="/api/backup" download>
+              <Download className="h-4 w-4" />
+              Backup completo
+            </a>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -271,7 +279,7 @@ export default async function ConfiguracoesPage() {
             <CardHeader>
               <CardTitle>Backup do sistema</CardTitle>
               <CardDescription>
-                Baixe um arquivo JSON com os dados principais do sistema.
+                Baixe arquivos com os dados principais do sistema para segurança e conferência.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -279,15 +287,26 @@ export default async function ConfiguracoesPage() {
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>Use o backup antes de grandes alterações de preço, estoque ou financeiro.</p>
               </div>
-              <Button asChild variant="outline" className="w-full justify-between">
-                <a href="/api/backup" download>
-                  <span className="inline-flex items-center gap-2">
-                    <Archive className="h-4 w-4" />
-                    Baixar cópia agora
-                  </span>
-                  <Download className="h-4 w-4" />
-                </a>
-              </Button>
+              <div className="grid gap-2">
+                <Button asChild variant="outline" className="w-full justify-between">
+                  <a href="/api/backup/planilha" download>
+                    <span className="inline-flex items-center gap-2">
+                      <Archive className="h-4 w-4" />
+                      Baixar planilha diária
+                    </span>
+                    <Download className="h-4 w-4" />
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-between">
+                  <a href="/api/backup" download>
+                    <span className="inline-flex items-center gap-2">
+                      <Archive className="h-4 w-4" />
+                      Baixar cópia completa
+                    </span>
+                    <Download className="h-4 w-4" />
+                  </a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

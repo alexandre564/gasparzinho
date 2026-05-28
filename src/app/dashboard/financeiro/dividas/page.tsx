@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { CalendarClock, Loader2, MessageCircle, Pencil } from 'lucide-react';
+import { CalendarClock, Download, Loader2, MessageCircle, Pencil } from 'lucide-react';
 import type { Debt } from '@prisma/client';
 import { getPaginatedDebts, getTotalOpenDebt } from '@/app/dashboard/financeiro/actions';
 import { getCollectionMessageTemplate } from '@/app/dashboard/configuracoes/actions';
@@ -133,11 +133,19 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Gestão de dívidas</h1>
-        <p className="text-sm text-slate-600">
-          Acompanhe valores em aberto, pagos, renegociações, vencimentos e pagamentos.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Gestão de dívidas</h1>
+          <p className="text-sm text-slate-600">
+            Acompanhe valores em aberto, pagos, renegociações, vencimentos e pagamentos.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <a href="/api/cobranca/exportar" download>
+            <Download className="mr-2 h-4 w-4" />
+            Exportar CSV
+          </a>
+        </Button>
       </div>
 
       <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>

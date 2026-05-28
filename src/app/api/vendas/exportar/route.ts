@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 
 import { auth } from '@/auth'
 import { deliveryStatusLabels, labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels'
@@ -11,14 +12,36 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth()
 
   if (!session?.user) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
+  const query = request.nextUrl.searchParams.get('query')?.trim() ?? ''
+  const status = request.nextUrl.searchParams.get('status')?.trim() ?? ''
+  const date = request.nextUrl.searchParams.get('date')?.trim() ?? ''
+  const selectedDate = date ? new Date(`${date}T00:00:00`) : null
+  const dayEnd = selectedDate ? new Date(selectedDate) : null
+
+  if (dayEnd) {
+    dayEnd.setHours(23, 59, 59, 999)
+  }
+
+  const where: Prisma.OrderWhereInput = {
+    ...(query && {
+      OR: [
+        { customer: { name: { contains: query } } },
+        { id: { contains: query } },
+      ],
+    }),
+    ...(status && status !== 'ALL' && { status }),
+    ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
+  }
+
   const orders = await prisma.order.findMany({
+    where,
     include: {
       customer: true,
       items: {

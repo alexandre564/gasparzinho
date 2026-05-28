@@ -2,6 +2,7 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Calendar,
+  Download,
   Hourglass,
   MessageCircle,
   Phone,
@@ -131,6 +132,12 @@ export default async function RecompraPreditivaPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a href={`/api/recompra/exportar?days=${days}`} download>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar CSV
+            </a>
+          </Button>
           {periodOptions.map((option) => (
             <FilterButton key={option} days={option} currentDays={days} />
           ))}

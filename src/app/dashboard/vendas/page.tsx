@@ -20,6 +20,8 @@ import {
 import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import { getPaginatedOrders } from './actions';
+import { DateFilter } from './DateFilter';
+import { StatusFilter } from './StatusFilter';
 import { labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
 
 
@@ -49,11 +51,20 @@ function getStatusVariant(status: string): BadgeProps['variant'] {
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams?: { query?: string; page?: string };
+  searchParams?: { query?: string; page?: string; status?: string; date?: string };
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
-  const { orders, totalPages } = await getPaginatedOrders(query, currentPage);
+  const status = searchParams?.status;
+  const date = searchParams?.date;
+  const { orders, totalPages } = await getPaginatedOrders(query, currentPage, status, date);
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+  if (status) exportParams.set('status', status);
+  if (date) exportParams.set('date', date);
+
+  const exportHref = `/api/vendas/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
   return (
     <div className="space-y-6">
@@ -66,7 +77,7 @@ export default async function OrdersPage({
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="outline" size="sm" className="gap-2">
-            <a href="/api/vendas/exportar" download>
+            <a href={exportHref} download>
               <Download className="h-4 w-4" />
               Exportar CSV
             </a>
@@ -88,7 +99,11 @@ export default async function OrdersPage({
               Busque por cliente ou identificador do pedido.
             </CardDescription>
           </div>
-          <Search placeholder="Buscar por cliente ou pedido..." />
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <Search placeholder="Buscar por cliente ou pedido..." />
+            <StatusFilter />
+            <DateFilter />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-md border">

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import type { ReportPeriod } from './actions';
 
 const options: Array<{ value: ReportPeriod; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-  { value: 'daily', label: 'Diario', icon: CalendarDays },
+  { value: 'daily', label: 'Diário', icon: CalendarDays },
   { value: 'monthly', label: 'Mensal', icon: BarChart3 },
 ];
 

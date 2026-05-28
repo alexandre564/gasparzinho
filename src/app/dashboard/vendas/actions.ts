@@ -245,19 +245,30 @@ export async function updateOrderStatus(
 export async function getPaginatedOrders(
   query: string,
   currentPage: number,
+  status?: string,
+  date?: string,
 ) {
   const ITEMS_PER_PAGE = 10;
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const where: Prisma.OrderWhereInput = query
-      ? {
-          OR: [
-            { customer: { name: { contains: query } } },
-            { id: { contains: query } },
-          ],
-        }
-      : {};
+    const selectedDate = date ? new Date(`${date}T00:00:00`) : null;
+    const dayEnd = selectedDate ? new Date(selectedDate) : null;
+
+    if (dayEnd) {
+      dayEnd.setHours(23, 59, 59, 999);
+    }
+
+    const where: Prisma.OrderWhereInput = {
+      ...(query && {
+        OR: [
+          { customer: { name: { contains: query } } },
+          { id: { contains: query } },
+        ],
+      }),
+      ...(status && status !== 'ALL' && { status }),
+      ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
+    };
 
     const orders = await prisma.order.findMany({
       where,

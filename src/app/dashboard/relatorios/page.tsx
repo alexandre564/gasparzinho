@@ -1,6 +1,7 @@
-import { BarChart3, DollarSign, ShoppingCart } from 'lucide-react';
+import { BarChart3, DollarSign, Download, ShoppingCart } from 'lucide-react';
 
 import SalesChart from '@/components/SalesChart';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSalesReportData, type ReportPeriod } from './actions';
 import { PeriodToggle } from './PeriodToggle';
@@ -64,7 +65,15 @@ export default async function RelatoriosPage({
             Analise as vendas por dia ou por mês, sem pedidos cancelados.
           </p>
         </div>
-        <PeriodToggle period={period} />
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a href={`/api/relatorios/exportar?period=${period}`} download>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar CSV
+            </a>
+          </Button>
+          <PeriodToggle period={period} />
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

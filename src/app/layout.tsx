@@ -4,8 +4,13 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
-  title: 'Gasparzinho',
+  title: {
+    default: 'Gasparzinho',
+    template: '%s | Gasparzinho',
+  },
+  applicationName: 'Gasparzinho',
   description: 'Sistema de vendas, entregas, estoque e financeiro para revenda de gás.',
+  manifest: '/manifest.webmanifest',
   icons: {
     icon: [
       {
@@ -22,6 +27,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: '#020617',
 };
 
 export default function RootLayout({

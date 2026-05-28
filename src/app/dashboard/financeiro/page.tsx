@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
+  Download,
   DollarSign,
   Loader2,
   TrendingDown,
@@ -141,14 +142,22 @@ async function WeeklyChart() {
 export default function FinancialPage() {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Painel financeiro</h1>
-        <Button asChild variant="outline">
-          <Link href="/dashboard/financeiro/despesas">
-            Gerenciar despesas
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline">
+            <a href="/api/financeiro/exportar" download>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar resumo
+            </a>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/financeiro/despesas">
+              Gerenciar despesas
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>

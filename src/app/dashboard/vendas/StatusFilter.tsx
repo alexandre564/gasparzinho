@@ -29,6 +29,10 @@ export function StatusFilter() {
                 <SelectItem value="ALL">Todos os status</SelectItem>
                 <SelectItem value={OrderStatus.PENDENTE}>Pendente</SelectItem>
                 <SelectItem value={OrderStatus.CONFIRMADO}>Confirmado</SelectItem>
+                <SelectItem value={OrderStatus.EM_PREPARO}>Em preparo</SelectItem>
+                <SelectItem value={OrderStatus.PRONTO}>Pronto</SelectItem>
+                <SelectItem value={OrderStatus.ENVIADO}>Enviado</SelectItem>
+                <SelectItem value={OrderStatus.ENTREGUE}>Entregue</SelectItem>
                 <SelectItem value={OrderStatus.CANCELADO}>Cancelado</SelectItem>
             </SelectContent>
         </Select>
