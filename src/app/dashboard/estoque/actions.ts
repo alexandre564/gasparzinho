@@ -316,18 +316,85 @@ export async function importProducts(
 }
 
 const ITEMS_PER_PAGE = 10;
-export async function getPaginatedProducts(query: string, currentPage: number, category?: string) {
+
+export type ProductSortKey = 'name' | 'category' | 'inventory' | 'price' | 'cost';
+export type SortDirection = 'asc' | 'desc';
+
+const productSortKeys: ProductSortKey[] = ['name', 'category', 'inventory', 'price', 'cost'];
+
+function normalizeSortKey(sort?: string): ProductSortKey {
+    return productSortKeys.includes(sort as ProductSortKey) ? (sort as ProductSortKey) : 'name';
+}
+
+function normalizeSortDirection(direction?: string): SortDirection {
+    return direction === 'desc' ? 'desc' : 'asc';
+}
+
+function buildProductOrderBy(sort: ProductSortKey, direction: SortDirection): Prisma.ProductOrderByWithRelationInput {
+    if (sort === 'category') {
+        return { category: direction };
+    }
+
+    if (sort === 'inventory') {
+        return { inventory: direction };
+    }
+
+    if (sort === 'price') {
+        return { price: direction };
+    }
+
+    if (sort === 'cost') {
+        return { cost: direction };
+    }
+
+    return { name: direction };
+}
+
+function getStockFilter(stock?: string): Prisma.IntFilter | undefined {
+    switch (stock) {
+        case 'SEM_ESTOQUE':
+            return { lte: 0 };
+        case 'CRITICO':
+            return { lte: 5 };
+        case 'BAIXO':
+            return { gt: 5, lte: 10 };
+        case 'DISPONIVEL':
+            return { gt: 10 };
+        default:
+            return undefined;
+    }
+}
+
+export async function getPaginatedProducts(
+    query: string,
+    currentPage: number,
+    category?: string,
+    stock?: string,
+    sort?: string,
+    direction?: string,
+) {
     const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+    const trimmedQuery = query.trim();
+    const stockFilter = getStockFilter(stock);
+    const sortKey = normalizeSortKey(sort);
+    const sortDirection = normalizeSortDirection(direction);
 
     const where: Prisma.ProductWhereInput = {
-        ...(query && { name: { contains: query } }),
+        ...(trimmedQuery && {
+            OR: [
+                { name: { contains: trimmedQuery } },
+                { description: { contains: trimmedQuery } },
+                { category: { contains: trimmedQuery.toUpperCase() } },
+            ],
+        }),
         ...(category && { category }),
+        ...(stockFilter && { inventory: stockFilter }),
     };
 
     try {
         const products = await prisma.product.findMany({
             where,
-            orderBy: { name: 'asc' },
+            orderBy: buildProductOrderBy(sortKey, sortDirection),
             take: ITEMS_PER_PAGE,
             skip: offset,
         });

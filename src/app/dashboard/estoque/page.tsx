@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Download, Pencil, PlusCircle } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, Pencil, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,9 @@ import { Search } from '@/components/Search';
 import { CategoryFilter } from './CategoryFilter';
 import DeleteProductButton from './DeleteProductButton';
 import ImportProductsButton from './ImportProductsButton';
+import { StockLevelFilter } from './StockLevelFilter';
 import { getPaginatedProducts } from './actions';
+import type { ProductSortKey, SortDirection } from './actions';
 
 
 export const dynamic = 'force-dynamic';
@@ -44,19 +46,109 @@ function StockBadge({ inventory }: { inventory: number }) {
   return <Badge variant="secondary">{inventory} unidades</Badge>;
 }
 
+const sortLabels: Record<ProductSortKey, string> = {
+  name: 'Produto',
+  category: 'Categoria',
+  inventory: 'Saldo',
+  price: 'Venda',
+  cost: 'Custo',
+};
+
+function normalizeSort(sort?: string): ProductSortKey {
+  if (sort === 'category' || sort === 'inventory' || sort === 'price' || sort === 'cost') {
+    return sort;
+  }
+
+  return 'name';
+}
+
+function normalizeDirection(direction?: string): SortDirection {
+  return direction === 'desc' ? 'desc' : 'asc';
+}
+
+function getDefaultDirection(sort: ProductSortKey): SortDirection {
+  return sort === 'name' || sort === 'category' ? 'asc' : 'desc';
+}
+
+function SortableHeader({
+  field,
+  activeSort,
+  activeDirection,
+  searchParams,
+  className = '',
+}: {
+  field: ProductSortKey;
+  activeSort: ProductSortKey;
+  activeDirection: SortDirection;
+  searchParams: { query?: string; category?: string; stock?: string };
+  className?: string;
+}) {
+  const isActive = activeSort === field;
+  const nextDirection = isActive
+    ? activeDirection === 'asc'
+      ? 'desc'
+      : 'asc'
+    : getDefaultDirection(field);
+  const params = new URLSearchParams();
+
+  if (searchParams.query) params.set('query', searchParams.query);
+  if (searchParams.category) params.set('category', searchParams.category);
+  if (searchParams.stock) params.set('stock', searchParams.stock);
+
+  params.set('page', '1');
+  params.set('sort', field);
+  params.set('direction', nextDirection);
+
+  const Icon = isActive ? (activeDirection === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+  return (
+    <TableHead className={className}>
+      <Link
+        href={`/dashboard/estoque?${params.toString()}`}
+        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-slate-950 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        aria-label={`Ordenar por ${sortLabels[field]}`}
+        title={`Ordenar por ${sortLabels[field]}`}
+      >
+        {sortLabels[field]}
+        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
+      </Link>
+    </TableHead>
+  );
+}
+
 export default async function StockPage({
   searchParams,
 }: {
-  searchParams?: { query?: string; page?: string; category?: string };
+  searchParams?: {
+    query?: string;
+    page?: string;
+    category?: string;
+    stock?: string;
+    sort?: string;
+    direction?: string;
+  };
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const category = searchParams?.category;
-  const { products, totalPages } = await getPaginatedProducts(query, currentPage, category);
+  const stock = searchParams?.stock;
+  const sort = normalizeSort(searchParams?.sort);
+  const direction = normalizeDirection(searchParams?.direction);
+  const { products, totalPages } = await getPaginatedProducts(
+    query,
+    currentPage,
+    category,
+    stock,
+    sort,
+    direction,
+  );
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
   if (category) exportParams.set('category', category);
+  if (stock) exportParams.set('stock', stock);
+  exportParams.set('sort', sort);
+  exportParams.set('direction', direction);
 
   const exportHref = `/api/estoque/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
@@ -103,6 +195,7 @@ export default async function StockPage({
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <Search placeholder="Buscar por nome..." />
             <CategoryFilter />
+            <StockLevelFilter />
           </div>
         </CardHeader>
         <CardContent>
@@ -110,11 +203,39 @@ export default async function StockPage({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead className="text-center">Saldo</TableHead>
-                  <TableHead className="text-right">Venda</TableHead>
-                  <TableHead className="hidden md:table-cell text-right">Custo</TableHead>
+                  <SortableHeader
+                    field="name"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                  />
+                  <SortableHeader
+                    field="category"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                  />
+                  <SortableHeader
+                    field="inventory"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="text-center"
+                  />
+                  <SortableHeader
+                    field="price"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="text-right"
+                  />
+                  <SortableHeader
+                    field="cost"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden md:table-cell text-right"
+                  />
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>

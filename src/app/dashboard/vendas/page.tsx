@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Download, Eye, PlusCircle } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, Eye, PlusCircle } from 'lucide-react';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,9 @@ import {
 import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import { getPaginatedOrders } from './actions';
+import type { OrderSortKey, SortDirection } from './actions';
 import { DateFilter } from './DateFilter';
+import { PaymentMethodFilter } from './PaymentMethodFilter';
 import { StatusFilter } from './StatusFilter';
 import { labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
 
@@ -47,22 +49,125 @@ function getStatusVariant(status: string): BadgeProps['variant'] {
   }
 }
 
+const sortLabels: Record<OrderSortKey, string> = {
+  createdAt: 'Data',
+  customer: 'Cliente',
+  status: 'Status',
+  paymentMethod: 'Pagamento',
+  grossValue: 'Valor',
+};
+
+function normalizeSort(sort?: string): OrderSortKey {
+  if (
+    sort === 'customer' ||
+    sort === 'status' ||
+    sort === 'paymentMethod' ||
+    sort === 'grossValue'
+  ) {
+    return sort;
+  }
+
+  return 'createdAt';
+}
+
+function normalizeDirection(direction?: string): SortDirection {
+  return direction === 'asc' ? 'asc' : 'desc';
+}
+
+function getDefaultDirection(sort: OrderSortKey): SortDirection {
+  return sort === 'customer' || sort === 'status' || sort === 'paymentMethod' ? 'asc' : 'desc';
+}
+
+function SortableHeader({
+  field,
+  activeSort,
+  activeDirection,
+  searchParams,
+  className = '',
+}: {
+  field: OrderSortKey;
+  activeSort: OrderSortKey;
+  activeDirection: SortDirection;
+  searchParams: {
+    query?: string;
+    status?: string;
+    date?: string;
+    paymentMethod?: string;
+  };
+  className?: string;
+}) {
+  const isActive = activeSort === field;
+  const nextDirection = isActive
+    ? activeDirection === 'asc'
+      ? 'desc'
+      : 'asc'
+    : getDefaultDirection(field);
+  const params = new URLSearchParams();
+
+  if (searchParams.query) params.set('query', searchParams.query);
+  if (searchParams.status) params.set('status', searchParams.status);
+  if (searchParams.date) params.set('date', searchParams.date);
+  if (searchParams.paymentMethod) params.set('paymentMethod', searchParams.paymentMethod);
+
+  params.set('page', '1');
+  params.set('sort', field);
+  params.set('direction', nextDirection);
+
+  const Icon = isActive ? (activeDirection === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+  return (
+    <TableHead className={className}>
+      <Link
+        href={`/dashboard/vendas?${params.toString()}`}
+        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-slate-950 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        aria-label={`Ordenar por ${sortLabels[field]}`}
+        title={`Ordenar por ${sortLabels[field]}`}
+      >
+        {sortLabels[field]}
+        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
+      </Link>
+    </TableHead>
+  );
+}
+
 
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams?: { query?: string; page?: string; status?: string; date?: string };
+  searchParams?: {
+    query?: string;
+    page?: string;
+    status?: string;
+    date?: string;
+    paymentMethod?: string;
+    sort?: string;
+    direction?: string;
+  };
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const status = searchParams?.status;
   const date = searchParams?.date;
-  const { orders, totalPages } = await getPaginatedOrders(query, currentPage, status, date);
+  const paymentMethod = searchParams?.paymentMethod;
+  const sort = normalizeSort(searchParams?.sort);
+  const direction = normalizeDirection(searchParams?.direction);
+  const { orders, totalPages } = await getPaginatedOrders(
+    query,
+    currentPage,
+    status,
+    date,
+    paymentMethod,
+    sort,
+    direction,
+  );
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
   if (status) exportParams.set('status', status);
   if (date) exportParams.set('date', date);
+  if (paymentMethod) exportParams.set('paymentMethod', paymentMethod);
+  exportParams.set('sort', sort);
+  exportParams.set('direction', direction);
 
   const exportHref = `/api/vendas/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
@@ -100,8 +205,9 @@ export default async function OrdersPage({
             </CardDescription>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <Search placeholder="Buscar por cliente ou pedido..." />
+            <Search placeholder="Buscar por cliente, telefone, pagamento ou pedido..." />
             <StatusFilter />
+            <PaymentMethodFilter />
             <DateFilter />
           </div>
         </CardHeader>
@@ -111,11 +217,38 @@ export default async function OrdersPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Pedido</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="hidden md:table-cell">Data</TableHead>
+                  <SortableHeader
+                    field="customer"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                  />
+                  <SortableHeader
+                    field="status"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                  />
+                  <SortableHeader
+                    field="paymentMethod"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                  />
+                  <SortableHeader
+                    field="grossValue"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="text-right"
+                  />
+                  <SortableHeader
+                    field="createdAt"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden md:table-cell"
+                  />
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>

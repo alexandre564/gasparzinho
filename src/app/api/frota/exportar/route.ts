@@ -27,11 +27,17 @@ export async function GET(request: NextRequest) {
   }
 
   const query = normalizeText(request.nextUrl.searchParams.get('query'))
+  const status = request.nextUrl.searchParams.get('status')?.trim() ?? ''
+  const type = request.nextUrl.searchParams.get('type')?.trim() ?? ''
   const vehicles = await prisma.vehicle.findMany({
     orderBy: { placa: 'asc' },
   })
-  const filteredVehicles = query
-    ? vehicles.filter((vehicle) =>
+  const filteredVehicles = vehicles.filter((vehicle) => {
+    if (status && vehicle.status !== status) return false
+    if (type && vehicle.tipo !== type) return false
+    if (!query) return true
+
+    return (
         [
           vehicle.placa,
           vehicle.modelo,
@@ -42,9 +48,9 @@ export async function GET(request: NextRequest) {
           labelFrom(vehicleStatusLabels, vehicle.status),
         ]
           .map(normalizeText)
-          .some((value) => value.includes(query)),
-      )
-    : vehicles
+          .some((value) => value.includes(query))
+    )
+  })
 
   const header = ['placa', 'modelo', 'tipo', 'status', 'custo medio km', 'observacoes', 'criado em']
   const rows = filteredVehicles.map((vehicle) => [

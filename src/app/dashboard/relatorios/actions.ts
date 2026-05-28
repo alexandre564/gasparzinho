@@ -7,6 +7,10 @@ export type ReportPeriod = 'daily' | 'monthly';
 export interface SalesReportPoint {
   name: string;
   total: number;
+  expenses: number;
+  net: number;
+  ordersCount: number;
+  avgTicket: number;
 }
 
 function startOfDay(date: Date) {
@@ -29,16 +33,32 @@ function endOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
 }
 
-async function sumOrders(start: Date, end: Date) {
-  const result = await prisma.order.aggregate({
-    _sum: { grossValue: true },
-    where: {
-      createdAt: { gte: start, lte: end },
-      status: { not: 'CANCELADO' },
-    },
-  });
+async function getPeriodTotals(start: Date, end: Date) {
+  const orderWhere = {
+    createdAt: { gte: start, lte: end },
+    status: { not: 'CANCELADO' },
+  };
+  const [ordersTotal, ordersCount, expensesTotal] = await prisma.$transaction([
+    prisma.order.aggregate({
+      _sum: { grossValue: true },
+      where: orderWhere,
+    }),
+    prisma.order.count({ where: orderWhere }),
+    prisma.expense.aggregate({
+      _sum: { value: true },
+      where: { date: { gte: start, lte: end } },
+    }),
+  ]);
+  const total = ordersTotal._sum.grossValue ?? 0;
+  const expenses = expensesTotal._sum.value ?? 0;
 
-  return result._sum.grossValue ?? 0;
+  return {
+    total,
+    expenses,
+    net: total - expenses,
+    ordersCount,
+    avgTicket: ordersCount > 0 ? total / ordersCount : 0,
+  };
 }
 
 export async function getSalesReportData(period: ReportPeriod): Promise<SalesReportPoint[]> {
@@ -48,11 +68,11 @@ export async function getSalesReportData(period: ReportPeriod): Promise<SalesRep
     const points = await Promise.all(
       Array.from({ length: 6 }).map(async (_, index) => {
         const monthDate = new Date(now.getFullYear(), now.getMonth() - index, 1);
-        const total = await sumOrders(startOfMonth(monthDate), endOfMonth(monthDate));
+        const totals = await getPeriodTotals(startOfMonth(monthDate), endOfMonth(monthDate));
 
         return {
           name: monthDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-          total,
+          ...totals,
         };
       })
     );
@@ -64,11 +84,11 @@ export async function getSalesReportData(period: ReportPeriod): Promise<SalesRep
     Array.from({ length: 7 }).map(async (_, index) => {
       const day = new Date(now);
       day.setDate(now.getDate() - index);
-      const total = await sumOrders(startOfDay(day), endOfDay(day));
+      const totals = await getPeriodTotals(startOfDay(day), endOfDay(day));
 
       return {
         name: day.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
-        total,
+        ...totals,
       };
     })
   );

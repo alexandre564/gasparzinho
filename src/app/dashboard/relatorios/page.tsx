@@ -1,8 +1,16 @@
-import { BarChart3, DollarSign, Download, ShoppingCart } from 'lucide-react';
+import { BarChart3, DollarSign, Download, Receipt, TrendingDown } from 'lucide-react';
 
 import SalesChart from '@/components/SalesChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { getSalesReportData, type ReportPeriod } from './actions';
 import { PeriodToggle } from './PeriodToggle';
 
@@ -50,11 +58,19 @@ export default async function RelatoriosPage({
   const period = getPeriod(searchParams?.period);
   const salesData = await getSalesReportData(period);
   const total = salesData.reduce((sum, item) => sum + item.total, 0);
-  const average = salesData.length ? total / salesData.length : 0;
+  const totalExpenses = salesData.reduce((sum, item) => sum + item.expenses, 0);
+  const net = total - totalExpenses;
+  const ordersCount = salesData.reduce((sum, item) => sum + item.ordersCount, 0);
+  const averageTicket = ordersCount > 0 ? total / ordersCount : 0;
   const bestPoint = salesData.reduce(
-    (best, item) => (item.total > best.total ? item : best),
-    { name: '-', total: 0 },
+    (best, item) => (item.net > best.net ? item : best),
+    { name: '-', total: 0, expenses: 0, net: 0, ordersCount: 0, avgTicket: 0 },
   );
+  const chartData = salesData.map((item) => ({
+    name: item.name,
+    Entradas: item.total,
+    Saidas: item.expenses,
+  }));
 
   return (
     <div className="space-y-6">
@@ -76,24 +92,30 @@ export default async function RelatoriosPage({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          title={period === 'monthly' ? 'Total em 6 meses' : 'Total em 7 dias'}
+          title="Entradas"
           value={currency.format(total)}
           description="Soma bruta das vendas no período selecionado."
           icon={DollarSign}
         />
         <SummaryCard
-          title="Média"
-          value={currency.format(average)}
-          description={period === 'monthly' ? 'Média mensal do período.' : 'Média diária do período.'}
+          title="Despesas"
+          value={currency.format(totalExpenses)}
+          description="Soma das despesas no mesmo período."
+          icon={TrendingDown}
+        />
+        <SummaryCard
+          title="Saldo"
+          value={currency.format(net)}
+          description="Entradas menos despesas."
           icon={BarChart3}
         />
         <SummaryCard
-          title="Melhor resultado"
-          value={bestPoint.name}
-          description={currency.format(bestPoint.total)}
-          icon={ShoppingCart}
+          title="Ticket médio"
+          value={currency.format(averageTicket)}
+          description={`${ordersCount} pedido(s) no período.`}
+          icon={Receipt}
         />
       </div>
 
@@ -107,7 +129,48 @@ export default async function RelatoriosPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SalesChart data={salesData} labelPrefix={period === 'monthly' ? 'Mês' : 'Dia'} />
+          <SalesChart data={chartData} labelPrefix={period === 'monthly' ? 'Mês' : 'Dia'} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Detalhamento do período</CardTitle>
+          <CardDescription>
+            Melhor saldo: {bestPoint.name} com {currency.format(bestPoint.net)}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{period === 'monthly' ? 'Mês' : 'Dia'}</TableHead>
+                <TableHead className="text-right">Entradas</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">Despesas</TableHead>
+                <TableHead className="text-right">Saldo</TableHead>
+                <TableHead className="hidden text-center md:table-cell">Pedidos</TableHead>
+                <TableHead className="hidden text-right lg:table-cell">Ticket médio</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {salesData.map((item) => (
+                <TableRow key={item.name}>
+                  <TableCell className="font-semibold">{item.name}</TableCell>
+                  <TableCell className="text-right font-mono">{currency.format(item.total)}</TableCell>
+                  <TableCell className="hidden text-right font-mono text-red-700 sm:table-cell">
+                    {currency.format(item.expenses)}
+                  </TableCell>
+                  <TableCell className="text-right font-mono font-semibold text-emerald-700">
+                    {currency.format(item.net)}
+                  </TableCell>
+                  <TableCell className="hidden text-center md:table-cell">{item.ordersCount}</TableCell>
+                  <TableCell className="hidden text-right font-mono lg:table-cell">
+                    {currency.format(item.avgTicket)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

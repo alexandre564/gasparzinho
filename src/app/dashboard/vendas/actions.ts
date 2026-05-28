@@ -40,6 +40,45 @@ const InventoryMovementType = {
   CANCELAMENTO: 'CANCELAMENTO',
 } as const;
 
+export type OrderSortKey = 'createdAt' | 'customer' | 'status' | 'paymentMethod' | 'grossValue';
+export type SortDirection = 'asc' | 'desc';
+
+const orderSortKeys: OrderSortKey[] = [
+  'createdAt',
+  'customer',
+  'status',
+  'paymentMethod',
+  'grossValue',
+];
+
+function normalizeSortKey(sort?: string): OrderSortKey {
+  return orderSortKeys.includes(sort as OrderSortKey) ? (sort as OrderSortKey) : 'createdAt';
+}
+
+function normalizeSortDirection(direction?: string): SortDirection {
+  return direction === 'asc' ? 'asc' : 'desc';
+}
+
+function buildOrderBy(sort: OrderSortKey, direction: SortDirection): Prisma.OrderOrderByWithRelationInput {
+  if (sort === 'customer') {
+    return { customer: { name: direction } };
+  }
+
+  if (sort === 'grossValue') {
+    return { grossValue: direction };
+  }
+
+  if (sort === 'status') {
+    return { status: direction };
+  }
+
+  if (sort === 'paymentMethod') {
+    return { paymentMethod: direction };
+  }
+
+  return { createdAt: direction };
+}
+
 function parseFilterDate(value?: string) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -256,11 +295,18 @@ export async function getPaginatedOrders(
   currentPage: number,
   status?: string,
   date?: string,
+  paymentMethod?: string,
+  sort?: string,
+  direction?: string,
 ) {
   const ITEMS_PER_PAGE = 10;
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
+    const trimmedQuery = query.trim();
+    const normalizedQuery = trimmedQuery.toUpperCase();
+    const sortKey = normalizeSortKey(sort);
+    const sortDirection = normalizeSortDirection(direction);
     const selectedDate = parseFilterDate(date);
     const dayEnd = selectedDate ? new Date(selectedDate) : null;
 
@@ -269,20 +315,24 @@ export async function getPaginatedOrders(
     }
 
     const where: Prisma.OrderWhereInput = {
-      ...(query && {
+      ...(trimmedQuery && {
         OR: [
-          { customer: { name: { contains: query } } },
-          { id: { contains: query } },
+          { customer: { name: { contains: trimmedQuery } } },
+          { customer: { phone: { contains: trimmedQuery.replace(/\D/g, '') || trimmedQuery } } },
+          { id: { contains: trimmedQuery } },
+          { paymentMethod: { contains: normalizedQuery } },
+          { status: { contains: normalizedQuery } },
         ],
       }),
       ...(status && status !== 'ALL' && { status }),
+      ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
       ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
     };
 
     const orders = await prisma.order.findMany({
       where,
       include: { customer: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: buildOrderBy(sortKey, sortDirection),
       take: ITEMS_PER_PAGE,
       skip: offset,
     });

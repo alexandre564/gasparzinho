@@ -24,13 +24,26 @@ export async function GET(request: NextRequest) {
   const period = getPeriod(request.nextUrl.searchParams.get('period'));
   const points = await getSalesReportData(period);
   const total = points.reduce((sum, point) => sum + point.total, 0);
-  const average = points.length ? total / points.length : 0;
+  const expenses = points.reduce((sum, point) => sum + point.expenses, 0);
+  const ordersCount = points.reduce((sum, point) => sum + point.ordersCount, 0);
+  const net = total - expenses;
+  const averageTicket = ordersCount > 0 ? total / ordersCount : 0;
 
-  const header = ['periodo', 'valor'];
-  const rows = points.map((point) => [point.name, point.total.toFixed(2).replace('.', ',')]);
+  const header = ['periodo', 'entradas', 'despesas', 'saldo', 'pedidos', 'ticket medio'];
+  const rows = points.map((point) => [
+    point.name,
+    point.total.toFixed(2).replace('.', ','),
+    point.expenses.toFixed(2).replace('.', ','),
+    point.net.toFixed(2).replace('.', ','),
+    point.ordersCount,
+    point.avgTicket.toFixed(2).replace('.', ','),
+  ]);
   const summaryRows = [
-    ['total', total.toFixed(2).replace('.', ',')],
-    ['media', average.toFixed(2).replace('.', ',')],
+    ['total entradas', total.toFixed(2).replace('.', ',')],
+    ['total despesas', expenses.toFixed(2).replace('.', ',')],
+    ['saldo', net.toFixed(2).replace('.', ',')],
+    ['pedidos', ordersCount],
+    ['ticket medio', averageTicket.toFixed(2).replace('.', ',')],
   ];
 
   const csv = [

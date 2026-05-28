@@ -23,6 +23,7 @@ import type { DeliveryStatus } from '@/types/enums';
 import StatusFilter from './StatusFilter';
 import StatusUpdater from './StatusUpdater';
 import DeliveryWorkflowActions from './DeliveryWorkflowActions';
+import DeliveryDateRangeFilter from './DeliveryDateRangeFilter';
 import { getPaginatedDeliveries } from './actions';
 import { getDriverWhatsappNumber } from '../configuracoes/actions';
 
@@ -49,19 +50,23 @@ function ItemsSummary({
 export default async function DeliveriesPage({
   searchParams,
 }: {
-  searchParams?: { query?: string; page?: string; status?: DeliveryStatus };
+  searchParams?: { query?: string; page?: string; status?: DeliveryStatus; from?: string; to?: string };
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const status = searchParams?.status;
+  const from = searchParams?.from;
+  const to = searchParams?.to;
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
   if (status) exportParams.set('status', status);
+  if (from) exportParams.set('from', from);
+  if (to) exportParams.set('to', to);
 
   const exportHref = `/api/entregas/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
   const [deliveryData, driverWhatsapp] = await Promise.all([
-    getPaginatedDeliveries(query, currentPage, status),
+    getPaginatedDeliveries(query, currentPage, status, from, to),
     getDriverWhatsappNumber(),
   ]);
   const deliveries = deliveryData.deliveries ?? [];
@@ -93,9 +98,10 @@ export default async function DeliveriesPage({
             </CardDescription>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <Search placeholder="Buscar por cliente ou endereço..." />
+            <Search placeholder="Buscar por cliente, telefone, endereço ou status..." />
             <StatusFilter />
           </div>
+          <DeliveryDateRangeFilter />
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-md border">

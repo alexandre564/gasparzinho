@@ -3,6 +3,7 @@ import { Download, FileSpreadsheet, Pencil, PlusCircle } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
 import ImportVehiclesButton from './ImportVehiclesButton';
+import VehicleFilters from './VehicleFilters';
 import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels';
 import { Search } from '@/components/Search';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
@@ -30,18 +31,18 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-async function getVehicles(query = '') {
+async function getVehicles(query = '', status?: string, type?: string) {
   const vehicles = await prisma.vehicle.findMany({
     orderBy: { placa: 'asc' },
   });
 
   const normalizedQuery = query.trim().toLowerCase();
 
-  if (!normalizedQuery) {
-    return vehicles;
-  }
-
   return vehicles.filter((vehicle) => {
+    if (status && vehicle.status !== status) return false;
+    if (type && vehicle.tipo !== type) return false;
+    if (!normalizedQuery) return true;
+
     const searchable = [
       vehicle.placa,
       vehicle.modelo,
@@ -66,15 +67,19 @@ function getStatusVariant(status: string): BadgeProps['variant'] {
 
 
 type VehiclesPageProps = {
-  searchParams?: { query?: string };
+  searchParams?: { query?: string; status?: string; type?: string };
 };
 
 export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
   const query = searchParams?.query ?? '';
-  const vehicles = await getVehicles(query);
+  const status = searchParams?.status;
+  const type = searchParams?.type;
+  const vehicles = await getVehicles(query, status, type);
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
+  if (status) exportParams.set('status', status);
+  if (type) exportParams.set('type', type);
 
   const exportHref = `/api/frota/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
@@ -110,8 +115,9 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
+        <div className="mb-4 space-y-3">
           <Search placeholder="Buscar por placa, modelo ou status..." />
+          <VehicleFilters />
         </div>
         <Table>
           <TableHeader>

@@ -7,18 +7,53 @@ import { DeliveryStatus } from '@/types/enums';
 
 const ITEMS_PER_PAGE = 15;
 
+function parseFilterDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function getPaginatedDeliveries(
   query: string,
   currentPage: number,
   status?: DeliveryStatus,
+  from?: string,
+  to?: string,
 ) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+  const fromDate = parseFilterDate(from);
+  const toDate = parseFilterDate(to);
+
+  if (toDate) {
+    toDate.setHours(23, 59, 59, 999);
+  }
 
   const where: Prisma.DeliveryWhereInput = {
     ...(status && { status }),
+    ...(fromDate || toDate
+      ? {
+          order: {
+            createdAt: {
+              ...(fromDate ? { gte: fromDate } : {}),
+              ...(toDate ? { lte: toDate } : {}),
+            },
+          },
+        }
+      : {}),
     ...(query && {
       OR: [
         { order: { customer: { name: { contains: query } } } },
+        { order: { customer: { phone: { contains: query } } } },
+        { order: { customer: { street: { contains: query } } } },
+        { order: { customer: { number: { contains: query } } } },
+        { order: { customer: { neighborhood: { contains: query } } } },
+        { order: { customer: { city: { contains: query } } } },
+        { order: { customer: { reference: { contains: query } } } },
+        { order: { paymentMethod: { contains: query.toUpperCase() } } },
+        { status: { contains: query.toUpperCase() } },
         { orderId: { contains: query } },
       ],
     }),

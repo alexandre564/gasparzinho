@@ -21,6 +21,46 @@ function parseFilterDate(value: string) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+type OrderSortKey = 'createdAt' | 'customer' | 'status' | 'paymentMethod' | 'grossValue'
+type SortDirection = 'asc' | 'desc'
+
+function normalizeSortKey(sort?: string): OrderSortKey {
+  if (
+    sort === 'customer' ||
+    sort === 'status' ||
+    sort === 'paymentMethod' ||
+    sort === 'grossValue'
+  ) {
+    return sort
+  }
+
+  return 'createdAt'
+}
+
+function normalizeSortDirection(direction?: string): SortDirection {
+  return direction === 'asc' ? 'asc' : 'desc'
+}
+
+function buildOrderBy(sort: OrderSortKey, direction: SortDirection): Prisma.OrderOrderByWithRelationInput {
+  if (sort === 'customer') {
+    return { customer: { name: direction } }
+  }
+
+  if (sort === 'grossValue') {
+    return { grossValue: direction }
+  }
+
+  if (sort === 'status') {
+    return { status: direction }
+  }
+
+  if (sort === 'paymentMethod') {
+    return { paymentMethod: direction }
+  }
+
+  return { createdAt: direction }
+}
+
 export async function GET(request: NextRequest) {
   const denied = await requireApiAccess(['ADMIN', 'VENDEDOR'])
 
@@ -31,6 +71,10 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? ''
   const status = request.nextUrl.searchParams.get('status')?.trim() ?? ''
   const date = request.nextUrl.searchParams.get('date')?.trim() ?? ''
+  const paymentMethod = request.nextUrl.searchParams.get('paymentMethod')?.trim() ?? ''
+  const sort = normalizeSortKey(request.nextUrl.searchParams.get('sort')?.trim() ?? '')
+  const direction = normalizeSortDirection(request.nextUrl.searchParams.get('direction')?.trim() ?? '')
+  const normalizedQuery = query.toUpperCase()
   const selectedDate = parseFilterDate(date)
   const dayEnd = selectedDate ? new Date(selectedDate) : null
 
@@ -42,10 +86,14 @@ export async function GET(request: NextRequest) {
     ...(query && {
       OR: [
         { customer: { name: { contains: query } } },
+        { customer: { phone: { contains: query.replace(/\D/g, '') || query } } },
         { id: { contains: query } },
+        { paymentMethod: { contains: normalizedQuery } },
+        { status: { contains: normalizedQuery } },
       ],
     }),
     ...(status && status !== 'ALL' && { status }),
+    ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
     ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
   }
 
@@ -61,7 +109,7 @@ export async function GET(request: NextRequest) {
       debt: true,
       delivery: true,
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: buildOrderBy(sort, direction),
   })
 
   const header = [
