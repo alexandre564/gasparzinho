@@ -44,6 +44,25 @@ function getStatusVariant(status: string): BadgeProps['variant'] {
   }
 }
 
+const statusLabels: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  CONFIRMADO: 'Confirmado',
+  PROCESSANDO: 'Processando',
+  EM_PREPARO: 'Em preparo',
+  PRONTO: 'Pronto',
+  ENVIADO: 'Enviado',
+  ENTREGUE: 'Entregue',
+  CONCLUIDO: 'Concluído',
+  CANCELADO: 'Cancelado',
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  DINHEIRO: 'Dinheiro',
+  PIX: 'Pix',
+  CARTAO: 'Cartão',
+  FIADO: 'Fiado',
+};
+
 export default async function OrdersPage({
   searchParams,
 }: {
@@ -103,9 +122,9 @@ export default async function OrdersPage({
                       </TableCell>
                       <TableCell className="font-medium">{order.customer.name}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
+                        <Badge variant={getStatusVariant(order.status)}>{statusLabels[order.status] ?? order.status}</Badge>
                       </TableCell>
-                      <TableCell>{order.paymentMethod}</TableCell>
+                      <TableCell>{paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod}</TableCell>
                       <TableCell className="text-right font-semibold">
                         {formatCurrency(order.grossValue)}
                       </TableCell>

@@ -84,6 +84,15 @@ function getStatusVariant(status: DebtStatus) {
   }
 }
 
+const debtStatusLabels: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  VENCIDO: 'Vencido',
+  PAGO: 'Pago',
+  RENEGOCIADO: 'Renegociado',
+  PENDING: 'Pendente',
+  OVERDUE: 'Vencido',
+};
+
 function SortableHeader({
   field,
   activeSort,
@@ -301,7 +310,9 @@ export default async function CobrancaPage({
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(debt.status as DebtStatus)}>{debt.status}</Badge>
+                        <Badge variant={getStatusVariant(debt.status as DebtStatus)}>
+                          {debtStatusLabels[debt.status] ?? debt.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-2">

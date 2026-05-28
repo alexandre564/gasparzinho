@@ -51,6 +51,13 @@ const getStatusVariant = (status: string): BadgeProps['variant'] => {
   }
 };
 
+const statusLabels: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  VENCIDO: 'Vencido',
+  PAGO: 'Pago',
+  RENEGOCIADO: 'Renegociado',
+};
+
 const formatDate = (date?: Date | null) =>
   date ? new Date(date).toLocaleDateString('pt-BR') : '-';
 
@@ -183,7 +190,9 @@ export default async function Page({ searchParams }: PageProps) {
                           <div className="text-xs text-slate-600">{debt.customer.phone}</div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusVariant(debt.status)}>{debt.status}</Badge>
+                          <Badge variant={getStatusVariant(debt.status)}>
+                            {statusLabels[debt.status] ?? debt.status}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono font-semibold text-emerald-700">
                           {currency.format(debt.renegotiatedValue ?? debt.value)}

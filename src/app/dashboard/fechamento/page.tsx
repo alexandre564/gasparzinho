@@ -35,7 +35,7 @@ export default async function FechamentoPage() {
 
       <ClosingActions data={clientData} isAlreadyClosed={isAlreadyClosed} />
 
-      <Suspense fallback={<p>Carregando historico...</p>}>
+      <Suspense fallback={<p>Carregando histórico...</p>}>
         <ClosingHistory history={history} />
       </Suspense>
     </div>

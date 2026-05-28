@@ -39,6 +39,19 @@ function getStatusVariant(status: string): BadgeProps['variant'] {
   return 'outline';
 }
 
+const vehicleStatusLabels: Record<string, string> = {
+  ATIVO: 'Ativo',
+  INATIVO: 'Inativo',
+  MANUTENCAO: 'Manutenção',
+};
+
+const vehicleTypeLabels: Record<string, string> = {
+  MOTO: 'Moto',
+  CARRO: 'Carro',
+  VAN: 'Van',
+  CAMINHAO: 'Caminhão',
+};
+
 export default async function VehiclesPage() {
   const vehicles = await getVehicles();
 
@@ -76,9 +89,11 @@ export default async function VehiclesPage() {
                 <TableRow key={vehicle.id}>
                   <TableCell className="font-mono font-semibold">{vehicle.placa}</TableCell>
                   <TableCell>{vehicle.modelo}</TableCell>
-                  <TableCell>{vehicle.tipo}</TableCell>
+                  <TableCell>{vehicleTypeLabels[vehicle.tipo] ?? vehicle.tipo}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(vehicle.status)}>{vehicle.status}</Badge>
+                    <Badge variant={getStatusVariant(vehicle.status)}>
+                      {vehicleStatusLabels[vehicle.status] ?? vehicle.status}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">{currency.format(vehicle.custoMedioKm)}</TableCell>
                   <TableCell className="text-right">

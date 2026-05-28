@@ -29,7 +29,7 @@ function SubmitButton() {
     const { pending } = useFormStatus();
     return (
         <Button type="submit" disabled={pending} className="w-full">
-            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Adicionando...</> : 'Adicionar Despesa'}
+            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Adicionando...</> : 'Adicionar despesa'}
         </Button>
     )
 }
@@ -81,7 +81,7 @@ export default function ExpenseForm() {
 
         <div className="flex items-center space-x-2">
             <Checkbox id="isRecurring" name="isRecurring" value="true" />
-            <label htmlFor="isRecurring" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Despesa Recorrente</label>
+            <label htmlFor="isRecurring" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Despesa recorrente</label>
         </div>
 
         <SubmitButton/>

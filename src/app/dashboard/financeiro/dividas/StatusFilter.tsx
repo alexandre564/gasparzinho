@@ -12,6 +12,13 @@ import { DebtStatus } from './types';
 
 const statuses: DebtStatus[] = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO'];
 
+const statusLabels: Record<DebtStatus, string> = {
+  PENDENTE: 'Pendente',
+  VENCIDO: 'Vencido',
+  RENEGOCIADO: 'Renegociado',
+  PAGO: 'Pago',
+};
+
 export default function StatusFilter() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -42,8 +49,7 @@ export default function StatusFilter() {
         <SelectItem value="TODOS">Todos os status</SelectItem>
         {statuses.map((status) => (
           <SelectItem key={status} value={status}>
-            {status.charAt(0).toUpperCase() +
-              status.slice(1).toLowerCase().replace('_', ' ')}
+            {statusLabels[status]}
           </SelectItem>
         ))}
       </SelectContent>
