@@ -68,14 +68,14 @@ export default function SalesChart({
           }}
           formatter={(value, name) => [
             formatCurrency(Number(value)),
-            name === 'Saidas' ? 'Saidas' : name,
+            name === 'Saidas' ? 'Saídas' : name,
           ]}
           labelFormatter={(label) => `${labelPrefix}: ${label}`}
         />
         {hasFinanceSeries ? (
           <>
             <Bar dataKey="Entradas" fill="#047857" radius={[5, 5, 0, 0]} />
-            <Bar dataKey="Saidas" name="Saidas" fill="#dc2626" radius={[5, 5, 0, 0]} />
+            <Bar dataKey="Saidas" name="Saídas" fill="#dc2626" radius={[5, 5, 0, 0]} />
           </>
         ) : (
           <Bar dataKey="total" name="Vendas" fill="#047857" radius={[5, 5, 0, 0]} />

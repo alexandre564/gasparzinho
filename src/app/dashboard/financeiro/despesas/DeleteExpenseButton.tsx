@@ -35,13 +35,18 @@ export default function DeleteExpenseButton({ id }: { id: string }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive/80">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive/80"
+          aria-label="Excluir despesa"
+        >
            <Trash2 className="h-4 w-4"/>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Exclusão?</AlertDialogTitle>
+          <AlertDialogTitle>Confirmar exclusão?</AlertDialogTitle>
           <AlertDialogDescription>
             Esta ação irá excluir a despesa permanentemente. A operação não pode ser desfeita.
           </AlertDialogDescription>
@@ -49,7 +54,7 @@ export default function DeleteExpenseButton({ id }: { id: string }) {
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} disabled={isPending} className='bg-destructive hover:bg-destructive/80'>
-             {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Excluindo...</> : 'Sim, Excluir'}
+             {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Excluindo...</> : 'Sim, excluir'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

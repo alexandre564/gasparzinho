@@ -39,7 +39,7 @@ export default function StatusFilter() {
         <SelectValue placeholder="Filtrar por status..." />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="TODOS">Todos os Status</SelectItem>
+        <SelectItem value="TODOS">Todos os status</SelectItem>
         {statuses.map((status) => (
           <SelectItem key={status} value={status}>
             {status.charAt(0).toUpperCase() +

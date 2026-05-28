@@ -11,9 +11,8 @@ async function deleteExpense(formData: FormData) {
     try {
         await prisma.expense.delete({ where: { id } });
         revalidatePath('/dashboard/financeiro/despesas');
-    } catch (error) {
-        console.error('Error deleting expense:', error);
-        // Handle error appropriately in a real app
+    } catch {
+        throw new Error('Falha ao excluir despesa.');
     }
 }
 
