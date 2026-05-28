@@ -40,6 +40,7 @@ export default function DeleteExpenseButton({ id }: { id: string }) {
           size="sm"
           className="text-destructive hover:text-destructive/80"
           aria-label="Excluir despesa"
+          title="Excluir despesa"
         >
            <Trash2 className="h-4 w-4"/>
         </Button>

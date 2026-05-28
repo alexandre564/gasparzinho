@@ -140,7 +140,11 @@ export default async function OrdersPage({
                       <TableCell>
                         <div className="flex justify-end">
                           <Button asChild variant="outline" size="icon" className="h-8 w-8">
-                            <Link href={`/dashboard/vendas/${order.id}`}>
+                            <Link
+                              href={`/dashboard/vendas/${order.id}`}
+                              aria-label={`Ver detalhes do pedido ${order.id.slice(-8).toUpperCase()}`}
+                              title="Ver detalhes"
+                            >
                               <Eye className="h-4 w-4" />
                               <span className="sr-only">Ver detalhes</span>
                             </Link>

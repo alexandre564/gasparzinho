@@ -64,13 +64,14 @@ export async function getPaginatedDebts(
 
 export async function getTotalOpenDebt() {
   try {
-    const total = await prisma.debt.aggregate({
-      _sum: { value: true },
+    const debts = await prisma.debt.findMany({
+      select: { value: true, renegotiatedValue: true },
       where: { status: { in: [...OPEN_DEBT_STATUSES] } },
     });
+    const totalOpen = debts.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0);
 
     return {
-      totalOpen: total._sum.value ?? 0,
+      totalOpen,
     };
   } catch (error) {
     console.error('Database Error:', error);

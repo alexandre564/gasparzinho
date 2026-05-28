@@ -17,6 +17,7 @@ export type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 10;
 const debtSortKeys: DebtSortKey[] = ['customer', 'phone', 'value', 'dueDate', 'daysLate', 'status', 'paidAt'];
+const debtStatusFilterValues = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO'] as const;
 
 const optionalDate = z.preprocess((value) => {
   if (value === '' || value === null || value === undefined) return undefined;
@@ -65,6 +66,12 @@ function normalizeSortKey(sort?: string): DebtSortKey {
 
 function normalizeSortDirection(direction?: string): SortDirection {
   return direction === 'desc' ? 'desc' : 'asc';
+}
+
+function normalizeStatusFilter(status?: string) {
+  return debtStatusFilterValues.includes(status as (typeof debtStatusFilterValues)[number])
+    ? status
+    : undefined;
 }
 
 function calculateDaysLate(dueDate: Date, paidAt?: Date | null) {
@@ -162,10 +169,12 @@ export async function getPaginatedDebts(
   currentPage: number,
   sort?: string,
   direction?: string,
+  status?: string,
 ) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
   const sortKey = normalizeSortKey(sort);
   const sortDirection = normalizeSortDirection(direction);
+  const statusFilter = normalizeStatusFilter(status);
   const normalizedQuery = query.trim();
 
   const debts = await prisma.debt.findMany({
@@ -179,6 +188,7 @@ export async function getPaginatedDebts(
   const sortedDebts = debts
     .map(enhanceDebt)
     .filter((debt) => debtMatchesSearch(debt, normalizedQuery))
+    .filter((debt) => !statusFilter || debt.status === statusFilter)
     .sort((left, right) => {
       const openOrder = Number(right.isOpen) - Number(left.isOpen);
 
@@ -373,6 +383,24 @@ function parseMoneyValue(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function normalizeImportedDebtStatus(value: string, paidAt: Date | null) {
+  const normalized = normalizeHeader(value);
+
+  if (paidAt || ['pago', 'paga', 'quitado', 'quitada', 'paid'].includes(normalized)) {
+    return 'PAGO';
+  }
+
+  if (['vencido', 'vencida', 'atrasado', 'atrasada', 'overdue'].includes(normalized)) {
+    return 'VENCIDO';
+  }
+
+  if (['renegociado', 'renegociada', 'renegociacao', 'renegociação'].includes(normalized)) {
+    return 'RENEGOCIADO';
+  }
+
+  return 'PENDENTE';
+}
+
 function parseDebtsCsv(text: string) {
   const cleanText = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const rawLines = cleanText.split('\n').map((line) => line.trim()).filter(Boolean);
@@ -432,7 +460,7 @@ export async function importDebts(
     let updated = 0;
 
     for (const row of rows) {
-      const importedStatus = row.status || (row.paidAt ? 'PAGO' : 'PENDENTE');
+      const importedStatus = normalizeImportedDebtStatus(row.status, row.paidAt);
 
       if (!row.dueDate || row.value < 0 || (row.value === 0 && importedStatus !== 'PAGO') || (!row.customerName && !row.phone)) {
         continue;

@@ -1,1 +1,1 @@
-export type DebtStatus = 'PENDENTE' | 'PAGO' | 'VENCIDO' | 'RENEGOCIADO';
+export type DebtStatus = 'PENDENTE' | 'PAGO' | 'VENCIDO' | 'RENEGOCIADO' | 'CANCELADA';

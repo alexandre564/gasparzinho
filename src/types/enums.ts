@@ -17,6 +17,7 @@ export const DebtStatus = {
   VENCIDO: 'VENCIDO',
   PAGO: 'PAGO',
   RENEGOCIADO: 'RENEGOCIADO',
+  CANCELADA: 'CANCELADA',
   PENDING: 'PENDING',
   OVERDUE: 'OVERDUE',
 } as const;

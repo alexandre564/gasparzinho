@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import {
   ArrowRight,
   Calendar,
@@ -16,6 +17,7 @@ import { RepurchasePrediction } from '@/services/recompra';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { Search } from '@/components/Search';
 import {
   Card,
   CardContent,
@@ -28,12 +30,16 @@ import {
 export const dynamic = 'force-dynamic';
 const periodOptions = [3, 7, 15];
 
-function FilterButton({ days, currentDays }: { days: number; currentDays: number }) {
+function FilterButton({ days, currentDays, query }: { days: number; currentDays: number; query: string }) {
   const isActive = days === currentDays;
+  const params = new URLSearchParams();
+
+  params.set('days', String(days));
+  if (query) params.set('query', query);
 
   return (
     <Button asChild variant={isActive ? 'default' : 'outline'} size="sm">
-      <Link href={`/dashboard/recompra?days=${days}`}>Próximos {days} dias</Link>
+      <Link href={`/dashboard/recompra?${params.toString()}`}>Próximos {days} dias</Link>
     </Button>
   );
 }
@@ -116,11 +122,17 @@ function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
 export default async function RecompraPreditivaPage({
   searchParams,
 }: {
-  searchParams?: { days?: string };
+  searchParams?: { days?: string; query?: string };
 }) {
   const requestedDays = Number(searchParams?.days) || 3;
   const days = periodOptions.includes(requestedDays) ? requestedDays : 3;
-  const predictions = await getRepurchasePredictions(days);
+  const query = searchParams?.query ?? '';
+  const exportParams = new URLSearchParams();
+
+  exportParams.set('days', String(days));
+  if (query) exportParams.set('query', query);
+
+  const predictions = await getRepurchasePredictions(days, query);
 
   return (
     <div className="space-y-6">
@@ -133,15 +145,21 @@ export default async function RecompraPreditivaPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
-            <a href={`/api/recompra/exportar?days=${days}`} download>
+            <a href={`/api/recompra/exportar?${exportParams.toString()}`} download>
               <Download className="mr-2 h-4 w-4" />
               Exportar CSV
             </a>
           </Button>
           {periodOptions.map((option) => (
-            <FilterButton key={option} days={option} currentDays={days} />
+            <FilterButton key={option} days={option} currentDays={days} query={query} />
           ))}
         </div>
+      </div>
+
+      <div className="rounded-lg border bg-white p-4 shadow-sm">
+        <Suspense fallback={<div className="h-11 w-full max-w-xl rounded-md border bg-white" />}>
+          <Search placeholder="Buscar recompra por cliente, telefone ou produto..." />
+        </Suspense>
       </div>
 
       {predictions.length > 0 ? (

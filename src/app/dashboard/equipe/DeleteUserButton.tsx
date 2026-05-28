@@ -43,6 +43,7 @@ export function DeleteUserButton({ userId }: DeleteUserButtonProps) {
           size="sm"
           className="h-9 gap-2 border-red-200 text-red-700 hover:border-red-300 hover:bg-red-50"
           aria-label="Excluir membro"
+          title="Excluir membro"
         >
           <Trash2 className="h-4 w-4" />
           Excluir

@@ -36,7 +36,13 @@ export default function DeleteProductButton({ id }: { id: string }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="icon" className="h-8 w-8">
+        <Button
+          variant="destructive"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Excluir produto"
+          title="Excluir produto"
+        >
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">Excluir</span>
         </Button>

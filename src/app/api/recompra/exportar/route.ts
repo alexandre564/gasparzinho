@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-const REPURCHASE_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE'] as const;
+const REPURCHASE_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CONCLUIDO'] as const;
 const GLOBAL_AVG_INTERVAL_DAYS = 15;
 
 function csvCell(value: unknown) {
@@ -33,6 +33,18 @@ function calculateAverageInterval(orders: { createdAt: Date }[]) {
   return Math.max(1, Math.round(intervals.reduce((sum, value) => sum + value, 0) / intervals.length));
 }
 
+function normalizeText(value: string | null | undefined) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function onlyDigits(value: string | null | undefined) {
+  return (value ?? '').replace(/\D/g, '');
+}
+
 export async function GET(request: NextRequest) {
   const denied = await requireApiAccess(["ADMIN","VENDEDOR"]);
 
@@ -42,6 +54,7 @@ export async function GET(request: NextRequest) {
 
   const daysParam = Number(request.nextUrl.searchParams.get('days') ?? '15');
   const days = Number.isFinite(daysParam) && daysParam > 0 ? Math.min(daysParam, 90) : 15;
+  const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
 
   const customers = await prisma.customer.findMany({
     include: {
@@ -68,8 +81,20 @@ export async function GET(request: NextRequest) {
       const avgInterval = calculateAverageInterval(customer.orders);
       const predictedNextPurchaseDate = addDays(lastOrder.createdAt, avgInterval);
       const daysUntilNextPurchase = differenceInCalendarDays(predictedNextPurchaseDate, new Date());
+      const term = normalizeText(query);
+      const digits = onlyDigits(query);
+      const textMatch = [
+        customer.name,
+        customer.phone,
+        customer.city,
+        lastOrder.items[0]?.product.name,
+      ]
+        .map(normalizeText)
+        .some((value) => value.includes(term));
+      const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
 
       if (daysUntilNextPurchase < 0 || daysUntilNextPurchase > days) return null;
+      if ((term || digits) && !textMatch && !phoneMatch) return null;
 
       return {
         customer,

@@ -81,12 +81,14 @@
     background: rgba(16, 185, 129, 0.24);
   }
 
+  input,
   textarea,
   select {
     font-size: 16px;
   }
 
   @media (min-width: 640px) {
+    input,
     textarea,
     select {
       font-size: 0.875rem;

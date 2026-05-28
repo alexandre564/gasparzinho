@@ -36,7 +36,13 @@ export default function DeleteCustomerButton({ id }: { id: string }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="icon" className="h-8 w-8">
+        <Button
+          variant="destructive"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Excluir cliente"
+          title="Excluir cliente"
+        >
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">Excluir</span>
         </Button>

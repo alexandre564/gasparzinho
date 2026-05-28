@@ -1,26 +1,16 @@
 import Link from "next/link";
 import {
-  AlertCircle,
-  Banknote,
-  Building2,
   Bell,
   CircleUser,
-  ClipboardPen,
   Download,
-  FileText,
-  Home,
   Menu,
-  Package,
-  Settings,
-  ShoppingCart,
-  Truck,
-  Users,
 } from "lucide-react";
 import { auth } from "@/auth";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { Button } from "@/components/ui/button";
+import { appNavLinks, roleLabels } from "@/lib/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,34 +21,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const mobileLinks = [
-  { href: "/dashboard", icon: Home, label: "Página principal", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/clientes", icon: Users, label: "Clientes", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/estoque", icon: Package, label: "Estoque", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/entregas", icon: Truck, label: "Entregas", roles: ["ADMIN", "ENTREGADOR"] },
-  { href: "/dashboard/recompra", icon: Building2, label: "Recompra", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/cobranca", icon: AlertCircle, label: "Cobrança", roles: ["ADMIN"] },
-  { href: "/dashboard/financeiro", icon: Banknote, label: "Financeiro", roles: ["ADMIN"] },
-  { href: "/dashboard/relatorios", icon: FileText, label: "Relatórios", roles: ["ADMIN"] },
-  { href: "/dashboard/equipe", icon: Users, label: "Equipe", roles: ["ADMIN"] },
-  { href: "/dashboard/frota", icon: Truck, label: "Frota", roles: ["ADMIN"] },
-  { href: "/dashboard/fechamento", icon: ClipboardPen, label: "Fechamento", roles: ["ADMIN"] },
-  { href: "/dashboard/configuracoes", icon: Settings, label: "Configurações", roles: ["ADMIN", "VENDEDOR", "ENTREGADOR"] },
-];
-
-const roleLabels: Record<string, string> = {
-  ADMIN: "Administrador",
-  VENDEDOR: "Vendedor",
-  ENTREGADOR: "Entregador",
-};
-
 export default async function Header() {
   const session = await auth();
   const userRole = session?.user?.role?.toUpperCase() || "";
   const userName = session?.user?.name || session?.user?.email || "Usuário";
   const roleLabel = roleLabels[userRole] ?? (userRole || "Sem autorização");
-  const visibleMobileLinks = mobileLinks.filter((link) => link.roles.includes(userRole));
+  const visibleMobileLinks = appNavLinks.filter((link) =>
+    (link.roles as readonly string[]).includes(userRole),
+  );
 
   return (
     <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur sm:gap-3 sm:px-4 lg:flex-nowrap lg:pl-6 lg:pr-8">

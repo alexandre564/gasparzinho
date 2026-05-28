@@ -22,6 +22,7 @@ export const debtStatusLabels: Record<string, string> = {
   VENCIDO: 'Vencido',
   PAGO: 'Pago',
   RENEGOCIADO: 'Renegociado',
+  CANCELADA: 'Cancelada',
   PENDING: 'Pendente',
   OVERDUE: 'Vencido',
 };

@@ -28,6 +28,7 @@ import ImportDebtsButton from './ImportDebtsButton';
 import type { DebtStatus } from '@/types/enums';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
+import StatusFilter from './StatusFilter';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,7 +97,7 @@ function SortableHeader({
   field: DebtSortKey;
   activeSort: DebtSortKey;
   activeDirection: SortDirection;
-  searchParams: { query?: string };
+  searchParams: { query?: string; status?: string };
   className?: string;
 }) {
   const isActive = activeSort === field;
@@ -109,6 +110,10 @@ function SortableHeader({
 
   if (searchParams.query) {
     params.set('query', searchParams.query);
+  }
+
+  if (searchParams.status) {
+    params.set('status', searchParams.status);
   }
 
   params.set('page', '1');
@@ -154,19 +159,23 @@ function getDelayText(debt: DebtListItem) {
 export default async function CobrancaPage({
   searchParams,
 }: {
-  searchParams?: { query?: string; page?: string; sort?: string; direction?: string };
+  searchParams?: { query?: string; page?: string; sort?: string; direction?: string; status?: string };
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const sort = normalizeSort(searchParams?.sort);
   const direction = normalizeDirection(searchParams?.direction);
+  const status = searchParams?.status;
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
+  if (status) exportParams.set('status', status);
+  exportParams.set('sort', sort);
+  exportParams.set('direction', direction);
 
   const exportHref = `/api/cobranca/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
   const [{ debts, totalPages, totalDebts }, messageTemplate] = await Promise.all([
-    getPaginatedDebts(query, currentPage, sort, direction),
+    getPaginatedDebts(query, currentPage, sort, direction, status),
     getCollectionMessageTemplate(),
   ]);
 
@@ -200,9 +209,14 @@ export default async function CobrancaPage({
           <Suspense fallback={<div className="h-11 w-full max-w-xl rounded-md border bg-white" />}>
             <Search placeholder="Buscar por cliente, telefone, status ou observação..." />
           </Suspense>
-          <span className="text-sm font-semibold text-slate-600">
-            {totalDebts} registro(s) de cobrança
-          </span>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Suspense fallback={<div className="h-11 w-full rounded-md border bg-white sm:w-[210px]" />}>
+              <StatusFilter />
+            </Suspense>
+            <span className="text-sm font-semibold text-slate-600">
+              {totalDebts} registro(s) de cobrança
+            </span>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

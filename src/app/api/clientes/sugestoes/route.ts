@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       reference: true,
       debts: {
         where: { status: { in: [...OPEN_DEBT_STATUSES] } },
-        select: { value: true },
+        select: { value: true, renegotiatedValue: true },
       },
     },
   });
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
       name: customer.name,
       phone: customer.phone,
       address: [customer.street, customer.neighborhood, customer.city].filter(Boolean).join(' - '),
-      totalDebt: customer.debts.reduce((sum, debt) => sum + debt.value, 0),
+      totalDebt: customer.debts.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0),
     }));
 
   return NextResponse.json({ customers: filtered });

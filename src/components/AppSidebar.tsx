@@ -1,48 +1,18 @@
 import Link from 'next/link';
-import {
-  AlertCircle,
-  Banknote,
-  Building2,
-  ClipboardPen,
-  Download,
-  FileText,
-  Home,
-  Package,
-  Settings,
-  ShoppingCart,
-  Truck,
-  Users2,
-} from 'lucide-react';
+import { Download } from 'lucide-react';
 import { auth } from '@/auth';
 import { BrandLogo } from '@/components/BrandLogo';
-
-const roleLabels: Record<string, string> = {
-  ADMIN: 'Administrador',
-  VENDEDOR: 'Vendedor',
-  ENTREGADOR: 'Entregador',
-};
-
-const navLinks = [
-  { href: '/dashboard', icon: Home, label: 'Página principal', roles: ['ADMIN', 'VENDEDOR'] },
-  { href: '/dashboard/clientes', icon: Users2, label: 'Clientes', roles: ['ADMIN', 'VENDEDOR'] },
-  { href: '/dashboard/vendas', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'VENDEDOR'] },
-  { href: '/dashboard/estoque', icon: Package, label: 'Estoque', roles: ['ADMIN', 'VENDEDOR'] },
-  { href: '/dashboard/entregas', icon: Truck, label: 'Entregas', roles: ['ADMIN', 'ENTREGADOR'] },
-  { href: '/dashboard/recompra', icon: Building2, label: 'Recompra', roles: ['ADMIN', 'VENDEDOR'] },
-  { href: '/dashboard/cobranca', icon: AlertCircle, label: 'Cobrança', roles: ['ADMIN'] },
-  { href: '/dashboard/financeiro', icon: Banknote, label: 'Financeiro', roles: ['ADMIN'] },
-  { href: '/dashboard/relatorios', icon: FileText, label: 'Relatórios', roles: ['ADMIN'] },
-  { href: '/dashboard/equipe', icon: Users2, label: 'Equipe', roles: ['ADMIN'] },
-  { href: '/dashboard/frota', icon: Truck, label: 'Frota', roles: ['ADMIN'] },
-  { href: '/dashboard/fechamento', icon: ClipboardPen, label: 'Fechamento', roles: ['ADMIN'] },
-];
+import { mainNavLinks, roleLabels, settingsNavLink } from '@/lib/navigation';
 
 export default async function Sidebar() {
   const session = await auth();
   const userRole = session?.user?.role?.toUpperCase() || '';
   const userName = session?.user?.name || session?.user?.email || 'Usuário';
   const roleLabel = roleLabels[userRole] ?? (userRole || 'Sem autorização');
-  const filteredNavLinks = navLinks.filter((link) => link.roles.includes(userRole));
+  const filteredNavLinks = mainNavLinks.filter((link) =>
+    (link.roles as readonly string[]).includes(userRole),
+  );
+  const canAccessSettings = (settingsNavLink.roles as readonly string[]).includes(userRole);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl lg:flex lg:flex-col">
@@ -76,15 +46,17 @@ export default async function Sidebar() {
       </nav>
 
       <div className="space-y-2 border-t border-slate-800 p-3">
-        <Link
-          href="/dashboard/configuracoes"
-          className="group flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-slate-400 group-hover:bg-emerald-500 group-hover:text-white">
-            <Settings className="h-4 w-4" />
-          </span>
-          Configurações
-        </Link>
+        {canAccessSettings ? (
+          <Link
+            href={settingsNavLink.href}
+            className="group flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-slate-400 group-hover:bg-emerald-500 group-hover:text-white">
+              <settingsNavLink.icon className="h-4 w-4" />
+            </span>
+            {settingsNavLink.label}
+          </Link>
+        ) : null}
         <a
           href="/api/backup"
           download

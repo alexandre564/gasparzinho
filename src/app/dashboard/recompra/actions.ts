@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 import type { RepurchasePrediction } from '@/services/recompra';
 
 const GLOBAL_AVG_INTERVAL_DAYS = 15;
-const REPURCHASE_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE'] as const;
+const REPURCHASE_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CONCLUIDO'] as const;
 
 async function getCustomersWithOrderHistory() {
   return prisma.customer.findMany({
@@ -86,6 +86,37 @@ function buildPrediction(customer: CustomerWithOrderHistory): RepurchasePredicti
   };
 }
 
+function normalizeText(value: string | null | undefined) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function onlyDigits(value: string | null | undefined) {
+  return (value ?? '').replace(/\D/g, '');
+}
+
+function predictionMatchesSearch(prediction: RepurchasePrediction, query: string) {
+  const term = normalizeText(query);
+  const digits = onlyDigits(query);
+
+  if (!term && !digits) return true;
+
+  const textMatch = [
+    prediction.customer.name,
+    prediction.customer.phone,
+    prediction.customer.city,
+    prediction.lastOrder?.items[0]?.product.name,
+  ]
+    .map(normalizeText)
+    .some((value) => value.includes(term));
+  const phoneMatch = Boolean(digits) && onlyDigits(prediction.customer.phone).includes(digits);
+
+  return textMatch || phoneMatch;
+}
+
 /**
  * Gets repurchase predictions for customers based on a specified time frame.
  * @param days - The number of days ahead to look for predicted repurchases.
@@ -93,12 +124,14 @@ function buildPrediction(customer: CustomerWithOrderHistory): RepurchasePredicti
  */
 export async function getRepurchasePredictions(
   days: number = 3,
+  query: string = '',
 ): Promise<RepurchasePrediction[]> {
   const customers = await getCustomersWithOrderHistory();
 
   return customers
     .map(buildPrediction)
     .filter((prediction): prediction is RepurchasePrediction => Boolean(prediction))
+    .filter((prediction) => predictionMatchesSearch(prediction, query))
     .filter(
       (prediction) =>
         prediction.daysUntilNextPurchase >= 0 &&
