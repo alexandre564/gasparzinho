@@ -8,6 +8,10 @@ import type { DebtStatus } from './dividas/types';
 const DEBT_ITEMS_PER_PAGE = 10;
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
 
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, '');
+}
+
 export async function getPaginatedDebts(
   query: string,
   currentPage: number,
@@ -15,9 +19,21 @@ export async function getPaginatedDebts(
 ) {
   const offset = (currentPage - 1) * DEBT_ITEMS_PER_PAGE;
 
+  const trimmedQuery = query.trim();
+  const queryDigits = onlyDigits(trimmedQuery);
   const where: Prisma.DebtWhereInput = {
-    ...(query ? { customer: { name: { contains: query } } } : {}),
-    ...(status ? { status } : { status: { in: [...OPEN_DEBT_STATUSES] } }),
+    ...(trimmedQuery
+      ? {
+          OR: [
+            { customer: { name: { contains: trimmedQuery } } },
+            { customer: { phone: { contains: trimmedQuery } } },
+            { status: { contains: trimmedQuery.toUpperCase() } },
+            { notes: { contains: trimmedQuery } },
+            ...(queryDigits ? [{ customer: { phone: { contains: queryDigits } } }] : []),
+          ],
+        }
+      : {}),
+    ...(status ? { status } : {}),
   };
 
   try {
@@ -29,7 +45,7 @@ export async function getPaginatedDebts(
             select: { name: true, phone: true },
           },
         },
-        orderBy: { dueDate: 'asc' },
+        orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
         take: DEBT_ITEMS_PER_PAGE,
         skip: offset,
       }),
@@ -42,7 +58,7 @@ export async function getPaginatedDebts(
     };
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Falha ao buscar dividas.');
+    throw new Error('Falha ao buscar dívidas.');
   }
 }
 
@@ -58,6 +74,6 @@ export async function getTotalOpenDebt() {
     };
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Falha ao buscar o total de dividas abertas.');
+    throw new Error('Falha ao buscar o total de dívidas abertas.');
   }
 }

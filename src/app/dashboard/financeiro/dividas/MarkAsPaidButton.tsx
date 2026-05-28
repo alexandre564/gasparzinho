@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { DollarSign, Loader2 } from 'lucide-react';
 
 import {
   AlertDialog,
@@ -16,7 +17,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { DollarSign, Loader2 } from 'lucide-react';
 
 export default function MarkAsPaidButton({ id }: { id: string }) {
   const [isPending, setIsPending] = useState(false);
@@ -50,7 +50,13 @@ export default function MarkAsPaidButton({ id }: { id: string }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-green-600 hover:text-green-700"
+          aria-label="Marcar dívida como paga"
+          title="Marcar como paga"
+        >
           <DollarSign className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
