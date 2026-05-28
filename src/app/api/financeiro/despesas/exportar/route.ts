@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -10,14 +10,25 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-export async function GET() {
-  const session = await auth();
+export async function GET(request: NextRequest) {
+  const denied = await requireApiAccess(["ADMIN"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
+  const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
+  const category = request.nextUrl.searchParams.get('category')?.trim() ?? '';
   const expenses = await prisma.expense.findMany({
+    where: {
+      ...(query && {
+        OR: [
+          { description: { contains: query } },
+          { category: { contains: query } },
+        ],
+      }),
+      ...(category && { category }),
+    },
     orderBy: { date: 'desc' },
   });
 

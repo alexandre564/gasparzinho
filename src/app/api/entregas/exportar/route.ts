@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 
-import { auth } from '@/auth'
+import { requireApiAccess } from '@/lib/api-auth';
 import { deliveryStatusLabels, labelFrom, paymentMethodLabels } from '@/lib/labels'
 import { prisma } from '@/lib/prisma'
 
@@ -13,10 +13,10 @@ function csvCell(value: unknown) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await auth()
+  const denied = await requireApiAccess(['ADMIN', 'ENTREGADOR'])
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+  if (denied) {
+    return denied
   }
 
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? ''

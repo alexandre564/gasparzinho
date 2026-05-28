@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 import { labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
 import { prisma } from '@/lib/prisma';
 
@@ -21,10 +21,10 @@ function section(title: string, header: string[], rows: unknown[][]) {
 }
 
 export async function GET() {
-  const session = await auth();
+  const denied = await requireApiAccess(["ADMIN"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
   const [customers, products, orders, debts, expenses, vehicles, closings] = await Promise.all([

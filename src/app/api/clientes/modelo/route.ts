@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,10 +34,10 @@ function csvCell(value: string) {
 }
 
 export async function GET() {
-  const session = await auth();
+  const denied = await requireApiAccess(["ADMIN","VENDEDOR"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
   const csv = ['sep=;', header.map(csvCell).join(';'), example.map(csvCell).join(';')].join('\r\n');

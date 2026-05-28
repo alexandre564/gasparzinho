@@ -53,6 +53,12 @@ export default async function StockPage({
   const currentPage = Number(searchParams?.page) || 1;
   const category = searchParams?.category;
   const { products, totalPages } = await getPaginatedProducts(query, currentPage, category);
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+  if (category) exportParams.set('category', category);
+
+  const exportHref = `/api/estoque/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
   return (
     <div className="space-y-6">
@@ -65,7 +71,7 @@ export default async function StockPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild size="sm" variant="outline" className="gap-2">
-            <a href="/api/estoque/exportar" download>
+            <a href={exportHref} download>
               <Download className="h-4 w-4" />
               Exportar CSV
             </a>

@@ -1,9 +1,16 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { requireApiAccess } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 
 export async function PATCH(request: Request) {
+  const denied = await requireApiAccess(['ADMIN']);
+
+  if (denied) {
+    return denied;
+  }
+
   try {
     const body = await request.json();
     const { id } = body as { id?: string };

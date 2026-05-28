@@ -72,6 +72,11 @@ type VehiclesPageProps = {
 export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
   const query = searchParams?.query ?? '';
   const vehicles = await getVehicles(query);
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+
+  const exportHref = `/api/frota/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
   return (
     <Card>
@@ -83,7 +88,7 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
             <Button asChild variant="outline" size="sm">
-              <a href="/api/frota/exportar" download>
+              <a href={exportHref} download>
                 <Download className="mr-2 h-4 w-4" />
                 Exportar CSV
               </a>

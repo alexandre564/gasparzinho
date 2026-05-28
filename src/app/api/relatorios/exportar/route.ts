@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 import { getSalesReportData, type ReportPeriod } from '@/app/dashboard/relatorios/actions';
 
 export const dynamic = 'force-dynamic';
@@ -15,10 +15,10 @@ function getPeriod(value: string | null): ReportPeriod {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
+  const denied = await requireApiAccess(["ADMIN"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
   const period = getPeriod(request.nextUrl.searchParams.get('period'));

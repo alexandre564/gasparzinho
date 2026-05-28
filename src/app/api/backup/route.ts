@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -13,10 +13,10 @@ function backupReplacer(_key: string, value: unknown) {
 }
 
 export async function GET() {
-  const session = await auth();
+  const denied = await requireApiAccess(["ADMIN"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
   const [

@@ -1,7 +1,7 @@
 import { addDays, differenceInCalendarDays } from 'date-fns';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -34,10 +34,10 @@ function calculateAverageInterval(orders: { createdAt: Date }[]) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
+  const denied = await requireApiAccess(["ADMIN","VENDEDOR"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
   const daysParam = Number(request.nextUrl.searchParams.get('days') ?? '15');

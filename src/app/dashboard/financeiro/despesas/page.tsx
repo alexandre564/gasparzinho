@@ -45,6 +45,14 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   const currentPage = Number(searchParams?.page) || 1;
   const category = searchParams?.category;
   const { expenses, totalPages } = await getPaginatedExpenses(query, currentPage, category);
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+  if (category) exportParams.set('category', category);
+
+  const exportHref = `/api/financeiro/despesas/exportar${
+    exportParams.toString() ? `?${exportParams.toString()}` : ''
+  }`;
 
   return (
     <div className="space-y-4">
@@ -57,7 +65,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href="/api/financeiro/despesas/exportar">
+            <Link href={exportHref}>
               <Download className="mr-2 h-4 w-4" />
               Exportar CSV
             </Link>

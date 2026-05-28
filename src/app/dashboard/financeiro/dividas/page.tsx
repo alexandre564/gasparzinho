@@ -129,6 +129,7 @@ export default async function Page({ searchParams }: PageProps) {
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
+  if (status) exportParams.set('status', status);
 
   const exportHref = `/api/cobranca/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 

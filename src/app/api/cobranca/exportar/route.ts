@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -54,14 +54,18 @@ function debtMatchesSearch(debt: ExportDebt, query: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
+  const denied = await requireApiAccess(["ADMIN"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
+  const status = request.nextUrl.searchParams.get('status')?.trim() ?? '';
   const debts = await prisma.debt.findMany({
+    where: {
+      ...(status && { status }),
+    },
     orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
     include: {
       customer: { select: { name: true, phone: true } },

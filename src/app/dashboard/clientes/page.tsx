@@ -121,6 +121,13 @@ export default async function CustomersPage({
   const sort = normalizeSort(searchParams?.sort);
   const direction = normalizeDirection(searchParams?.direction);
   const { customers, totalPages } = await getPaginatedCustomers(query, currentPage, sort, direction);
+  const exportParams = new URLSearchParams();
+
+  if (query) exportParams.set('query', query);
+  exportParams.set('sort', sort);
+  exportParams.set('direction', direction);
+
+  const exportHref = `/api/clientes/exportar?${exportParams.toString()}`;
 
   return (
     <div className="space-y-6">
@@ -133,7 +140,7 @@ export default async function CustomersPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild size="sm" variant="outline" className="gap-2">
-            <a href="/api/clientes/exportar" download>
+            <a href={exportHref} download>
               <Download className="h-4 w-4" />
               Exportar CSV
             </a>

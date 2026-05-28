@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -9,28 +9,102 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-export async function GET() {
-  const session = await auth();
+function normalizeText(value: string | null | undefined) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+function onlyDigits(value: string | null | undefined) {
+  return (value ?? '').replace(/\D/g, '');
+}
+
+type ExportCustomer = Awaited<ReturnType<typeof prisma.customer.findMany>>[number] & {
+  orders: { createdAt: Date }[];
+  debts: { value: number; renegotiatedValue: number | null }[];
+};
+
+function customerMatchesSearch(customer: ExportCustomer, query: string) {
+  const term = normalizeText(query);
+  const digits = onlyDigits(query);
+
+  if (!term && !digits) return true;
+
+  const textMatch = [
+    customer.name,
+    customer.phone,
+    customer.cep,
+    customer.street,
+    customer.number,
+    customer.complement,
+    customer.neighborhood,
+    customer.city,
+    customer.reference,
+  ]
+    .map(normalizeText)
+    .some((value) => value.includes(term));
+  const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
+
+  return textMatch || phoneMatch;
+}
+
+function getCustomerMetrics(customer: ExportCustomer) {
+  const lastPurchase = customer.orders[0]?.createdAt ?? null;
+  const daysSinceLastPurchase = lastPurchase
+    ? Math.floor((Date.now() - lastPurchase.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const totalDebt = customer.debts.reduce(
+    (sum, debt) => sum + (debt.renegotiatedValue ?? debt.value),
+    0,
+  );
+
+  return { lastPurchase, daysSinceLastPurchase, totalDebt };
+}
+
+export async function GET(request: NextRequest) {
+  const denied = await requireApiAccess(["ADMIN","VENDEDOR"]);
+
+  if (denied) {
+    return denied;
   }
 
+  const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
+  const sort = request.nextUrl.searchParams.get('sort') ?? 'lastPurchase';
+  const direction = request.nextUrl.searchParams.get('direction') === 'asc' ? 'asc' : 'desc';
   const customers = await prisma.customer.findMany({
     orderBy: { name: 'asc' },
-    select: {
-      name: true,
-      phone: true,
-      cep: true,
-      street: true,
-      number: true,
-      complement: true,
-      neighborhood: true,
-      city: true,
-      reference: true,
-      createdAt: true,
+    include: {
+      orders: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true },
+      },
+      debts: {
+        where: { status: { in: ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] } },
+        select: { value: true, renegotiatedValue: true },
+      },
     },
   });
+  const filteredCustomers = customers
+    .filter((customer) => customerMatchesSearch(customer, query))
+    .sort((left, right) => {
+      const leftMetrics = getCustomerMetrics(left);
+      const rightMetrics = getCustomerMetrics(right);
+      let result = 0;
+
+      if (sort === 'name') result = left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' });
+      else if (sort === 'city') result = left.city.localeCompare(right.city, 'pt-BR', { sensitivity: 'base' });
+      else if (sort === 'daysSinceLastPurchase') {
+        result = (leftMetrics.daysSinceLastPurchase ?? Number.MAX_SAFE_INTEGER) -
+          (rightMetrics.daysSinceLastPurchase ?? Number.MAX_SAFE_INTEGER);
+      } else {
+        result = (leftMetrics.lastPurchase?.getTime() ?? 0) - (rightMetrics.lastPurchase?.getTime() ?? 0);
+      }
+
+      return direction === 'asc' ? result : -result;
+    });
 
   const header = [
     'Name',
@@ -50,27 +124,37 @@ export async function GET() {
     'cidade',
     'referencia',
     'criado_em',
+    'ultima_compra',
+    'dias_sem_comprar',
+    'divida_aberta',
   ];
 
-  const rows = customers.map((customer) => [
-    customer.name,
-    customer.name,
-    'Mobile',
-    customer.phone,
-    [customer.street, customer.number, customer.complement, customer.neighborhood].filter(Boolean).join(', '),
-    customer.city,
-    customer.reference,
-    customer.name,
-    customer.phone,
-    customer.cep,
-    customer.street,
-    customer.number,
-    customer.complement,
-    customer.neighborhood,
-    customer.city,
-    customer.reference,
-    customer.createdAt.toLocaleDateString('pt-BR'),
-  ]);
+  const rows = filteredCustomers.map((customer) => {
+    const metrics = getCustomerMetrics(customer);
+
+    return [
+      customer.name,
+      customer.name,
+      'Mobile',
+      customer.phone,
+      [customer.street, customer.number, customer.complement, customer.neighborhood].filter(Boolean).join(', '),
+      customer.city,
+      customer.reference,
+      customer.name,
+      customer.phone,
+      customer.cep,
+      customer.street,
+      customer.number,
+      customer.complement,
+      customer.neighborhood,
+      customer.city,
+      customer.reference,
+      customer.createdAt.toLocaleDateString('pt-BR'),
+      metrics.lastPurchase?.toLocaleDateString('pt-BR') ?? '',
+      metrics.daysSinceLastPurchase ?? '',
+      metrics.totalDebt.toFixed(2).replace('.', ','),
+    ];
+  });
 
   const csv = [
     'sep=;',

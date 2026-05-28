@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -42,10 +42,10 @@ function matchesCustomer(customer: {
 }
 
 export async function GET(request: Request) {
-  const session = await auth();
+  const denied = await requireApiAccess(["ADMIN","VENDEDOR"]);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  if (denied) {
+    return denied;
   }
 
   const { searchParams } = new URL(request.url);

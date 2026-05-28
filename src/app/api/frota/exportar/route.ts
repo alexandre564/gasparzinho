@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-import { auth } from '@/auth'
+import { requireApiAccess } from '@/lib/api-auth';
 import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels'
 import { prisma } from '@/lib/prisma'
 
@@ -11,19 +11,43 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`
 }
 
-export async function GET() {
-  const session = await auth()
+function normalizeText(value: string | null | undefined) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+export async function GET(request: NextRequest) {
+  const denied = await requireApiAccess(['ADMIN'])
+
+  if (denied) {
+    return denied
   }
 
+  const query = normalizeText(request.nextUrl.searchParams.get('query'))
   const vehicles = await prisma.vehicle.findMany({
     orderBy: { placa: 'asc' },
   })
+  const filteredVehicles = query
+    ? vehicles.filter((vehicle) =>
+        [
+          vehicle.placa,
+          vehicle.modelo,
+          vehicle.tipo,
+          vehicle.status,
+          vehicle.observacoes ?? '',
+          labelFrom(vehicleTypeLabels, vehicle.tipo),
+          labelFrom(vehicleStatusLabels, vehicle.status),
+        ]
+          .map(normalizeText)
+          .some((value) => value.includes(query)),
+      )
+    : vehicles
 
   const header = ['placa', 'modelo', 'tipo', 'status', 'custo medio km', 'observacoes', 'criado em']
-  const rows = vehicles.map((vehicle) => [
+  const rows = filteredVehicles.map((vehicle) => [
     vehicle.placa,
     vehicle.modelo,
     labelFrom(vehicleTypeLabels, vehicle.tipo),
