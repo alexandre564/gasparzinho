@@ -71,8 +71,8 @@ const paymentMethods = Object.values(PaymentMethod);
 const paymentMethodLabels: Record<string, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
-  CARTAO_CREDITO: 'Cartao de credito',
-  CARTAO_DEBITO: 'Cartao de debito',
+  CARTAO_CREDITO: 'Cartão de crédito',
+  CARTAO_DEBITO: 'Cartão de débito',
   FIADO: 'Fiado / a prazo',
 };
 
@@ -192,13 +192,13 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   const customerWhatsapp = selectedCustomer
     ? buildWhatsAppUrl(
         selectedCustomer.phone,
-        `Ola ${selectedCustomer.name}, seu pedido na Gas Gasparzinho foi registrado e sera separado para entrega. Total: ${formatCurrency(grossValue)}.`,
+        `Olá ${selectedCustomer.name}, seu pedido na Gás Gasparzinho foi registrado e será separado para entrega. Total: ${formatCurrency(grossValue)}.`,
       )
     : '#';
 
   const driverMessage = selectedCustomer
-    ? `Nova entrega Gas Gasparzinho\nCliente: ${selectedCustomer.name}\nTelefone: ${selectedCustomer.phone}\nItens: ${selectedItemsSummary || 'Ver pedido no sistema'}\nTotal: ${formatCurrency(grossValue)}`
-    : 'Nova entrega Gas Gasparzinho. Confira os detalhes do pedido no sistema.';
+    ? `Nova entrega Gás Gasparzinho\nCliente: ${selectedCustomer.name}\nTelefone: ${selectedCustomer.phone}\nItens: ${selectedItemsSummary || 'Ver pedido no sistema'}\nTotal: ${formatCurrency(grossValue)}`
+    : 'Nova entrega Gás Gasparzinho. Confira os detalhes do pedido no sistema.';
   const driverWhatsappUrl = buildWhatsAppUrl(driverWhatsapp, driverMessage);
 
   async function onSubmit(values: OrderFormValues) {
@@ -237,7 +237,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-600">
-            Agora voce pode avisar o cliente, encaminhar a entrega e acompanhar o andamento.
+            Agora você pode avisar o cliente, encaminhar a entrega e acompanhar o andamento.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button asChild className="gap-2" disabled={!selectedCustomer}>
@@ -505,7 +505,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Valor liquido:</span>
+                  <span>Valor líquido:</span>
                   <span>{formatCurrency(netValue)}</span>
                 </div>
               </CardContent>

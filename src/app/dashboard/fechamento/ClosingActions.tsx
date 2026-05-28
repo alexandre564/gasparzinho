@@ -53,7 +53,7 @@ export default function ClosingActions({ data, isAlreadyClosed }: Props) {
       .map((item) => `- ${item.name}: ${item.units}`)
       .join('\n');
 
-    const message = `*Fechamento Gas Gasparzinho - ${today}*
+    const message = `*Fechamento Gás Gasparzinho - ${today}*
 
 *Vendas:* ${ordersCount}
 *Entradas:* ${formatCurrency(totalRevenue)}
@@ -97,14 +97,14 @@ Mensagem gerada automaticamente pelo sistema.`;
             ) : (
               <Lock className="mr-2 h-4 w-4" />
             )}
-            {isAlreadyClosed ? 'Fechamento ja realizado' : 'Fechar o dia'}
+            {isAlreadyClosed ? 'Fechamento já realizado' : 'Fechar o dia'}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar fechamento do dia</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acao salva um resumo permanente das financas de hoje. Confira os
+              Esta ação salva um resumo permanente das finanças de hoje. Confira os
               valores antes de confirmar.
             </AlertDialogDescription>
           </AlertDialogHeader>

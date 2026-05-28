@@ -58,7 +58,7 @@ function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
   const firstName = customer.name.split(' ')[0] || customer.name;
   const lastOrderProduct = lastOrder?.items[0]?.product.name || 'produto';
   const daysText = daysUntilNextPurchase <= 0 ? 'hoje' : `em ${daysUntilNextPurchase} dia(s)`;
-  const whatsappMessage = `Ola ${firstName}, tudo bem? Vi aqui que talvez esteja chegando a hora de repor ${lastOrderProduct}. Posso separar um novo pedido para voce?`;
+  const whatsappMessage = `Olá ${firstName}, tudo bem? Vi aqui que talvez esteja chegando a hora de repor ${lastOrderProduct}. Posso separar um novo pedido para você?`;
   const whatsappUrl = buildWhatsAppUrl(customer.phone, whatsappMessage);
 
   return (

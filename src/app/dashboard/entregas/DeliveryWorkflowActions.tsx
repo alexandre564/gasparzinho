@@ -50,8 +50,8 @@ export default function DeliveryWorkflowActions({
   const [pending, setPending] = useState(false);
   const address = `${customer.street}, ${customer.number} - ${customer.neighborhood}, ${customer.city}`;
   const orderSummary = itemsText(items);
-  const customerMessage = `Ola ${customer.name}, seu pedido na Gas Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentMethod}.`;
-  const driverMessage = `Entrega Gas Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereco: ${address}\nReferencia: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentMethod}${hasOpenDebt ? ' / A RECEBER' : ''}`;
+  const customerMessage = `Olá ${customer.name}, seu pedido na Gás Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentMethod}.`;
+  const driverMessage = `Entrega Gás Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereço: ${address}\nReferência: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentMethod}${hasOpenDebt ? ' / A RECEBER' : ''}`;
   const customerWhatsapp = buildWhatsAppUrl(customer.phone, customerMessage);
   const driverWhatsappLink = buildWhatsAppUrl(driverWhatsapp, driverMessage);
 

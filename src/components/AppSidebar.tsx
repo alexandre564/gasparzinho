@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 import {
   AlertCircle,
   Banknote,
@@ -12,36 +12,36 @@ import {
   ShoppingCart,
   Truck,
   Users2,
-} from "lucide-react";
-import { auth } from "@/auth";
-import { BrandLogo } from "@/components/BrandLogo";
+} from 'lucide-react';
+import { auth } from '@/auth';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const roleLabels: Record<string, string> = {
-  ADMIN: "Administrador",
-  VENDEDOR: "Vendedor",
-  ENTREGADOR: "Entregador",
+  ADMIN: 'Administrador',
+  VENDEDOR: 'Vendedor',
+  ENTREGADOR: 'Entregador',
 };
 
 const navLinks = [
-  { href: "/dashboard", icon: Home, label: "Página principal", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/clientes", icon: Users2, label: "Clientes", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/vendas", icon: ShoppingCart, label: "Vendas", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/estoque", icon: Package, label: "Estoque", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/entregas", icon: Truck, label: "Entregas", roles: ["ADMIN", "ENTREGADOR"] },
-  { href: "/dashboard/recompra", icon: Building2, label: "Recompra", roles: ["ADMIN", "VENDEDOR"] },
-  { href: "/dashboard/cobranca", icon: AlertCircle, label: "Cobrança", roles: ["ADMIN"] },
-  { href: "/dashboard/financeiro", icon: Banknote, label: "Financeiro", roles: ["ADMIN"] },
-  { href: "/dashboard/relatorios", icon: FileText, label: "Relatórios", roles: ["ADMIN"] },
-  { href: "/dashboard/equipe", icon: Users2, label: "Equipe", roles: ["ADMIN"] },
-  { href: "/dashboard/frota", icon: Truck, label: "Frota", roles: ["ADMIN"] },
-  { href: "/dashboard/fechamento", icon: ClipboardPen, label: "Fechamento", roles: ["ADMIN"] },
+  { href: '/dashboard', icon: Home, label: 'Página principal', roles: ['ADMIN', 'VENDEDOR'] },
+  { href: '/dashboard/clientes', icon: Users2, label: 'Clientes', roles: ['ADMIN', 'VENDEDOR'] },
+  { href: '/dashboard/vendas', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'VENDEDOR'] },
+  { href: '/dashboard/estoque', icon: Package, label: 'Estoque', roles: ['ADMIN', 'VENDEDOR'] },
+  { href: '/dashboard/entregas', icon: Truck, label: 'Entregas', roles: ['ADMIN', 'ENTREGADOR'] },
+  { href: '/dashboard/recompra', icon: Building2, label: 'Recompra', roles: ['ADMIN', 'VENDEDOR'] },
+  { href: '/dashboard/cobranca', icon: AlertCircle, label: 'Cobrança', roles: ['ADMIN'] },
+  { href: '/dashboard/financeiro', icon: Banknote, label: 'Financeiro', roles: ['ADMIN'] },
+  { href: '/dashboard/relatorios', icon: FileText, label: 'Relatórios', roles: ['ADMIN'] },
+  { href: '/dashboard/equipe', icon: Users2, label: 'Equipe', roles: ['ADMIN'] },
+  { href: '/dashboard/frota', icon: Truck, label: 'Frota', roles: ['ADMIN'] },
+  { href: '/dashboard/fechamento', icon: ClipboardPen, label: 'Fechamento', roles: ['ADMIN'] },
 ];
 
 export default async function Sidebar() {
   const session = await auth();
-  const userRole = session?.user?.role?.toUpperCase() || "";
-  const userName = session?.user?.name || session?.user?.email || "Usuário";
-  const roleLabel = roleLabels[userRole] ?? (userRole || "Sem autorização");
+  const userRole = session?.user?.role?.toUpperCase() || '';
+  const userName = session?.user?.name || session?.user?.email || 'Usuário';
+  const roleLabel = roleLabels[userRole] ?? (userRole || 'Sem autorização');
   const filteredNavLinks = navLinks.filter((link) => link.roles.includes(userRole));
 
   return (
