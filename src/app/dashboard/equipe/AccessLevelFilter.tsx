@@ -24,7 +24,7 @@ export function AccessLevelFilter() {
 
   return (
     <div className="relative flex-1 flex-shrink-0">
-      <label htmlFor="role-filter" className="sr-only">Filtrar por nivel de acesso</label>
+      <label htmlFor="role-filter" className="sr-only">Filtrar por nível de acesso</label>
       <select
         id="role-filter"
         onChange={handleRoleChange}

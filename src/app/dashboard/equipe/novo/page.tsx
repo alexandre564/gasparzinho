@@ -41,7 +41,7 @@ export default function NovoMembroPage() {
             </div>
 
             <div className="grid gap-2">
-              <label htmlFor="role" className="text-sm font-bold text-slate-800">Nivel de acesso</label>
+              <label htmlFor="role" className="text-sm font-bold text-slate-800">N?vel de acesso</label>
               <select
                 name="role"
                 id="role"

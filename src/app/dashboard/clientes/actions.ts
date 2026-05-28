@@ -289,7 +289,7 @@ export async function getPaginatedCustomers(
         };
     } catch (err) {
         console.error('Database Error:', err);
-        throw new Error('Failed to fetch customers.');
+        throw new Error('Falha ao buscar clientes.');
     }
 }
 export async function getCustomerById(id: string) {
@@ -298,7 +298,7 @@ export async function getCustomerById(id: string) {
     return customer;
   } catch (err) {
     console.error('Database Error:', err);
-    throw new Error('Failed to fetch customer.');
+    throw new Error('Falha ao buscar cliente.');
   }
 }
 

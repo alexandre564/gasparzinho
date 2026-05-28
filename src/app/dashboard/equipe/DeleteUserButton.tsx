@@ -2,35 +2,70 @@
 
 import { deleteUser } from './actions';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 
 interface DeleteUserButtonProps {
   userId: string;
 }
 
 export function DeleteUserButton({ userId }: DeleteUserButtonProps) {
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
-      const formData = new FormData();
-      formData.append('id', userId);
-      const result = await deleteUser(formData);
+  const handleDelete = async () => {
+    const formData = new FormData();
+    formData.append('id', userId);
+    const result = await deleteUser(formData);
 
-      if (result?.message) {
-        toast.success(result.message);
-      } else {
-        // Assumindo que um erro resultaria em uma exceção capturada na action
-        // e a mensagem viria no `catch` da action
-        toast.error('Não foi possível excluir o usuário.');
-      }
+    if (result?.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result?.message || 'Não foi possível excluir o usuário.');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'inline' }}>
-      <input type="hidden" name="id" value={userId} />
-      <button type="submit" className="text-red-600 hover:text-red-800">
-        Excluir
-      </button>
-    </form>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 gap-2 border-red-200 text-red-700 hover:border-red-300 hover:bg-red-50"
+          aria-label="Excluir membro"
+        >
+          <Trash2 className="h-4 w-4" />
+          Excluir
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir membro da equipe?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação remove o acesso deste usuário ao sistema. Use apenas quando o membro não
+            precisar mais entrar no Gasparzinho.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-red-600 text-white hover:bg-red-700"
+            onClick={handleDelete}
+          >
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

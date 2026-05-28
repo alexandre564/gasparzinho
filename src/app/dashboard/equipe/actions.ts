@@ -18,7 +18,7 @@ type UserFormInput = {
 
 const UserFormSchema = z.object({
   name: z.string().trim().min(3, { message: 'O nome deve ter no minimo 3 caracteres.' }),
-  email: z.string().trim().email({ message: 'Email invalido.' }).transform((email) => email.toLowerCase()),
+  email: z.string().trim().email({ message: 'Email inv?lido.' }).transform((email) => email.toLowerCase()),
   role: z.enum(TEAM_ROLE_VALUES),
   isActive: z.boolean().default(true),
   password: z
@@ -68,7 +68,7 @@ export async function createUser(data: UserFormInput) {
     });
 
     if (existingUser) {
-      return { success: false, message: 'Ja existe um membro com este email.' };
+      return { success: false, message: 'J? existe um membro com este email.' };
     }
 
     const hashedPassword = await bcrypt.hash(validatedFields.data.password ?? 'senha123', 10);
@@ -88,12 +88,12 @@ export async function createUser(data: UserFormInput) {
     return {
       success: true,
       message: validatedFields.data.password
-        ? 'Usuario criado com sucesso.'
-        : 'Usuario criado com sucesso. Senha inicial: senha123.',
+        ? 'Usu?rio criado com sucesso.'
+        : 'Usu?rio criado com sucesso. Senha inicial: senha123.',
     };
   } catch (error) {
     console.error('Database Error:', error);
-    return { success: false, message: 'Falha ao criar o usuario no banco de dados.' };
+    return { success: false, message: 'Falha ao criar o usu?rio no banco de dados.' };
   }
 }
 
@@ -140,12 +140,12 @@ export async function updateUser(id: string, data: UserFormInput) {
     return {
       success: true,
       message: validatedFields.data.password
-        ? 'Usuario, email e senha atualizados com sucesso.'
-        : 'Usuario atualizado com sucesso.',
+        ? 'Usu?rio, email e senha atualizados com sucesso.'
+        : 'Usu?rio atualizado com sucesso.',
     };
   } catch (error) {
     console.error('Database Error:', error);
-    return { success: false, message: 'Falha ao atualizar o usuario no banco de dados.' };
+    return { success: false, message: 'Falha ao atualizar o usu?rio no banco de dados.' };
   }
 }
 
@@ -167,10 +167,10 @@ export async function deleteUser(formData: FormData) {
   try {
     await prisma.user.delete({ where: { id } });
     revalidatePath('/dashboard/equipe');
-    return { success: true, message: 'Usuario excluido com sucesso.' };
+    return { success: true, message: 'Usu?rio exclu?do com sucesso.' };
   } catch (error) {
     console.error('Database Error:', error);
-    return { success: false, message: 'Falha ao excluir o usuario.' };
+    return { success: false, message: 'Falha ao excluir o usu?rio.' };
   }
 }
 
@@ -178,7 +178,7 @@ export async function updateUserRole(userId: string, role: string) {
   const parsedRole = z.enum(TEAM_ROLE_VALUES).safeParse(role);
 
   if (!parsedRole.success) {
-    return { success: false, message: 'Nivel de acesso invalido.' };
+    return { success: false, message: 'N?vel de acesso inv?lido.' };
   }
 
   try {
@@ -191,10 +191,10 @@ export async function updateUserRole(userId: string, role: string) {
     });
 
     revalidatePath('/dashboard/equipe');
-    return { success: true, message: 'Nivel de acesso atualizado com sucesso.' };
+    return { success: true, message: 'N?vel de acesso atualizado com sucesso.' };
   } catch (error) {
     console.error('Database Error:', error);
-    return { success: false, message: 'Falha ao atualizar o nivel de acesso.' };
+    return { success: false, message: 'Falha ao atualizar o n?vel de acesso.' };
   }
 }
 

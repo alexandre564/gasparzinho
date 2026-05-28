@@ -22,7 +22,7 @@ export default async function EditUserPage({ params }: { params: { id: string } 
         <CardHeader className="border-b border-slate-200 bg-slate-50">
           <CardTitle className="text-2xl font-extrabold text-slate-950">Editar membro</CardTitle>
           <CardDescription>
-            Atualize nome, email de login, senha, situacao e nivel de acesso deste membro da equipe.
+            Atualize nome, email de login, senha, situação e nível de acesso deste membro da equipe.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">

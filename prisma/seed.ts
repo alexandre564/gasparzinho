@@ -145,7 +145,7 @@ async function seedDemoData() {
 async function main() {
   await seedUsers();
   await seedDemoData();
-  console.log('Seed concluido. Usuarios e dados iniciais disponiveis.');
+  console.log('Seed conclu?do. Usu?rios e dados iniciais dispon?veis.');
 }
 
 main()
