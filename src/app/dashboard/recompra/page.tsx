@@ -32,7 +32,7 @@ function FilterButton({ days, currentDays }: { days: number; currentDays: number
 
   return (
     <Button asChild variant={isActive ? 'default' : 'outline'} size="sm">
-      <Link href={`/dashboard/recompra?days=${days}`}>Proximos {days} dias</Link>
+      <Link href={`/dashboard/recompra?days=${days}`}>Próximos {days} dias</Link>
     </Button>
   );
 }

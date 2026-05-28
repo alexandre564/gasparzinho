@@ -98,7 +98,7 @@ async function RecentExpenses() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Descricao</TableHead>
+              <TableHead>Descrição</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="hidden text-center md:table-cell">Data</TableHead>
             </TableRow>
@@ -129,7 +129,7 @@ async function WeeklyChart() {
     <Card>
       <CardHeader>
         <CardTitle>Balanco semanal</CardTitle>
-        <CardDescription>Receitas e despesas dos ultimos 7 dias.</CardDescription>
+        <CardDescription>Receitas e despesas dos últimos 7 dias.</CardDescription>
       </CardHeader>
       <CardContent>
         <SalesChart data={chartData} />

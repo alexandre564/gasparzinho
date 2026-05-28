@@ -36,9 +36,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { createProduct, ProductFormState, updateProduct } from './actions';
 
 const ProductFormSchema = z.object({
-  name: z.string().min(3, 'O nome deve ter no minimo 3 caracteres.'),
+  name: z.string().min(3, 'O nome deve ter no mínimo 3 caracteres.'),
   description: z.string().optional(),
-  price: z.coerce.number().positive('O preco de venda deve ser positivo.'),
+  price: z.coerce.number().positive('O preço de venda deve ser positivo.'),
   cost: z.coerce.number().nonnegative('O custo não pode ser negativo.'),
   category: z.nativeEnum(ProductCategory),
   stockKind: z.nativeEnum(StockKind),
@@ -52,9 +52,9 @@ interface ProductFormProps {
 }
 
 const categoryLabels: Record<string, string> = {
-  BOTIJAO: 'Botijao',
-  AGUA: 'Agua',
-  ACESSORIO: 'Acessorio',
+  BOTIJAO: 'Botijão',
+  AGUA: 'Água',
+  ACESSORIO: 'Acessório',
   OUTROS: 'Outros',
 };
 
@@ -113,7 +113,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                 <FormItem>
                   <FormLabel>Nome do produto</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Ex: Botijao de gas P13" />
+                    <Input {...field} placeholder="Ex: Botijão de gás P13" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,7 +125,7 @@ export default function ProductForm({ product }: ProductFormProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descricao (opcional)</FormLabel>
+                  <FormLabel>Descrição (opcional)</FormLabel>
                   <FormControl>
                     <Textarea {...field} placeholder="Detalhes sobre o produto..." />
                   </FormControl>

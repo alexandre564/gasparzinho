@@ -71,13 +71,13 @@ export default async function RelatoriosPage({
         <SummaryCard
           title={period === 'monthly' ? 'Total em 6 meses' : 'Total em 7 dias'}
           value={currency.format(total)}
-          description="Soma bruta das vendas no periodo selecionado."
+          description="Soma bruta das vendas no período selecionado."
           icon={DollarSign}
         />
         <SummaryCard
-          title="Media"
+          title="Média"
           value={currency.format(average)}
-          description={period === 'monthly' ? 'Media mensal do periodo.' : 'Media diaria do periodo.'}
+          description={period === 'monthly' ? 'Média mensal do período.' : 'Média diária do período.'}
           icon={BarChart3}
         />
         <SummaryCard
@@ -90,15 +90,15 @@ export default async function RelatoriosPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{period === 'monthly' ? 'Vendas mensais' : 'Vendas diarias'}</CardTitle>
+          <CardTitle>{period === 'monthly' ? 'Vendas mensais' : 'Vendas diárias'}</CardTitle>
           <CardDescription>
             {period === 'monthly'
-              ? 'Comparativo dos ultimos 6 meses.'
-              : 'Comparativo dos ultimos 7 dias.'}
+              ? 'Comparativo dos últimos 6 meses.'
+              : 'Comparativo dos últimos 7 dias.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SalesChart data={salesData} labelPrefix={period === 'monthly' ? 'Mes' : 'Dia'} />
+          <SalesChart data={salesData} labelPrefix={period === 'monthly' ? 'Mês' : 'Dia'} />
         </CardContent>
       </Card>
     </div>

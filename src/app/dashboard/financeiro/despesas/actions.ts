@@ -20,7 +20,7 @@ export type CreateExpenseState = {
 };
 
 const ExpenseSchema = z.object({
-  description: z.string().min(3, { message: 'Descricao deve ter no minimo 3 caracteres.' }),
+  description: z.string().min(3, { message: 'Descrição deve ter no mínimo 3 caracteres.' }),
   value: z.coerce.number().positive({ message: 'Valor deve ser positivo.' }),
   date: z.coerce.date({ error: 'Data invalida.' }),
   category: z.string().min(1, { message: 'Por favor, selecione uma categoria.' }),
@@ -91,7 +91,7 @@ export async function deleteExpense(id: string): Promise<{ success: boolean; mes
     await prisma.expense.delete({ where: { id } });
     revalidatePath('/dashboard/financeiro');
     revalidatePath('/dashboard/financeiro/despesas');
-    return { success: true, message: 'Despesa excluida com sucesso.' };
+    return { success: true, message: 'Despesa excluída com sucesso.' };
   } catch (error) {
     console.error('Database Error:', error);
     return { success: false, message: 'Falha ao excluir despesa.' };

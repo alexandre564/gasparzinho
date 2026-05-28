@@ -64,19 +64,19 @@ async function seedDemoData() {
   const gas13 = await prisma.product.upsert({
     where: { name: 'Gas P13' },
     update: { price: 115, cost: 82, category: 'BOTIJAO', stockKind: 'UNIDADE', inventory: 18 },
-    create: { name: 'Gas P13', description: 'Botijao de gas 13kg', price: 115, cost: 82, category: 'BOTIJAO', stockKind: 'UNIDADE', inventory: 18 },
+    create: { name: 'Gas P13', description: 'Botijão de gas 13kg', price: 115, cost: 82, category: 'BOTIJAO', stockKind: 'UNIDADE', inventory: 18 },
   });
 
   const agua = await prisma.product.upsert({
-    where: { name: 'Agua mineral 20L' },
+    where: { name: 'Água mineral 20L' },
     update: { price: 18, cost: 9, category: 'AGUA', stockKind: 'UNIDADE', inventory: 32 },
-    create: { name: 'Agua mineral 20L', description: 'Galao de agua mineral', price: 18, cost: 9, category: 'AGUA', stockKind: 'UNIDADE', inventory: 32 },
+    create: { name: 'Água mineral 20L', description: 'Galao de agua mineral', price: 18, cost: 9, category: 'AGUA', stockKind: 'UNIDADE', inventory: 32 },
   });
 
   await prisma.vehicle.upsert({
     where: { placa: 'ABC1D23' },
     update: { modelo: 'Honda CG 160', tipo: 'Moto', status: 'ATIVO', custoMedioKm: 0.65 },
-    create: { placa: 'ABC1D23', modelo: 'Honda CG 160', tipo: 'Moto', status: 'ATIVO', custoMedioKm: 0.65, observacoes: 'Veiculo principal de entregas' },
+    create: { placa: 'ABC1D23', modelo: 'Honda CG 160', tipo: 'Moto', status: 'ATIVO', custoMedioKm: 0.65, observacoes: 'Veículo principal de entregas' },
   });
 
   const existingOrders = await prisma.order.count();
@@ -145,7 +145,7 @@ async function seedDemoData() {
 async function main() {
   await seedUsers();
   await seedDemoData();
-  console.log('Seed conclu?do. Usu?rios e dados iniciais dispon?veis.');
+  console.log('Seed concluído. Usuários e dados iniciais disponíveis.');
 }
 
 main()

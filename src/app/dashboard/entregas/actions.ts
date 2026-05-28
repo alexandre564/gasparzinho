@@ -55,13 +55,13 @@ export async function updateDeliveryStatus(
   status: DeliveryStatus,
 ): Promise<{ success: boolean; message: string }> {
   if (!deliveryId || !status) {
-    return { success: false, message: 'ID da entrega e status sao obrigatorios.' };
+    return { success: false, message: 'ID da entrega e status são obrigatórios.' };
   }
 
   if (status === DeliveryStatus.ENTREGUE) {
     return {
       success: false,
-      message: 'Use os botoes "Entregue pago" ou "Entregue a receber" para registrar o financeiro corretamente.',
+      message: 'Use os botões "Entregue pago" ou "Entregue a receber" para registrar o financeiro corretamente.',
     };
   }
 

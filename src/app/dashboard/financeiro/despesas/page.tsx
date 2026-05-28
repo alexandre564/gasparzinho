@@ -52,7 +52,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between gap-4">
-                <Search placeholder="Buscar por descricao..." />
+                <Search placeholder="Buscar por descrição..." />
               </div>
             </CardHeader>
             <CardContent>
@@ -60,7 +60,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Descricao</TableHead>
+                      <TableHead>Descrição</TableHead>
                       <TableHead className="hidden sm:table-cell">Categoria</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="hidden text-center md:table-cell">Data</TableHead>

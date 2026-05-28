@@ -20,7 +20,7 @@ export async function createVehicle(data: unknown) {
   }
   await prisma.vehicle.create({ data: result.data })
   revalidatePath('/dashboard/frota')
-  return { success: true as const, message: 'Veiculo criado com sucesso!' }
+  return { success: true as const, message: 'Veículo criado com sucesso!' }
 }
 
 export async function updateVehicle(id: string, data: unknown) {
@@ -30,7 +30,7 @@ export async function updateVehicle(id: string, data: unknown) {
   }
   await prisma.vehicle.update({ where: { id }, data: result.data })
   revalidatePath('/dashboard/frota')
-  return { success: true as const, message: 'Veiculo atualizado com sucesso!' }
+  return { success: true as const, message: 'Veículo atualizado com sucesso!' }
 }
 
 export async function deleteVehicle(id: string) {

@@ -21,7 +21,7 @@ export function AccessLevelSelect({ userId, currentLevel }: AccessLevelSelectPro
       const result = await updateUserRole(userId, newRole);
 
       if (result.success) {
-        toast.success('N?vel de acesso atualizado.');
+        toast.success('Nível de acesso atualizado.');
         return;
       }
 

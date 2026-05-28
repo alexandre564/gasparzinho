@@ -574,7 +574,7 @@ export async function importCustomers(
     if (customers.length === 0) {
       return {
         success: false,
-        message: 'Nenhum cliente valido encontrado. O arquivo precisa ter nome e telefone/celular.',
+        message: 'Nenhum cliente válido encontrado. O arquivo precisa ter nome e telefone/celular.',
       };
     }
 
@@ -614,7 +614,7 @@ export async function importCustomers(
 
     return {
       success: true,
-      message: `Importacao concluida: ${created} criado(s) e ${updated} atualizado(s).`,
+      message: `Importação concluída: ${created} criado(s) e ${updated} atualizado(s).`,
     };
   } catch (error) {
     console.error(error);

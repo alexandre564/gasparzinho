@@ -66,7 +66,7 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: 'role',
-    header: 'N?vel de acesso',
+    header: 'Nível de acesso',
     cell: ({ row }) => (
       <Badge variant={row.original.role === 'ADMIN' ? 'default' : 'secondary'}>
         {roleLabels[row.original.role] ?? row.original.role}
