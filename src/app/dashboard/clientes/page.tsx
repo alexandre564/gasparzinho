@@ -127,7 +127,9 @@ export default async function CustomersPage({
   exportParams.set('sort', sort);
   exportParams.set('direction', direction);
 
-  const exportHref = `/api/clientes/exportar?${exportParams.toString()}`;
+  const exportQuery = exportParams.toString();
+  const exportHref = `/api/clientes/exportar?${exportQuery}`;
+  const exportVcfHref = `/api/clientes/exportar-vcf${exportQuery ? `?${exportQuery}` : ''}`;
 
   return (
     <div className="space-y-6">
@@ -143,6 +145,12 @@ export default async function CustomersPage({
             <a href={exportHref} download>
               <Download className="h-4 w-4" />
               Exportar CSV
+            </a>
+          </Button>
+          <Button asChild size="sm" variant="outline" className="gap-2">
+            <a href={exportVcfHref} download>
+              <Download className="h-4 w-4" />
+              Exportar VCF
             </a>
           </Button>
           <Button asChild size="sm" variant="outline" className="gap-2">

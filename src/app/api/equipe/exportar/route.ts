@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
@@ -16,14 +16,27 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const denied = await requireApiAccess(["ADMIN"]);
 
   if (denied) {
     return denied;
   }
 
+  const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
+  const role = request.nextUrl.searchParams.get('role')?.trim() ?? '';
+  const active = request.nextUrl.searchParams.get('active')?.trim() ?? '';
   const users = await prisma.user.findMany({
+    where: {
+      ...(query && {
+        OR: [
+          { name: { contains: query } },
+          { email: { contains: query } },
+        ],
+      }),
+      ...(role && role !== 'TODOS' ? { role } : {}),
+      ...(active === 'true' || active === 'false' ? { isActive: active === 'true' } : {}),
+    },
     orderBy: { name: 'asc' },
   });
 

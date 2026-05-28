@@ -11,19 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from 'lucide-react';
+import { EXPENSE_CATEGORIES } from './categories';
 
 const initialState: CreateExpenseState = { message: "", success: false, errors: {} };
-
-const categories = [
-    "Alimentação",
-    "Transporte",
-    "Moradia",
-    "Salário",
-    "Saúde",
-    "Educação",
-    "Lazer",
-    "Outros"
-];
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -73,7 +63,7 @@ export default function ExpenseForm() {
             <Select name="category" required>
                 <SelectTrigger><SelectValue placeholder="Selecione uma categoria..." /></SelectTrigger>
                 <SelectContent>
-                    {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                    {EXPENSE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                 </SelectContent>
             </Select>
             {state.errors?.category && <p className="text-sm text-red-500">{state.errors.category[0]}</p>}

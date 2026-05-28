@@ -67,6 +67,7 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: 'role',
     header: 'Nível de acesso',
+    filterFn: (row, id, value) => !value || value === 'TODOS' || row.getValue(id) === value,
     cell: ({ row }) => (
       <Badge variant={row.original.role === 'ADMIN' ? 'default' : 'secondary'}>
         {roleLabels[row.original.role] ?? row.original.role}
@@ -76,6 +77,7 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: 'isActive',
     header: 'Situação',
+    filterFn: (row, id, value) => !value || value === 'TODOS' || String(row.getValue(id)) === value,
     cell: ({ row }) => (
       <Badge variant={row.original.isActive ? 'success' : 'outline'}>
         {row.original.isActive ? 'Ativo' : 'Inativo'}

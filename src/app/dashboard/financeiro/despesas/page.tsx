@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { getPaginatedExpenses } from './actions';
 import DeleteExpenseButton from './DeleteExpenseButton';
+import { ExpenseCategoryFilter } from './ExpenseCategoryFilter';
 import ExpenseForm from './ExpenseForm';
 import ImportExpensesButton from './ImportExpensesButton';
 import Pagination from '@/components/Pagination';
@@ -84,8 +85,11 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <Search placeholder="Buscar por descrição..." />
+                <Suspense fallback={<div className="h-11 w-full rounded-md border bg-white sm:max-w-xs" />}>
+                  <ExpenseCategoryFilter />
+                </Suspense>
               </div>
             </CardHeader>
             <CardContent>
