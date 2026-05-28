@@ -78,7 +78,7 @@ function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
         </div>
         <div className="flex items-center gap-2 text-slate-700">
           <ShoppingBag className="h-4 w-4 text-slate-500" />
-          Ultimo pedido:{' '}
+          Último pedido:{' '}
           {lastOrder ? `${format(lastOrder.createdAt, 'dd/MM/yyyy')} (${lastOrderProduct})` : 'sem pedido'}
         </div>
         <div className="flex items-center gap-2 text-slate-700">
@@ -127,7 +127,7 @@ export default async function RecompraPreditivaPage({
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950">Recompra</h1>
           <p className="text-sm text-slate-600">
-            Clientes com maior chance de comprar novamente, calculados pelo historico de pedidos.
+            Clientes com maior chance de comprar novamente, calculados pelo histórico de pedidos.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

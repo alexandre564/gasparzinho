@@ -47,13 +47,13 @@ export default async function VehiclesPage() {
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Frota de veiculos</CardTitle>
-            <CardDescription>Gerencie veiculos, status e custo medio por quilometro.</CardDescription>
+            <CardTitle>Frota de veículos</CardTitle>
+            <CardDescription>Gerencie veículos, status e custo médio por quilômetro.</CardDescription>
           </div>
           <Button asChild>
             <Link href="/dashboard/frota/novo">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Adicionar veiculo
+              Adicionar veículo
             </Link>
           </Button>
         </div>
@@ -66,8 +66,8 @@ export default async function VehiclesPage() {
               <TableHead>Modelo</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Custo medio/km</TableHead>
-              <TableHead className="text-right">Acoes</TableHead>
+              <TableHead className="text-right">Custo médio/km</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -94,7 +94,7 @@ export default async function VehiclesPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  Nenhum veiculo cadastrado.
+                  Nenhum veículo cadastrado.
                 </TableCell>
               </TableRow>
             )}

@@ -26,7 +26,7 @@ export function StatusFilter() {
                 <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="ALL">Todos Status</SelectItem>
+                <SelectItem value="ALL">Todos os status</SelectItem>
                 <SelectItem value={OrderStatus.PENDENTE}>Pendente</SelectItem>
                 <SelectItem value={OrderStatus.CONFIRMADO}>Confirmado</SelectItem>
                 <SelectItem value={OrderStatus.CANCELADO}>Cancelado</SelectItem>

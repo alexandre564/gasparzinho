@@ -65,7 +65,7 @@ export default async function DeliveriesPage({
       <div>
         <h2 className="text-2xl font-semibold tracking-tight">Entregas</h2>
         <p className="text-sm text-muted-foreground">
-          Acompanhe enderecos, itens e andamento das entregas.
+          Acompanhe endereços, itens e andamento das entregas.
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export default async function DeliveriesPage({
             </CardDescription>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <Search placeholder="Buscar por cliente ou endereco..." />
+            <Search placeholder="Buscar por cliente ou endereço..." />
             <StatusFilter />
           </div>
         </CardHeader>
@@ -92,7 +92,7 @@ export default async function DeliveriesPage({
                   <TableHead className="hidden md:table-cell">Endereço</TableHead>
                   <TableHead className="hidden xl:table-cell">Itens</TableHead>
                   <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Acoes</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -146,7 +146,7 @@ export default async function DeliveriesPage({
                       <div className="mx-auto max-w-sm space-y-2">
                         <p className="font-medium">Nenhuma entrega encontrada</p>
                         <p className="text-sm text-muted-foreground">
-                          Entregas aparecem aqui apos vendas confirmadas.
+                          Entregas aparecem aqui após vendas confirmadas.
                         </p>
                       </div>
                     </TableCell>

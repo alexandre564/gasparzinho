@@ -136,7 +136,7 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isUpdate ? 'Editar Cliente' : 'Novo Cliente'}</CardTitle>
+        <CardTitle>{isUpdate ? 'Editar cliente' : 'Novo cliente'}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>

@@ -64,19 +64,19 @@ async function FinancialSummary() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <StatCard
-        title="Receita do mes"
+        title="Receita do mês"
         value={currencyFormatter(summary.month.revenue)}
         icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
         subtext={`Hoje: ${currencyFormatter(summary.today.revenue)}`}
       />
       <StatCard
-        title="Despesas do mes"
+        title="Despesas do mês"
         value={currencyFormatter(summary.month.expenses)}
         icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
         subtext={`Hoje: ${currencyFormatter(summary.today.expenses)}`}
       />
       <StatCard
-        title="Saldo do mes"
+        title="Saldo do mês"
         value={currencyFormatter(summary.month.net)}
         icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
         subtext={`Hoje: ${currencyFormatter(summary.today.net)}`}
@@ -92,7 +92,7 @@ async function RecentExpenses() {
     <Card>
       <CardHeader>
         <CardTitle>Despesas recentes</CardTitle>
-        <CardDescription>Ultimas despesas adicionadas.</CardDescription>
+        <CardDescription>Últimas despesas adicionadas.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -128,7 +128,7 @@ async function WeeklyChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Balanco semanal</CardTitle>
+        <CardTitle>Balanço semanal</CardTitle>
         <CardDescription>Receitas e despesas dos últimos 7 dias.</CardDescription>
       </CardHeader>
       <CardContent>

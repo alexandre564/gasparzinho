@@ -7,7 +7,7 @@ export default function NovoProdutoPage() {
     return (
         <Card className="max-w-4xl mx-auto">
             <CardHeader>
-                <CardTitle>Adicionar Novo Produto</CardTitle>
+                <CardTitle>Adicionar novo produto</CardTitle>
                 <CardDescription>Preencha os detalhes abaixo para cadastrar um novo item no estoque.</CardDescription>
             </CardHeader>
             <CardContent>

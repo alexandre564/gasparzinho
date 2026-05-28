@@ -170,7 +170,7 @@ export default async function DeliveryDetailsPage({
               <TableRow>
                 <TableHead>Produto</TableHead>
                 <TableHead className="text-center">Qtd.</TableHead>
-                <TableHead className="text-right">Unitario</TableHead>
+                <TableHead className="text-right">Unit?rio</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>

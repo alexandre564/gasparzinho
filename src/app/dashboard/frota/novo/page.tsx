@@ -6,7 +6,7 @@ export default function NewVehiclePage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Adicionar Novo Veículo</CardTitle>
+        <CardTitle>Adicionar novo veículo</CardTitle>
       </CardHeader>
       <CardContent>
         <VehicleForm />

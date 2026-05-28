@@ -65,7 +65,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="hidden text-center md:table-cell">Data</TableHead>
                       <TableHead>
-                        <span className="sr-only">Acoes</span>
+                        <span className="sr-only">Ações</span>
                       </TableHead>
                     </TableRow>
                   </TableHeader>

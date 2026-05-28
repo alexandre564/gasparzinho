@@ -59,9 +59,9 @@ export default async function RelatoriosPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Relatorios</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Relatórios</h2>
           <p className="text-sm text-slate-600">
-            Analise as vendas por dia ou por mes, sem pedidos cancelados.
+            Analise as vendas por dia ou por mês, sem pedidos cancelados.
           </p>
         </div>
         <PeriodToggle period={period} />

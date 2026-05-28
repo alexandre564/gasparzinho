@@ -72,7 +72,7 @@ export default async function OrderDetailsPage({
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Detalhes do Pedido</h1>
+            <h1 className="text-2xl font-bold">Detalhes do pedido</h1>
             <p className="text-sm text-muted-foreground">ID: {order.id}</p>
           </div>
         </div>
@@ -145,7 +145,7 @@ export default async function OrderDetailsPage({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Package className="mr-2" /> Itens do Pedido
+                <Package className="mr-2" /> Itens do pedido
               </CardTitle>
             </CardHeader>
             <CardContent>

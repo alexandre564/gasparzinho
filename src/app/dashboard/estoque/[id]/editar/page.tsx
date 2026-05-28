@@ -15,7 +15,7 @@ export default async function EditarProdutoPage({ params }: { params: { id: stri
   return (
     <Card className="max-w-4xl mx-auto">
         <CardHeader>
-            <CardTitle>Editar Produto</CardTitle>
+            <CardTitle>Editar produto</CardTitle>
             <CardDescription>Atualize os detalhes do produto e o estoque.</CardDescription>
         </CardHeader>
         <CardContent>

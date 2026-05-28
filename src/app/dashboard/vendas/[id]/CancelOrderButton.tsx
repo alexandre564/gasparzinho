@@ -36,7 +36,7 @@ export default function CancelOrderButton({ orderId }: { orderId: string }) {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive">
-            <XCircle className="mr-2 h-4 w-4" /> Cancelar Pedido
+            <XCircle className="mr-2 h-4 w-4" /> Cancelar pedido
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
