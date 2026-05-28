@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,11 +63,19 @@ export default async function DeliveriesPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Entregas</h2>
-        <p className="text-sm text-muted-foreground">
-          Acompanhe endereços, itens e andamento das entregas.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Entregas</h2>
+          <p className="text-sm text-muted-foreground">
+            Acompanhe endereços, itens e andamento das entregas.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="gap-2">
+          <a href="/api/entregas/exportar" download>
+            <Download className="h-4 w-4" />
+            Exportar CSV
+          </a>
+        </Button>
       </div>
 
       <Card>

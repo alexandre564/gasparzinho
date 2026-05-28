@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Eye, PlusCircle } from 'lucide-react';
+import { Download, Eye, PlusCircle } from 'lucide-react';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -64,12 +64,20 @@ export default async function OrdersPage({
             Consulte pedidos, pagamentos e detalhes das vendas registradas.
           </p>
         </div>
-        <Button asChild size="sm" className="gap-2">
-          <Link href="/dashboard/vendas/novo">
-            <PlusCircle className="h-4 w-4" />
-            Nova venda
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <a href="/api/vendas/exportar" download>
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </a>
+          </Button>
+          <Button asChild size="sm" className="gap-2">
+            <Link href="/dashboard/vendas/novo">
+              <PlusCircle className="h-4 w-4" />
+              Nova venda
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>

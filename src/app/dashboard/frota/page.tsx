@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { Pencil, PlusCircle } from 'lucide-react';
+import { Download, FileSpreadsheet, Pencil, PlusCircle } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
+import ImportVehiclesButton from './ImportVehiclesButton';
 import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels';
+import { Search } from '@/components/Search';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,9 +30,31 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-async function getVehicles() {
-  return prisma.vehicle.findMany({
+async function getVehicles(query = '') {
+  const vehicles = await prisma.vehicle.findMany({
     orderBy: { placa: 'asc' },
+  });
+
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return vehicles;
+  }
+
+  return vehicles.filter((vehicle) => {
+    const searchable = [
+      vehicle.placa,
+      vehicle.modelo,
+      vehicle.tipo,
+      vehicle.status,
+      vehicle.observacoes ?? '',
+      labelFrom(vehicleTypeLabels, vehicle.tipo),
+      labelFrom(vehicleStatusLabels, vehicle.status),
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return searchable.includes(normalizedQuery);
   });
 }
 
@@ -41,8 +65,13 @@ function getStatusVariant(status: string): BadgeProps['variant'] {
 }
 
 
-export default async function VehiclesPage() {
-  const vehicles = await getVehicles();
+type VehiclesPageProps = {
+  searchParams?: { query?: string };
+};
+
+export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
+  const query = searchParams?.query ?? '';
+  const vehicles = await getVehicles(query);
 
   return (
     <Card>
@@ -52,15 +81,33 @@ export default async function VehiclesPage() {
             <CardTitle>Frota de veículos</CardTitle>
             <CardDescription>Gerencie veículos, status e custo médio por quilômetro.</CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/dashboard/frota/novo">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Adicionar veículo
-            </Link>
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+            <Button asChild variant="outline" size="sm">
+              <a href="/api/frota/exportar" download>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar CSV
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href="/api/frota/modelo" download>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Modelo CSV
+              </a>
+            </Button>
+            <ImportVehiclesButton />
+            <Button asChild size="sm">
+              <Link href="/dashboard/frota/novo">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar veículo
+              </Link>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
+        <div className="mb-4">
+          <Search placeholder="Buscar por placa, modelo ou status..." />
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -98,7 +145,7 @@ export default async function VehiclesPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  Nenhum veículo cadastrado.
+                  Nenhum veículo encontrado.
                 </TableCell>
               </TableRow>
             )}
