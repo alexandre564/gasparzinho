@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import type { ClosingSale, StockForecastItem } from './actions';
+import type { ClosingExpense, ClosingSale, StockForecastItem } from './actions';
 
 interface SummaryData {
   totalRevenue: number;
@@ -31,6 +31,7 @@ interface SummaryData {
 interface ClientData {
   summary: SummaryData;
   sales: ClosingSale[];
+  expenses: ClosingExpense[];
   stockForecast: StockForecastItem[];
 }
 
@@ -52,6 +53,9 @@ export default function ClosingActions({ data, isAlreadyClosed }: Props) {
     const stockText = data.stockForecast
       .map((item) => `- ${item.name}: ${item.units}`)
       .join('\n');
+    const expensesText = data.expenses
+      .map((item) => `- ${item.description}: ${formatCurrency(item.value)}`)
+      .join('\n');
 
     const message = `*Fechamento Gás Gasparzinho - ${today}*
 
@@ -59,6 +63,9 @@ export default function ClosingActions({ data, isAlreadyClosed }: Props) {
 *Entradas:* ${formatCurrency(totalRevenue)}
 *Despesas:* ${formatCurrency(totalExpenses)}
 *Saldo:* ${formatCurrency(netBalance)}
+
+*Despesas do dia:*
+${expensesText || '- Nenhuma despesa registrada'}
 
 *Estoque:*
 ${stockText || '- Sem produtos cadastrados'}

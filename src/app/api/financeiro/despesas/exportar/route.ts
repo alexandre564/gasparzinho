@@ -10,6 +10,15 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function parseFilterDate(value?: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function GET(request: NextRequest) {
   const denied = await requireApiAccess(["ADMIN"]);
 
@@ -19,6 +28,12 @@ export async function GET(request: NextRequest) {
 
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
   const category = request.nextUrl.searchParams.get('category')?.trim() ?? '';
+  const fromDate = parseFilterDate(request.nextUrl.searchParams.get('from'));
+  const toDate = parseFilterDate(request.nextUrl.searchParams.get('to'));
+
+  if (toDate) {
+    toDate.setHours(23, 59, 59, 999);
+  }
   const expenses = await prisma.expense.findMany({
     where: {
       ...(query && {
@@ -28,6 +43,14 @@ export async function GET(request: NextRequest) {
         ],
       }),
       ...(category && { category }),
+      ...(fromDate || toDate
+        ? {
+            date: {
+              ...(fromDate ? { gte: fromDate } : {}),
+              ...(toDate ? { lte: toDate } : {}),
+            },
+          }
+        : {}),
     },
     orderBy: { date: 'desc' },
   });

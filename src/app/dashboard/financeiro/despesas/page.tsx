@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getPaginatedExpenses } from './actions';
 import DeleteExpenseButton from './DeleteExpenseButton';
 import { ExpenseCategoryFilter } from './ExpenseCategoryFilter';
+import { ExpenseDateRangeFilter } from './ExpenseDateRangeFilter';
 import ExpenseForm from './ExpenseForm';
 import ImportExpensesButton from './ImportExpensesButton';
 import Pagination from '@/components/Pagination';
@@ -38,6 +39,8 @@ type ExpensesPageProps = {
     query?: string;
     page?: string;
     category?: string;
+    from?: string;
+    to?: string;
   };
 };
 
@@ -45,11 +48,15 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
   const category = searchParams?.category;
-  const { expenses, totalPages } = await getPaginatedExpenses(query, currentPage, category);
+  const from = searchParams?.from;
+  const to = searchParams?.to;
+  const { expenses, totalPages } = await getPaginatedExpenses(query, currentPage, category, from, to);
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
   if (category) exportParams.set('category', category);
+  if (from) exportParams.set('from', from);
+  if (to) exportParams.set('to', to);
 
   const exportHref = `/api/financeiro/despesas/exportar${
     exportParams.toString() ? `?${exportParams.toString()}` : ''
@@ -91,6 +98,9 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                   <ExpenseCategoryFilter />
                 </Suspense>
               </div>
+              <Suspense fallback={<div className="h-20 rounded-md border bg-white" />}>
+                <ExpenseDateRangeFilter />
+              </Suspense>
             </CardHeader>
             <CardContent>
               <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>

@@ -13,6 +13,7 @@ export default async function Sidebar() {
     (link.roles as readonly string[]).includes(userRole),
   );
   const canAccessSettings = (settingsNavLink.roles as readonly string[]).includes(userRole);
+  const canDownloadBackup = userRole === 'ADMIN';
 
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl lg:flex lg:flex-col">
@@ -57,14 +58,16 @@ export default async function Sidebar() {
             {settingsNavLink.label}
           </Link>
         ) : null}
-        <a
-          href="/api/backup"
-          download
-          className="flex h-10 items-center gap-3 rounded-md border border-emerald-400/30 bg-emerald-500 px-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-400"
-        >
-          <Download className="h-4 w-4" />
-          Baixar backup
-        </a>
+        {canDownloadBackup ? (
+          <a
+            href="/api/backup"
+            download
+            className="flex h-10 items-center gap-3 rounded-md border border-emerald-400/30 bg-emerald-500 px-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-400"
+          >
+            <Download className="h-4 w-4" />
+            Baixar backup
+          </a>
+        ) : null}
       </div>
     </aside>
   );

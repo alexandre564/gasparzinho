@@ -27,7 +27,8 @@ export async function GET() {
     return denied;
   }
 
-  const [customers, products, orders, debts, expenses, vehicles, closings] = await Promise.all([
+  const [users, customers, products, orders, debts, expenses, vehicles, closings, settings] = await Promise.all([
+    prisma.user.findMany({ orderBy: { name: 'asc' } }),
     prisma.customer.findMany({ orderBy: { name: 'asc' } }),
     prisma.product.findMany({ orderBy: { name: 'asc' } }),
     prisma.order.findMany({
@@ -41,10 +42,22 @@ export async function GET() {
     prisma.expense.findMany({ orderBy: { date: 'desc' } }),
     prisma.vehicle.findMany({ orderBy: { placa: 'asc' } }),
     prisma.dailyClosing.findMany({ orderBy: { date: 'desc' } }),
+    prisma.systemSetting.findMany({ orderBy: { key: 'asc' } }),
   ]);
 
   const csv = [
     'sep=;',
+    section(
+      'EQUIPE',
+      ['nome', 'email', 'perfil', 'ativo', 'criado em'],
+      users.map((user) => [
+        user.name,
+        user.email,
+        user.role,
+        user.isActive ? 'sim' : 'não',
+        user.createdAt.toLocaleDateString('pt-BR'),
+      ]),
+    ),
     section(
       'CLIENTES',
       ['nome', 'telefone', 'cep', 'rua', 'numero', 'bairro', 'cidade', 'referencia'],
@@ -88,16 +101,29 @@ export async function GET() {
     ),
     section(
       'COBRANCAS',
-      ['cliente', 'telefone', 'status', 'valor', 'vencimento', 'pago em', 'renegociado em', 'novo valor'],
+      [
+        'cliente',
+        'telefone',
+        'status',
+        'valor original',
+        'valor para pagamento',
+        'vencimento',
+        'vencimento original',
+        'pago em',
+        'renegociado em',
+        'observacoes',
+      ],
       debts.map((debt) => [
         debt.customer.name,
         debt.customer.phone,
         debt.status,
         debt.value.toFixed(2).replace('.', ','),
+        (debt.renegotiatedValue ?? debt.value).toFixed(2).replace('.', ','),
         debt.dueDate.toLocaleDateString('pt-BR'),
+        debt.originalDueDate?.toLocaleDateString('pt-BR') ?? '',
         debt.paidAt?.toLocaleDateString('pt-BR') ?? '',
         debt.renegotiatedAt?.toLocaleDateString('pt-BR') ?? '',
-        debt.renegotiatedValue?.toFixed(2).replace('.', ',') ?? '',
+        debt.notes ?? '',
       ]),
     ),
     section(
@@ -132,6 +158,15 @@ export async function GET() {
         Number(closing.totalRevenue).toFixed(2).replace('.', ','),
         Number(closing.totalExpenses).toFixed(2).replace('.', ','),
         Number(closing.netBalance).toFixed(2).replace('.', ','),
+      ]),
+    ),
+    section(
+      'CONFIGURACOES',
+      ['chave', 'valor', 'atualizado em'],
+      settings.map((setting) => [
+        setting.key,
+        setting.value,
+        setting.updatedAt.toLocaleDateString('pt-BR'),
       ]),
     ),
   ].join('\r\n');

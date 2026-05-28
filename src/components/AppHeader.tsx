@@ -29,6 +29,7 @@ export default async function Header() {
   const visibleMobileLinks = appNavLinks.filter((link) =>
     (link.roles as readonly string[]).includes(userRole),
   );
+  const canDownloadBackup = userRole === "ADMIN";
 
   return (
     <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur sm:gap-3 sm:px-4 lg:flex-nowrap lg:pl-6 lg:pr-8">
@@ -66,14 +67,16 @@ export default async function Header() {
                 </Link>
               </SheetClose>
             ))}
-            <a
-              href="/api/backup"
-              download
-              className="flex min-h-11 items-center gap-3 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-white hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
-            >
-              <Download className="h-4 w-4" />
-              Baixar backup
-            </a>
+            {canDownloadBackup ? (
+              <a
+                href="/api/backup"
+                download
+                className="flex min-h-11 items-center gap-3 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-white hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+              >
+                <Download className="h-4 w-4" />
+                Baixar backup
+              </a>
+            ) : null}
           </nav>
         </SheetContent>
       </Sheet>
@@ -116,9 +119,11 @@ export default async function Header() {
           <DropdownMenuItem asChild>
             <Link href="/dashboard/configuracoes">Configurações</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href="/api/backup" download>Baixar backup</a>
-          </DropdownMenuItem>
+          {canDownloadBackup ? (
+            <DropdownMenuItem asChild>
+              <a href="/api/backup" download>Baixar backup</a>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem>Suporte</DropdownMenuItem>
           <DropdownMenuSeparator />
           <LogoutButton />

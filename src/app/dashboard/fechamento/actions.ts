@@ -16,12 +16,29 @@ const DailyClosingSchema = z.object({
   stockForecast: z.string().optional(),
 });
 
+function parseFilterDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export type ClosingSale = {
   id: string;
   createdAt: Date;
   customer: { name: string };
   grossValue: number;
   netValue: number;
+};
+
+export type ClosingExpense = {
+  id: string;
+  description: string;
+  category: string;
+  value: number;
+  date: Date;
 };
 
 export type StockForecastItem = {
@@ -70,6 +87,13 @@ export async function getDailyClosingData() {
       customer: sale.customer,
       grossValue: sale.grossValue,
       netValue: sale.netValue,
+    })),
+    expenses: expenses.map((expense) => ({
+      id: expense.id,
+      description: expense.description,
+      category: expense.category,
+      value: expense.value,
+      date: expense.date,
     })),
     totalRevenue,
     totalExpenses,
@@ -122,8 +146,21 @@ export async function createDailyClosing(
   }
 }
 
-export async function getClosingHistory() {
+export async function getClosingHistory(from?: string, to?: string) {
+  const fromDate = parseFilterDate(from);
+  const toDate = parseFilterDate(to);
+  const endDate = toDate ? endOfDay(toDate) : null;
   const history = await prisma.dailyClosing.findMany({
+    where: {
+      ...(fromDate || endDate
+        ? {
+            date: {
+              ...(fromDate ? { gte: startOfDay(fromDate) } : {}),
+              ...(endDate ? { lte: endDate } : {}),
+            },
+          }
+        : {}),
+    },
     take: 30,
     orderBy: { date: 'desc' },
   });

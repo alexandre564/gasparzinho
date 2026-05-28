@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { endOfDay, startOfDay } from 'date-fns';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
@@ -10,14 +11,36 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-export async function GET() {
+function parseFilterDate(value?: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export async function GET(request: NextRequest) {
   const denied = await requireApiAccess(["ADMIN"]);
 
   if (denied) {
     return denied;
   }
 
+  const fromDate = parseFilterDate(request.nextUrl.searchParams.get('from'));
+  const toDate = parseFilterDate(request.nextUrl.searchParams.get('to'));
+  const endDate = toDate ? endOfDay(toDate) : null;
   const closings = await prisma.dailyClosing.findMany({
+    where: {
+      ...(fromDate || endDate
+        ? {
+            date: {
+              ...(fromDate ? { gte: startOfDay(fromDate) } : {}),
+              ...(endDate ? { lte: endDate } : {}),
+            },
+          }
+        : {}),
+    },
     orderBy: { date: 'desc' },
     take: 365,
   });

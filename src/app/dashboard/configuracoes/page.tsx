@@ -11,6 +11,7 @@ import {
   Settings,
   ShieldCheck,
 } from 'lucide-react';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,8 @@ function SummaryCard({
 }
 
 export default async function ConfiguracoesPage() {
+  const session = await auth();
+  const canDownloadBackup = session?.user?.role?.toUpperCase() === 'ADMIN';
   const data = await getSettingsData();
 
   return (
@@ -102,20 +105,22 @@ export default async function ConfiguracoesPage() {
             Ajuste produtos, preços, custos, gastos, mensagens e baixe uma cópia dos dados.
           </p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button asChild variant="outline" className="gap-2">
-            <a href="/api/backup/planilha" download>
-              <Download className="h-4 w-4" />
-              Backup planilha
-            </a>
-          </Button>
-          <Button asChild className="gap-2">
-            <a href="/api/backup" download>
-              <Download className="h-4 w-4" />
-              Backup completo
-            </a>
-          </Button>
-        </div>
+        {canDownloadBackup ? (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild variant="outline" className="gap-2">
+              <a href="/api/backup/planilha" download>
+                <Download className="h-4 w-4" />
+                Backup planilha
+              </a>
+            </Button>
+            <Button asChild className="gap-2">
+              <a href="/api/backup" download>
+                <Download className="h-4 w-4" />
+                Backup completo
+              </a>
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -275,40 +280,42 @@ export default async function ConfiguracoesPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Backup do sistema</CardTitle>
-              <CardDescription>
-                Baixe arquivos com os dados principais do sistema para segurança e conferência.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-                <p>Use o backup antes de grandes alterações de preço, estoque ou financeiro.</p>
-              </div>
-              <div className="grid gap-2">
-                <Button asChild variant="outline" className="w-full justify-between">
-                  <a href="/api/backup/planilha" download>
-                    <span className="inline-flex items-center gap-2">
-                      <Archive className="h-4 w-4" />
-                      Baixar planilha diária
-                    </span>
-                    <Download className="h-4 w-4" />
-                  </a>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-between">
-                  <a href="/api/backup" download>
-                    <span className="inline-flex items-center gap-2">
-                      <Archive className="h-4 w-4" />
-                      Baixar cópia completa
-                    </span>
-                    <Download className="h-4 w-4" />
-                  </a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {canDownloadBackup ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Backup do sistema</CardTitle>
+                <CardDescription>
+                  Baixe arquivos com os dados principais do sistema para segurança e conferência.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>Use o backup antes de grandes alterações de preço, estoque ou financeiro.</p>
+                </div>
+                <div className="grid gap-2">
+                  <Button asChild variant="outline" className="w-full justify-between">
+                    <a href="/api/backup/planilha" download>
+                      <span className="inline-flex items-center gap-2">
+                        <Archive className="h-4 w-4" />
+                        Baixar planilha diária
+                      </span>
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-between">
+                    <a href="/api/backup" download>
+                      <span className="inline-flex items-center gap-2">
+                        <Archive className="h-4 w-4" />
+                        Baixar cópia completa
+                      </span>
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>

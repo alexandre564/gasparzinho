@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
-import type { ClosingSale, StockForecastItem } from './actions';
+import type { ClosingExpense, ClosingSale, StockForecastItem } from './actions';
 
 interface SummaryData {
   totalRevenue: number;
@@ -18,6 +18,7 @@ interface SummaryData {
   netBalance: number;
   ordersCount: number;
   sales: ClosingSale[];
+  expenses: ClosingExpense[];
   stockForecast: StockForecastItem[];
 }
 
@@ -26,7 +27,7 @@ interface Props {
 }
 
 export default function ClosingSummary({ data }: Props) {
-  const { totalRevenue, totalExpenses, netBalance, ordersCount, sales, stockForecast } = data;
+  const { totalRevenue, totalExpenses, netBalance, ordersCount, sales, expenses, stockForecast } = data;
 
   return (
     <div className="space-y-6">
@@ -73,7 +74,7 @@ export default function ClosingSummary({ data }: Props) {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Vendas do dia</CardTitle>
@@ -124,6 +125,42 @@ export default function ClosingSummary({ data }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Despesas do dia</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Descrição</TableHead>
+                <TableHead className="hidden sm:table-cell">Categoria</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {expenses.length > 0 ? (
+                expenses.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell className="font-medium">{expense.description}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{expense.category}</TableCell>
+                    <TableCell className="text-right text-red-700">
+                      {formatCurrency(expense.value)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">
+                    Nenhuma despesa registrada hoje.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

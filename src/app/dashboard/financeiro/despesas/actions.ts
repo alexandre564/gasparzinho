@@ -109,6 +109,15 @@ function parseDateValue(value: string) {
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
+function parseFilterDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function parseBooleanValue(value: string) {
   const normalized = normalizeHeader(value);
   return ['sim', 's', 'true', '1', 'recorrente', 'yes'].includes(normalized);
@@ -122,12 +131,32 @@ function pickValue(row: Record<string, string>, options: string[]) {
   return '';
 }
 
-export async function getPaginatedExpenses(query: string, currentPage: number, category?: string) {
+export async function getPaginatedExpenses(
+  query: string,
+  currentPage: number,
+  category?: string,
+  from?: string,
+  to?: string,
+) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+  const fromDate = parseFilterDate(from);
+  const toDate = parseFilterDate(to);
+
+  if (toDate) {
+    toDate.setHours(23, 59, 59, 999);
+  }
 
   const where: Prisma.ExpenseWhereInput = {
     ...(category && { category }),
     ...(query && { description: { contains: query } }),
+    ...(fromDate || toDate
+      ? {
+          date: {
+            ...(fromDate ? { gte: fromDate } : {}),
+            ...(toDate ? { lte: toDate } : {}),
+          },
+        }
+      : {}),
   };
 
   try {

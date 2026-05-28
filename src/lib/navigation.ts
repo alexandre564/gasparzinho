@@ -19,7 +19,7 @@ export const roleLabels: Record<string, string> = {
 };
 
 export const appNavLinks = [
-  { href: '/dashboard', icon: Home, label: 'Página principal', roles: ['ADMIN', 'VENDEDOR'] },
+  { href: '/dashboard', icon: Home, label: 'Página principal', roles: ['ADMIN', 'VENDEDOR', 'ENTREGADOR'] },
   { href: '/dashboard/clientes', icon: Users2, label: 'Clientes', roles: ['ADMIN', 'VENDEDOR'] },
   { href: '/dashboard/vendas', icon: ShoppingCart, label: 'Vendas', roles: ['ADMIN', 'VENDEDOR'] },
   { href: '/dashboard/estoque', icon: Package, label: 'Estoque', roles: ['ADMIN', 'VENDEDOR'] },
