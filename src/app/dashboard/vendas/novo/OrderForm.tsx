@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 
 import { getDriverWhatsappNumber } from '../../configuracoes/actions';
+import { labelFrom, paymentMethodLabels } from '@/lib/labels';
 import { createOrder, getCustomersForSelect, getProductsForSelect } from '../actions';
 import { OrderStatus } from '@/types/enums';
 import { Button } from '@/components/ui/button';
@@ -68,16 +69,9 @@ const PaymentMethod = {
 } as const;
 
 const paymentMethods = Object.values(PaymentMethod);
-const paymentMethodLabels: Record<string, string> = {
-  DINHEIRO: 'Dinheiro',
-  PIX: 'Pix',
-  CARTAO_CREDITO: 'Cartão de crédito',
-  CARTAO_DEBITO: 'Cartão de débito',
-  FIADO: 'Fiado / a prazo',
-};
 
 const orderStatusOptions = [OrderStatus.PENDENTE, OrderStatus.CONFIRMADO];
-const orderStatusLabels: Record<string, string> = {
+const orderCreationStatusLabels: Record<string, string> = {
   PENDENTE: 'Pedido feito',
   CONFIRMADO: 'Confirmado para entrega',
 };
@@ -429,7 +423,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <SelectContent>
                           {paymentMethods.map((method) => (
                             <SelectItem key={method} value={method}>
-                              {paymentMethodLabels[method] ?? method}
+                              {labelFrom(paymentMethodLabels, method)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -474,7 +468,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <SelectContent>
                           {orderStatusOptions.map((status) => (
                             <SelectItem key={status} value={status}>
-                              {orderStatusLabels[status] ?? status}
+                              {labelFrom(orderCreationStatusLabels, status)}
                             </SelectItem>
                           ))}
                         </SelectContent>

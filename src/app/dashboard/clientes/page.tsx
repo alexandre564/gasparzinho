@@ -138,6 +138,12 @@ export default async function CustomersPage({
               Exportar CSV
             </a>
           </Button>
+          <Button asChild size="sm" variant="outline" className="gap-2">
+            <a href="/api/clientes/modelo" download>
+              <Download className="h-4 w-4" />
+              Modelo CSV
+            </a>
+          </Button>
           <ImportCustomersButton />
           <Button asChild size="sm" className="gap-2">
             <Link href="/dashboard/clientes/novo">

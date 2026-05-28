@@ -2,14 +2,9 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { DeliveryStatus } from '@/types/enums';
+import { deliveryStatusLabels, labelFrom } from '@/lib/labels';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const statusLabels: Record<DeliveryStatus, string> = {
-  [DeliveryStatus.PENDENTE]: 'Pendente',
-  [DeliveryStatus.EM_ROTA]: 'Em rota',
-  [DeliveryStatus.ENTREGUE]: 'Entregue',
-  [DeliveryStatus.CANCELADA]: 'Cancelada',
-};
 
 export default function StatusFilter() {
   const searchParams = useSearchParams();
@@ -38,7 +33,7 @@ export default function StatusFilter() {
         <SelectItem value="TODOS">Todos os status</SelectItem>
         {Object.values(DeliveryStatus).map((status) => (
           <SelectItem key={status} value={status}>
-            {statusLabels[status]}
+            {labelFrom(deliveryStatusLabels, status)}
           </SelectItem>
         ))}
       </SelectContent>

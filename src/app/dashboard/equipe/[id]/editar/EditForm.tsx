@@ -83,7 +83,7 @@ export function EditForm({ user }: EditFormProps) {
           placeholder="Deixe em branco para manter a senha atual"
         />
         <p className="text-xs font-medium text-slate-500">
-          Preencha apenas quando quiser alterar a senha deste membro. A nova senha passa a valer no proximo login.
+          Preencha apenas quando quiser alterar a senha deste membro. A nova senha passa a valer no próximo login.
         </p>
       </div>
 

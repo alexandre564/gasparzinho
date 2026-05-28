@@ -130,7 +130,7 @@ export default async function Header() {
 
       <Button size="icon" variant="outline" className="hidden border-slate-300 bg-white md:inline-flex">
         <Bell className="h-4 w-4" />
-        <span className="sr-only">Notificacoes</span>
+        <span className="sr-only">Notificações</span>
       </Button>
 
       <DropdownMenu>

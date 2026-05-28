@@ -27,6 +27,7 @@ import { DebtSortKey, SortDirection, getPaginatedDebts } from './actions';
 import ImportDebtsButton from './ImportDebtsButton';
 import type { DebtStatus } from '@/types/enums';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { debtStatusLabels, labelFrom } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,14 +85,6 @@ function getStatusVariant(status: DebtStatus) {
   }
 }
 
-const debtStatusLabels: Record<string, string> = {
-  PENDENTE: 'Pendente',
-  VENCIDO: 'Vencido',
-  PAGO: 'Pago',
-  RENEGOCIADO: 'Renegociado',
-  PENDING: 'Pendente',
-  OVERDUE: 'Vencido',
-};
 
 function SortableHeader({
   field,
@@ -187,6 +180,12 @@ export default async function CobrancaPage({
               <a href="/api/cobranca/exportar" download>
                 <Download className="h-4 w-4" />
                 Exportar Excel
+              </a>
+            </Button>
+            <Button asChild size="sm" variant="outline" className="gap-2">
+              <a href="/api/cobranca/modelo" download>
+                <Download className="h-4 w-4" />
+                Modelo CSV
               </a>
             </Button>
             <ImportDebtsButton />
@@ -311,7 +310,7 @@ export default async function CobrancaPage({
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(debt.status as DebtStatus)}>
-                          {debtStatusLabels[debt.status] ?? debt.status}
+                          {labelFrom(debtStatusLabels, debt.status)}
                         </Badge>
                       </TableCell>
                       <TableCell>

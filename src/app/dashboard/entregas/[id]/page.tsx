@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, Box, Calendar, CreditCard, Home, Truck, User } from 'lucide-react';
 
 import { getDriverWhatsappNumber } from '../../configuracoes/actions';
+import { deliveryStatusLabels, labelFrom, paymentMethodLabels } from '@/lib/labels';
 import { getDeliveryDetails } from '../actions';
 import DeliveryWorkflowActions from '../DeliveryWorkflowActions';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
@@ -37,19 +38,6 @@ function statusVariant(status: string): BadgeProps['variant'] {
   return 'secondary';
 }
 
-const deliveryStatusLabels: Record<string, string> = {
-  PENDENTE: 'Pendente',
-  EM_ROTA: 'Em rota',
-  ENTREGUE: 'Entregue',
-  CANCELADA: 'Cancelada',
-};
-
-const paymentMethodLabels: Record<string, string> = {
-  DINHEIRO: 'Dinheiro',
-  PIX: 'Pix',
-  CARTAO: 'Cartão',
-  FIADO: 'Fiado',
-};
 
 export default async function DeliveryDetailsPage({
   params,
@@ -92,7 +80,7 @@ export default async function DeliveryDetailsPage({
           </div>
         </div>
         <Badge variant={statusVariant(delivery.status)} className="w-fit text-sm">
-          {deliveryStatusLabels[delivery.status] ?? delivery.status}
+          {labelFrom(deliveryStatusLabels, delivery.status)}
         </Badge>
       </div>
 
@@ -137,7 +125,7 @@ export default async function DeliveryDetailsPage({
               <div className="flex items-start gap-2">
                 <CreditCard className="mt-0.5 h-4 w-4 text-slate-500" />
                 <p className="text-slate-700">
-                  Pagamento: {paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod}
+                  Pagamento: {labelFrom(paymentMethodLabels, order.paymentMethod)}
                   {order.paymentDueDate
                     ? ` - vencimento ${new Date(order.paymentDueDate).toLocaleDateString('pt-BR')}`
                     : ''}

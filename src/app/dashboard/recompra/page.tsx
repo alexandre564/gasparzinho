@@ -43,7 +43,7 @@ function getUrgencyBadge(daysUntilNextPurchase: number) {
   }
 
   if (daysUntilNextPurchase <= 3) {
-    return <Badge className="bg-amber-500 text-white">Muito proximo</Badge>;
+    return <Badge className="bg-amber-500 text-white">Muito próximo</Badge>;
   }
 
   return <Badge variant="secondary">Em breve</Badge>;
@@ -83,11 +83,11 @@ function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
         </div>
         <div className="flex items-center gap-2 text-slate-700">
           <Repeat className="h-4 w-4 text-slate-500" />
-          Intervalo medio: {avgInterval} dias
+          Intervalo médio: {avgInterval} dias
         </div>
         <div className="flex items-center gap-2 font-semibold text-emerald-800">
           <Calendar className="h-4 w-4" />
-          Previsao: {format(predictedNextPurchaseDate, 'dd/MM/yyyy')}
+          Previsão: {format(predictedNextPurchaseDate, 'dd/MM/yyyy')}
         </div>
         <div className="flex items-center gap-2 text-slate-600">
           <Hourglass className="h-4 w-4" />
@@ -148,7 +148,7 @@ export default async function RecompraPreditivaPage({
           <Hourglass className="mx-auto h-12 w-12 text-slate-400" />
           <h3 className="mt-3 text-sm font-semibold text-slate-950">Nenhuma recompra prevista</h3>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
-            Nenhum cliente entrou nos criterios de recompra para os proximos {days} dias.
+            Nenhum cliente entrou nos critérios de recompra para os próximos {days} dias.
             Conforme novas vendas forem registradas, esta lista fica mais precisa.
           </p>
         </div>

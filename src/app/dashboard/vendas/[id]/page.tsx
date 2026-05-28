@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import CancelOrderButton from './CancelOrderButton';
 import { OrderStatus } from "@/types/enums";
+import { deliveryStatusLabels, labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
 
 
 export const dynamic = 'force-dynamic';
@@ -50,31 +51,6 @@ const getStatusVariant = (status: OrderStatus) => {
   }
 };
 
-const orderStatusLabels: Record<string, string> = {
-  PENDENTE: 'Pendente',
-  CONFIRMADO: 'Confirmado',
-  PROCESSANDO: 'Processando',
-  EM_PREPARO: 'Em preparo',
-  PRONTO: 'Pronto',
-  ENVIADO: 'Enviado',
-  ENTREGUE: 'Entregue',
-  CONCLUIDO: 'Concluído',
-  CANCELADO: 'Cancelado',
-};
-
-const deliveryStatusLabels: Record<string, string> = {
-  PENDENTE: 'Pendente',
-  EM_ROTA: 'Em rota',
-  ENTREGUE: 'Entregue',
-  CANCELADA: 'Cancelada',
-};
-
-const paymentMethodLabels: Record<string, string> = {
-  DINHEIRO: 'Dinheiro',
-  PIX: 'Pix',
-  CARTAO: 'Cartão',
-  FIADO: 'Fiado',
-};
 
 export default async function OrderDetailsPage({
   params,
@@ -118,7 +94,7 @@ export default async function OrderDetailsPage({
               variant={getStatusVariant(order.status as OrderStatus)}
               className="text-lg"
             >
-              {orderStatusLabels[order.status] ?? order.status}
+              {labelFrom(orderStatusLabels, order.status)}
             </Badge>
           </CardContent>
         </Card>
@@ -137,7 +113,7 @@ export default async function OrderDetailsPage({
               }
               className="text-lg"
             >
-              {order.delivery?.status ? deliveryStatusLabels[order.delivery.status] ?? order.delivery.status : 'Sem entrega'}
+              {labelFrom(deliveryStatusLabels, order.delivery?.status, 'Sem entrega')}
             </Badge>
           </CardContent>
         </Card>
@@ -149,7 +125,7 @@ export default async function OrderDetailsPage({
           </CardHeader>
           <CardContent>
             <div className="text-lg font-semibold">
-              {paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod}
+              {labelFrom(paymentMethodLabels, order.paymentMethod)}
             </div>
           </CardContent>
         </Card>

@@ -5,6 +5,7 @@ import SalesChart from '@/components/SalesChart';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { prisma } from '@/lib/prisma';
+import { labelFrom, orderStatusLabels } from '@/lib/labels';
 import { getRepurchasePredictions } from './recompra/actions';
 
 
@@ -16,17 +17,6 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-const orderStatusLabels: Record<string, string> = {
-  PENDENTE: 'Pendente',
-  CONFIRMADO: 'Confirmado',
-  PROCESSANDO: 'Processando',
-  EM_PREPARO: 'Em preparo',
-  PRONTO: 'Pronto',
-  ENVIADO: 'Enviado',
-  ENTREGUE: 'Entregue',
-  CONCLUIDO: 'Concluído',
-  CANCELADO: 'Cancelado',
-};
 
 async function getDashboardData() {
   const today = new Date();
@@ -231,7 +221,7 @@ export default async function DashboardPage() {
                   <div className="text-right">
                     <p className="text-sm font-extrabold text-slate-950">{currency.format(order.grossValue)}</p>
                     <Badge variant="secondary" className="mt-1">
-                      {orderStatusLabels[order.status] ?? order.status}
+                      {labelFrom(orderStatusLabels, order.status)}
                     </Badge>
                   </div>
                 </div>

@@ -25,7 +25,7 @@ export default function NovoMembroPage() {
         <CardHeader className="border-b border-slate-200 bg-slate-50">
           <CardTitle className="text-2xl font-extrabold text-slate-950">Adicionar membro</CardTitle>
           <CardDescription>
-            Cadastre um membro da equipe. A senha inicial sera senha123 e podera ser alterada depois.
+            Cadastre um membro da equipe. A senha inicial será senha123 e poderá ser alterada depois.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">

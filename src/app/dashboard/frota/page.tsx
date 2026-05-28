@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Pencil, PlusCircle } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
+import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,18 +40,6 @@ function getStatusVariant(status: string): BadgeProps['variant'] {
   return 'outline';
 }
 
-const vehicleStatusLabels: Record<string, string> = {
-  ATIVO: 'Ativo',
-  INATIVO: 'Inativo',
-  MANUTENCAO: 'Manutenção',
-};
-
-const vehicleTypeLabels: Record<string, string> = {
-  MOTO: 'Moto',
-  CARRO: 'Carro',
-  VAN: 'Van',
-  CAMINHAO: 'Caminhão',
-};
 
 export default async function VehiclesPage() {
   const vehicles = await getVehicles();
@@ -89,10 +78,10 @@ export default async function VehiclesPage() {
                 <TableRow key={vehicle.id}>
                   <TableCell className="font-mono font-semibold">{vehicle.placa}</TableCell>
                   <TableCell>{vehicle.modelo}</TableCell>
-                  <TableCell>{vehicleTypeLabels[vehicle.tipo] ?? vehicle.tipo}</TableCell>
+                  <TableCell>{labelFrom(vehicleTypeLabels, vehicle.tipo)}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(vehicle.status)}>
-                      {vehicleStatusLabels[vehicle.status] ?? vehicle.status}
+                      {labelFrom(vehicleStatusLabels, vehicle.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{currency.format(vehicle.custoMedioKm)}</TableCell>

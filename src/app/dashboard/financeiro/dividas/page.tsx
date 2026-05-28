@@ -28,6 +28,7 @@ import { Search } from '@/components/Search';
 import StatusFilter from './StatusFilter';
 import MarkAsPaidButton from './MarkAsPaidButton';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { debtStatusLabels, labelFrom } from '@/lib/labels';
 
 
 export const dynamic = 'force-dynamic';
@@ -51,12 +52,6 @@ const getStatusVariant = (status: string): BadgeProps['variant'] => {
   }
 };
 
-const statusLabels: Record<string, string> = {
-  PENDENTE: 'Pendente',
-  VENCIDO: 'Vencido',
-  PAGO: 'Pago',
-  RENEGOCIADO: 'Renegociado',
-};
 
 const formatDate = (date?: Date | null) =>
   date ? new Date(date).toLocaleDateString('pt-BR') : '-';
@@ -191,7 +186,7 @@ export default async function Page({ searchParams }: PageProps) {
                         </TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(debt.status)}>
-                            {statusLabels[debt.status] ?? debt.status}
+                            {labelFrom(debtStatusLabels, debt.status)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono font-semibold text-emerald-700">

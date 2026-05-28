@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckCircle2, MessageCircle, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { paymentMethodLabels, labelFrom } from '@/lib/labels';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { confirmDeliveryPayment, markDeliverySentToDriver } from './actions';
 
@@ -32,12 +33,6 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-const paymentMethodLabels: Record<string, string> = {
-  DINHEIRO: 'Dinheiro',
-  PIX: 'Pix',
-  CARTAO: 'Cartão',
-  FIADO: 'Fiado',
-};
 
 function itemsText(items: DeliveryWorkflowActionsProps['items']) {
   return items.map((item) => `${item.quantity}x ${item.product.name}`).join(', ');
@@ -57,7 +52,7 @@ export default function DeliveryWorkflowActions({
   const [pending, setPending] = useState(false);
   const address = `${customer.street}, ${customer.number} - ${customer.neighborhood}, ${customer.city}`;
   const orderSummary = itemsText(items);
-  const paymentLabel = paymentMethodLabels[paymentMethod] ?? paymentMethod;
+  const paymentLabel = labelFrom(paymentMethodLabels, paymentMethod);
   const customerMessage = `Olá ${customer.name}, seu pedido na Gás Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentLabel}.`;
   const driverMessage = `Entrega Gás Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereço: ${address}\nReferência: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentLabel}${hasOpenDebt ? ' / A RECEBER' : ''}`;
   const customerWhatsapp = buildWhatsAppUrl(customer.phone, customerMessage);
