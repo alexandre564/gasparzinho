@@ -16,7 +16,7 @@ export async function GET() {
   const session = await auth();
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Nao autorizado.' }, { status: 401 });
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
   }
 
   const [
@@ -31,6 +31,7 @@ export async function GET() {
     expenses,
     vehicles,
     dailyClosings,
+    systemSettings,
   ] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: 'asc' } }),
     prisma.customer.findMany({ orderBy: { createdAt: 'asc' } }),
@@ -46,6 +47,7 @@ export async function GET() {
     prisma.expense.findMany({ orderBy: { createdAt: 'asc' } }),
     prisma.vehicle.findMany({ orderBy: { createdAt: 'asc' } }),
     prisma.dailyClosing.findMany({ orderBy: { createdAt: 'asc' } }),
+    prisma.systemSetting.findMany({ orderBy: { key: 'asc' } }),
   ]);
 
   const exportedAt = new Date();
@@ -65,6 +67,7 @@ export async function GET() {
       expenses: expenses.length,
       vehicles: vehicles.length,
       dailyClosings: dailyClosings.length,
+      systemSettings: systemSettings.length,
     },
     data: {
       users,
@@ -78,6 +81,7 @@ export async function GET() {
       expenses,
       vehicles,
       dailyClosings,
+      systemSettings,
     },
   };
 
