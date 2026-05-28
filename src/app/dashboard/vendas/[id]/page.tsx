@@ -50,6 +50,32 @@ const getStatusVariant = (status: OrderStatus) => {
   }
 };
 
+const orderStatusLabels: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  CONFIRMADO: 'Confirmado',
+  PROCESSANDO: 'Processando',
+  EM_PREPARO: 'Em preparo',
+  PRONTO: 'Pronto',
+  ENVIADO: 'Enviado',
+  ENTREGUE: 'Entregue',
+  CONCLUIDO: 'Concluído',
+  CANCELADO: 'Cancelado',
+};
+
+const deliveryStatusLabels: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  EM_ROTA: 'Em rota',
+  ENTREGUE: 'Entregue',
+  CANCELADA: 'Cancelada',
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  DINHEIRO: 'Dinheiro',
+  PIX: 'Pix',
+  CARTAO: 'Cartão',
+  FIADO: 'Fiado',
+};
+
 export default async function OrderDetailsPage({
   params,
 }: {
@@ -92,7 +118,7 @@ export default async function OrderDetailsPage({
               variant={getStatusVariant(order.status as OrderStatus)}
               className="text-lg"
             >
-              {order.status}
+              {orderStatusLabels[order.status] ?? order.status}
             </Badge>
           </CardContent>
         </Card>
@@ -111,7 +137,7 @@ export default async function OrderDetailsPage({
               }
               className="text-lg"
             >
-              {order.delivery?.status || 'N/A'}
+              {order.delivery?.status ? deliveryStatusLabels[order.delivery.status] ?? order.delivery.status : 'Sem entrega'}
             </Badge>
           </CardContent>
         </Card>
@@ -123,7 +149,7 @@ export default async function OrderDetailsPage({
           </CardHeader>
           <CardContent>
             <div className="text-lg font-semibold">
-              {order.paymentMethod}
+              {paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod}
             </div>
           </CardContent>
         </Card>
@@ -154,7 +180,7 @@ export default async function OrderDetailsPage({
                   <TableRow>
                     <TableHead>Produto</TableHead>
                     <TableHead className="text-center">Qtd</TableHead>
-                    <TableHead className="text-right">Preço Un.</TableHead>
+                    <TableHead className="text-right">Preço un.</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -200,22 +226,22 @@ export default async function OrderDetailsPage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Resumo Financeiro</CardTitle>
+              <CardTitle>Resumo financeiro</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span>Valor Bruto</span>
+                <span>Valor bruto</span>
                 <span>{formatCurrency(order.grossValue)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Custo Produtos</span>
+                <span>Custo dos produtos</span>
                 <span className="text-red-500">
                   - {formatCurrency(order.totalCost)}
                 </span>
               </div>
               <Separator />
               <div className="flex justify-between font-bold text-lg">
-                <span>Valor Líquido (Lucro)</span>
+                <span>Valor líquido (lucro)</span>
                 <span>{formatCurrency(Number(order.netValue))}</span>
               </div>
             </CardContent>

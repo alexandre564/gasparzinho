@@ -52,7 +52,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
                 type="email"
@@ -81,7 +81,7 @@ export default function LoginPage() {
                 onChange={(event) => setRememberEmail(event.target.checked)}
                 className="h-4 w-4 rounded border-slate-300 text-emerald-600"
               />
-              Lembrar meu email neste computador
+              Lembrar meu e-mail neste computador
             </label>
             {errorMessage && (
               <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center">

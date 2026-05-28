@@ -12,13 +12,13 @@ export async function authenticate(
   const password = formData.get('password');
 
   if (typeof email !== 'string' || typeof password !== 'string') {
-    return 'Informe email e senha.';
+    return 'Informe e-mail e senha.';
   }
 
   const normalizedEmail = email.trim().toLowerCase();
 
   if (!normalizedEmail || !password) {
-    return 'Informe email e senha.';
+    return 'Informe e-mail e senha.';
   }
 
   try {
@@ -36,7 +36,7 @@ export async function authenticate(
       console.error('Login AuthError:', error.type, error.cause);
 
       if (error.type === 'CredentialsSignin' || error.type === 'CallbackRouteError') {
-        return 'Email ou senha invalidos.';
+        return 'E-mail ou senha inválidos.';
       }
 
       return 'Não foi possível entrar agora. Tente novamente.';

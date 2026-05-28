@@ -36,7 +36,7 @@ export default function NovoMembroPage() {
             </div>
 
             <div className="grid gap-2">
-              <label htmlFor="email" className="text-sm font-bold text-slate-800">Email</label>
+              <label htmlFor="email" className="text-sm font-bold text-slate-800">E-mail</label>
               <Input id="email" type="email" name="email" required />
             </div>
 

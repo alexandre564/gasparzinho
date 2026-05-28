@@ -16,6 +16,18 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
+const orderStatusLabels: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  CONFIRMADO: 'Confirmado',
+  PROCESSANDO: 'Processando',
+  EM_PREPARO: 'Em preparo',
+  PRONTO: 'Pronto',
+  ENVIADO: 'Enviado',
+  ENTREGUE: 'Entregue',
+  CONCLUIDO: 'Concluído',
+  CANCELADO: 'Cancelado',
+};
+
 async function getDashboardData() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -218,7 +230,9 @@ export default async function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-extrabold text-slate-950">{currency.format(order.grossValue)}</p>
-                    <Badge variant="secondary" className="mt-1">{order.status}</Badge>
+                    <Badge variant="secondary" className="mt-1">
+                      {orderStatusLabels[order.status] ?? order.status}
+                    </Badge>
                   </div>
                 </div>
               ))

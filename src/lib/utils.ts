@@ -20,7 +20,7 @@ export function formatCurrency(amount: number | string | null | undefined) {
 
 export function formatDateTime(date: Date | string | null | undefined) {
   if (!date) {
-    return 'N/A';
+    return '-';
   }
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;

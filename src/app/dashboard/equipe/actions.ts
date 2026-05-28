@@ -18,7 +18,7 @@ type UserFormInput = {
 
 const UserFormSchema = z.object({
   name: z.string().trim().min(3, { message: 'O nome deve ter no mínimo 3 caracteres.' }),
-  email: z.string().trim().email({ message: 'Email inválido.' }).transform((email) => email.toLowerCase()),
+  email: z.string().trim().email({ message: 'E-mail inválido.' }).transform((email) => email.toLowerCase()),
   role: z.enum(TEAM_ROLE_VALUES),
   isActive: z.boolean().default(true),
   password: z

@@ -65,9 +65,9 @@ export function EditForm({ user }: EditFormProps) {
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="email" className="text-sm font-bold text-slate-800">Email de login</label>
+        <label htmlFor="email" className="text-sm font-bold text-slate-800">E-mail de login</label>
         <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
-        <p className="text-xs font-medium text-slate-500">Este email sera usado para entrar no sistema.</p>
+        <p className="text-xs font-medium text-slate-500">Este e-mail será usado para entrar no sistema.</p>
       </div>
 
       <div className="grid gap-2">

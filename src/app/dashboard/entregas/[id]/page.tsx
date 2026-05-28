@@ -37,6 +37,20 @@ function statusVariant(status: string): BadgeProps['variant'] {
   return 'secondary';
 }
 
+const deliveryStatusLabels: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  EM_ROTA: 'Em rota',
+  ENTREGUE: 'Entregue',
+  CANCELADA: 'Cancelada',
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  DINHEIRO: 'Dinheiro',
+  PIX: 'Pix',
+  CARTAO: 'Cartão',
+  FIADO: 'Fiado',
+};
+
 export default async function DeliveryDetailsPage({
   params,
 }: {
@@ -78,7 +92,7 @@ export default async function DeliveryDetailsPage({
           </div>
         </div>
         <Badge variant={statusVariant(delivery.status)} className="w-fit text-sm">
-          {delivery.status}
+          {deliveryStatusLabels[delivery.status] ?? delivery.status}
         </Badge>
       </div>
 
@@ -123,7 +137,7 @@ export default async function DeliveryDetailsPage({
               <div className="flex items-start gap-2">
                 <CreditCard className="mt-0.5 h-4 w-4 text-slate-500" />
                 <p className="text-slate-700">
-                  Pagamento: {order.paymentMethod}
+                  Pagamento: {paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod}
                   {order.paymentDueDate
                     ? ` - vencimento ${new Date(order.paymentDueDate).toLocaleDateString('pt-BR')}`
                     : ''}
@@ -170,7 +184,7 @@ export default async function DeliveryDetailsPage({
               <TableRow>
                 <TableHead>Produto</TableHead>
                 <TableHead className="text-center">Qtd.</TableHead>
-                <TableHead className="text-right">Unit?rio</TableHead>
+                <TableHead className="text-right">Unitário</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
