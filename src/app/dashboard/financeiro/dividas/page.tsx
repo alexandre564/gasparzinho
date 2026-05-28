@@ -29,6 +29,8 @@ import StatusFilter from './StatusFilter';
 import MarkAsPaidButton from './MarkAsPaidButton';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
+
+export const dynamic = 'force-dynamic';
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',

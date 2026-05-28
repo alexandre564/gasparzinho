@@ -114,7 +114,7 @@ export async function updateUser(id: string, data: UserFormInput) {
     });
 
     if (existingUser) {
-      return { success: false, message: 'Este email ja esta em uso por outro membro.' };
+      return { success: false, message: 'Este email já está em uso por outro membro.' };
     }
 
     const passwordUpdate = validatedFields.data.password
@@ -161,7 +161,7 @@ export async function deleteUser(formData: FormData) {
   const id = formData.get('id') as string;
 
   if (!id) {
-    return { success: false, message: 'ID do usuario nao fornecido.' };
+    return { success: false, message: 'ID do usuário não fornecido.' };
   }
 
   try {

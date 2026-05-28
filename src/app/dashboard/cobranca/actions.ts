@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
@@ -24,8 +24,8 @@ const optionalDate = z.preprocess((value) => {
 }, z.coerce.date().optional());
 
 const DebtActionSchema = z.object({
-  paidAmount: z.coerce.number().min(0, 'O valor pago nao pode ser negativo.').default(0),
-  remainingValue: z.coerce.number().min(0, 'O restante a receber nao pode ser negativo.'),
+  paidAmount: z.coerce.number().min(0, 'O valor pago não pode ser negativo.').default(0),
+  remainingValue: z.coerce.number().min(0, 'O restante a receber não pode ser negativo.'),
   newDueDate: z.coerce.date({ message: 'Informe a nova data prevista.' }),
   paymentDate: optionalDate,
   notes: z.string().trim().max(500, 'Use no máximo 500 caracteres.').optional(),
@@ -227,10 +227,10 @@ export async function updateDebt(id: string, data: unknown) {
       ? existingDebt.renegotiatedValue ?? existingDebt.value
       : remainingValue;
     const paymentInfo = [
-      `Valor pago nesta renegociacao: R$ ${paidAmount.toFixed(2)}`,
+      `Valor pago nesta renegociação: R$ ${paidAmount.toFixed(2)}`,
       paymentDate ? `Data do pagamento parcial: ${paymentDate.toLocaleDateString('pt-BR')}` : null,
       `Restante a receber: R$ ${remainingValue.toFixed(2)}`,
-      notes ? `Observacoes: ${notes}` : null,
+      notes ? `Observações: ${notes}` : null,
     ]
       .filter(Boolean)
       .join('\n');
@@ -256,8 +256,8 @@ export async function updateDebt(id: string, data: unknown) {
     return {
       success: true as const,
       message: fullPayment
-        ? 'Divida quitada e marcada como paga.'
-        : 'Renegociacao salva. O restante continua pendente de cobranca.',
+        ? 'Dívida quitada e marcada como paga.'
+        : 'Renegociação salva. O restante continua pendente de cobrança.',
     };
   } catch (error) {
     console.error('Erro ao renegociar dívida:', error);
@@ -397,12 +397,12 @@ function parseDebtsCsv(text: string) {
       id: pickValue(row, ['id', 'codigo']),
       customerName: pickValue(row, ['cliente', 'nome', 'customer']),
       phone: pickValue(row, ['telefone', 'celular', 'whatsapp', 'phone']),
-      value: parseMoneyValue(pickValue(row, ['valor para pagamento', 'valor', 'divida', 'restante'])),
+      value: parseMoneyValue(pickValue(row, ['valor para pagamento', 'valor', 'dívida', 'divida', 'restante'])),
       dueDate: parseDateValue(pickValue(row, ['vencimento', 'data vencimento', 'due date'])),
       paidAt: parseDateValue(pickValue(row, ['pagamento', 'pago em', 'paid at'])),
-      renegotiatedAt: parseDateValue(pickValue(row, ['renegociado em', 'renegociacao'])),
+      renegotiatedAt: parseDateValue(pickValue(row, ['renegociado em', 'renegociação', 'renegociacao'])),
       status: pickValue(row, ['status']).toUpperCase() || 'PENDENTE',
-      notes: pickValue(row, ['observacoes', 'observacao', 'notes']),
+      notes: pickValue(row, ['observações', 'observacoes', 'observação', 'observacao', 'notes']),
     };
   });
 }

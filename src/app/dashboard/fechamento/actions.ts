@@ -86,7 +86,7 @@ export async function createDailyClosing(
   const validatedFields = DailyClosingSchema.safeParse(data);
 
   if (!validatedFields.success) {
-    return { success: false, message: 'Erro de validacao nos dados do fechamento.' };
+    return { success: false, message: 'Erro de validação nos dados do fechamento.' };
   }
 
   const { date, totalRevenue, totalExpenses, netBalance, ordersCount, stockForecast } =
@@ -99,7 +99,7 @@ export async function createDailyClosing(
     });
 
     if (existingClosing) {
-      return { success: false, message: 'O fechamento de hoje ja foi realizado.' };
+      return { success: false, message: 'O fechamento de hoje já foi realizado.' };
     }
 
     await prisma.dailyClosing.create({
@@ -118,7 +118,7 @@ export async function createDailyClosing(
     return { success: true, message: 'Fechamento do dia realizado com sucesso.' };
   } catch (error) {
     console.error('Database Error:', error);
-    return { success: false, message: 'Nao foi possivel salvar o fechamento no banco de dados.' };
+    return { success: false, message: 'Não foi possível salvar o fechamento no banco de dados.' };
   }
 }
 

@@ -21,6 +21,8 @@ import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import { getPaginatedOrders } from './actions';
 
+
+export const dynamic = 'force-dynamic';
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', {
     style: 'currency',

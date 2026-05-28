@@ -1,4 +1,5 @@
-﻿import { format } from 'date-fns';
+export const dynamic = 'force-dynamic';
+import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { prisma } from '@/lib/prisma';

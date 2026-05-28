@@ -70,7 +70,7 @@ export async function createExpense(
   if (!validatedFields.success) {
     return {
       success: false,
-      message: 'Erro de validacao. Corrija os campos e tente novamente.',
+      message: 'Erro de validação. Corrija os campos e tente novamente.',
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }

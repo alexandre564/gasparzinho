@@ -24,3 +24,6 @@ export default async function EditVehiclePage({ params }: { params: { id: string
     </Card>
   )
 }
+
+
+export const dynamic = 'force-dynamic';

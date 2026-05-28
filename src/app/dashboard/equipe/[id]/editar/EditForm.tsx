@@ -54,7 +54,7 @@ export function EditForm({ user }: EditFormProps) {
       return;
     }
 
-    toast.error(result?.message || 'Nao foi possivel salvar.');
+    toast.error(result?.message || 'Não foi possível salvar.');
   };
 
   return (
@@ -103,7 +103,7 @@ export function EditForm({ user }: EditFormProps) {
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="isActive" className="text-sm font-bold text-slate-800">Situacao</label>
+        <label htmlFor="isActive" className="text-sm font-bold text-slate-800">Situação</label>
         <select
           id="isActive"
           name="isActive"

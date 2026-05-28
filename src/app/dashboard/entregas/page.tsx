@@ -25,6 +25,8 @@ import DeliveryWorkflowActions from './DeliveryWorkflowActions';
 import { getPaginatedDeliveries } from './actions';
 import { getDriverWhatsappNumber } from '../configuracoes/actions';
 
+
+export const dynamic = 'force-dynamic';
 function ItemsSummary({
   items,
 }: {
@@ -87,7 +89,7 @@ export default async function DeliveriesPage({
                 <TableRow>
                   <TableHead>Data</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead className="hidden md:table-cell">Endereco</TableHead>
+                  <TableHead className="hidden md:table-cell">Endereço</TableHead>
                   <TableHead className="hidden xl:table-cell">Itens</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-right">Acoes</TableHead>

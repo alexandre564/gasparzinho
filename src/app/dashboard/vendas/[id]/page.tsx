@@ -29,6 +29,8 @@ import {
 import CancelOrderButton from './CancelOrderButton';
 import { OrderStatus } from "@/types/enums";
 
+
+export const dynamic = 'force-dynamic';
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', {
     style: 'currency',

@@ -3,6 +3,8 @@ import { getProduct } from '../../actions';
 import ProductForm from '../../ProductForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
+
+export const dynamic = 'force-dynamic';
 export default async function EditarProdutoPage({ params }: { params: { id: string } }) {
   const product = await getProduct(params.id);
 

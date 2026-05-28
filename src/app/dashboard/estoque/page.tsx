@@ -23,6 +23,8 @@ import { CategoryFilter } from './CategoryFilter';
 import DeleteProductButton from './DeleteProductButton';
 import { getPaginatedProducts } from './actions';
 
+
+export const dynamic = 'force-dynamic';
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', {
     style: 'currency',

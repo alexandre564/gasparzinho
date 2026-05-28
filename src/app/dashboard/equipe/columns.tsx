@@ -75,7 +75,7 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: 'isActive',
-    header: 'Situacao',
+    header: 'Situação',
     cell: ({ row }) => (
       <Badge variant={row.original.isActive ? 'success' : 'outline'}>
         {row.original.isActive ? 'Ativo' : 'Inativo'}

@@ -14,3 +14,6 @@ export default function NewVehiclePage() {
     </Card>
   )
 }
+
+
+export const dynamic = 'force-dynamic';

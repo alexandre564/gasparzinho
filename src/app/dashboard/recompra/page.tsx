@@ -23,6 +23,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
+
+export const dynamic = 'force-dynamic';
 const periodOptions = [3, 7, 15];
 
 function FilterButton({ days, currentDays }: { days: number; currentDays: number }) {

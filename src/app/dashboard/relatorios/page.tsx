@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getSalesReportData, type ReportPeriod } from './actions';
 import { PeriodToggle } from './PeriodToggle';
 
+
+export const dynamic = 'force-dynamic';
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',

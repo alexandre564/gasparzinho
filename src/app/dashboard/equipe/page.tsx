@@ -5,6 +5,8 @@ import { DataTable } from './data-table';
 import { getTeamMembers } from './actions';
 import { Button } from '@/components/ui/button';
 
+
+export const dynamic = 'force-dynamic';
 export default async function TeamPage() {
   const members = await getTeamMembers();
 

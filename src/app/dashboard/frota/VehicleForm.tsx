@@ -15,7 +15,7 @@ import { createVehicle, updateVehicle } from './actions'
 
 const vehicleFormSchema = z.object({
   placa: z.string().length(7, 'A placa deve ter 7 caracteres.'),
-  modelo: z.string().min(1, 'O modelo e obrigatorio.'),
+  modelo: z.string().min(1, 'O modelo é obrigatório.'),
   tipo: z.string().min(1, 'Selecione o tipo.'),
   status: z.string().min(1, 'Selecione o status.'),
   custoMedioKm: z.coerce.number().positive('O custo deve ser positivo.'),
@@ -107,7 +107,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
         )} />
         <FormField control={form.control} name="observacoes" render={({ field }) => (
           <FormItem>
-            <FormLabel>Observacoes</FormLabel>
+            <FormLabel>Observações</FormLabel>
             <FormControl><Textarea {...field} /></FormControl>
             <FormMessage />
           </FormItem>

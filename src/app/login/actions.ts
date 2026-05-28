@@ -39,10 +39,10 @@ export async function authenticate(
         return 'Email ou senha invalidos.';
       }
 
-      return 'Nao foi possivel entrar agora. Tente novamente.';
+      return 'Não foi possível entrar agora. Tente novamente.';
     }
 
     console.error('Login error:', error);
-    return 'Nao foi possivel entrar agora. Tente novamente.';
+    return 'Não foi possível entrar agora. Tente novamente.';
   }
 }

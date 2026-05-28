@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma';
 import { getRepurchasePredictions } from './recompra/actions';
 
+
+export const dynamic = 'force-dynamic';
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
 
 const currency = new Intl.NumberFormat('pt-BR', {

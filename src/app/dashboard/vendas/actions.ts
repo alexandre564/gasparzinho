@@ -41,7 +41,7 @@ const InventoryMovementType = {
 } as const;
 
 const OrderItemSchema = z.object({
-  productId: z.string().min(1, 'Produto e obrigatorio.'),
+  productId: z.string().min(1, 'Produto é obrigatório.'),
   quantity: z.coerce
     .number()
     .positive('Quantidade deve ser maior que zero.'),
@@ -50,10 +50,10 @@ const OrderItemSchema = z.object({
 });
 
 const OrderFormSchema = z.object({
-  customerId: z.string().min(1, 'Cliente e obrigatorio.'),
-  paymentMethod: z.string().min(1, 'Forma de pagamento e obrigatoria.'),
+  customerId: z.string().min(1, 'Cliente é obrigatório.'),
+  paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória.'),
   paymentDueDate: z.string().optional(),
-  orderStatus: z.string().min(1, 'Status do pedido e obrigatorio.'),
+  orderStatus: z.string().min(1, 'Status do pedido é obrigatório.'),
   items: z
     .array(OrderItemSchema)
     .min(1, 'O pedido deve ter pelo menos um item.'),
@@ -74,7 +74,7 @@ export async function createOrder(
   if (!validatedFields.success) {
     return {
       success: false,
-      message: 'Erro de validacao',
+      message: 'Erro de validação',
       errors: validatedFields.error.issues,
     };
   }
@@ -98,12 +98,12 @@ export async function createOrder(
         const product = products.find((item) => item.id === productId);
 
         if (!product) {
-          throw new Error('Produto nao encontrado no estoque.');
+          throw new Error('Produto não encontrado no estoque.');
         }
 
         if (product.inventory < requestedQuantity) {
           throw new Error(
-            `Estoque insuficiente para ${product.name}. Disponivel: ${product.inventory}, solicitado: ${requestedQuantity}.`
+            `Estoque insuficiente para ${product.name}. Disponível: ${product.inventory}, solicitado: ${requestedQuantity}.`
           );
         }
       }
@@ -203,7 +203,7 @@ export async function createOrder(
       orderId: createdOrder.id,
     };
   } catch (error) {
-    console.error('Erro na transacao ao criar pedido:', error);
+    console.error('Erro na transação ao criar pedido:', error);
 
     return {
       success: false,
@@ -311,11 +311,11 @@ export async function deleteOrder(
       });
 
       if (!order) {
-        throw new Error('Pedido nao encontrado.');
+        throw new Error('Pedido não encontrado.');
       }
 
       if (order.status === OrderStatus.CANCELADO) {
-        throw new Error('Este pedido ja foi cancelado.');
+        throw new Error('Este pedido já foi cancelado.');
       }
 
       await tx.order.update({

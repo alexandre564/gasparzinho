@@ -21,11 +21,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 const renegotiationSchema = z.object({
-  paidAmount: z.coerce.number().min(0, 'O valor pago nao pode ser negativo.'),
-  remainingValue: z.coerce.number().min(0, 'O restante a receber nao pode ser negativo.'),
+  paidAmount: z.coerce.number().min(0, 'O valor pago não pode ser negativo.'),
+  remainingValue: z.coerce.number().min(0, 'O restante a receber não pode ser negativo.'),
   newDueDate: z.string().min(1, 'Informe a nova data prevista.'),
   paymentDate: z.string().optional(),
-  notes: z.string().max(500, 'Use no maximo 500 caracteres.').optional(),
+  notes: z.string().max(500, 'Use no máximo 500 caracteres.').optional(),
 });
 
 type RenegotiationFormValues = z.infer<typeof renegotiationSchema>;
@@ -91,11 +91,11 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
         });
       });
 
-      toast.error('Erro de validacao. Verifique os campos.');
+      toast.error('Erro de validação. Verifique os campos.');
       return;
     }
 
-    toast.error(result.message || 'Nao foi possivel renegociar a divida.');
+    toast.error(result.message || 'Não foi possível renegociar a dívida.');
   }
 
   return (
@@ -103,7 +103,7 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="rounded-lg border bg-slate-50 p-3 text-sm">
           <div className="flex justify-between">
-            <span>Divida atual</span>
+            <span>Dívida atual</span>
             <strong>{currency.format(debt.value)}</strong>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
                 <Input type="number" min="0" step="0.01" {...field} />
               </FormControl>
               <p className="text-xs text-slate-500">
-                Informe apenas o valor pago nesta renegociacao. Se nao houve pagamento, deixe 0.
+                Informe apenas o valor pago nesta renegociação. Se não houve pagamento, deixe 0.
               </p>
               <FormMessage />
             </FormItem>
@@ -135,7 +135,7 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
                 <Input type="number" min="0" step="0.01" {...field} />
               </FormControl>
               <p className="text-xs text-slate-500">
-                Este valor continua aparecendo em cobranca ate ser quitado.
+                Este valor continua aparecendo em cobrança até ser quitado.
               </p>
               <FormMessage />
             </FormItem>
@@ -166,7 +166,7 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
                 <Input type="date" {...field} />
               </FormControl>
               <p className="text-xs text-slate-500">
-                Use para registrar quando o cliente pagou parte da divida. Nao quita a cobranca.
+                Use para registrar quando o cliente pagou parte da dívida. Não quita a cobrança.
               </p>
               <FormMessage />
             </FormItem>
@@ -178,9 +178,9 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Observacoes da renegociacao</FormLabel>
+              <FormLabel>Observações da renegociação</FormLabel>
               <FormControl>
-                <Textarea rows={4} placeholder="Ex.: cliente combinou pagar o restante apos receber salario." {...field} />
+                <Textarea rows={4} placeholder="Ex.: cliente combinou pagar o restante após receber salário." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -188,7 +188,7 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
         />
 
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-          Salvar renegociacao
+          Salvar renegociação
         </Button>
       </form>
     </Form>

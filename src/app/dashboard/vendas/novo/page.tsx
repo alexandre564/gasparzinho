@@ -1,5 +1,7 @@
 import OrderForm from './OrderForm';
 
+
+export const dynamic = 'force-dynamic';
 export default function CreateOrderPage({
   searchParams,
 }: {

@@ -112,7 +112,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Proximo
+          Próximo
         </Button>
       </div>
     </div>

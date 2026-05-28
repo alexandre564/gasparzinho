@@ -39,10 +39,10 @@ const ProductFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter no minimo 3 caracteres.'),
   description: z.string().optional(),
   price: z.coerce.number().positive('O preco de venda deve ser positivo.'),
-  cost: z.coerce.number().nonnegative('O custo nao pode ser negativo.'),
+  cost: z.coerce.number().nonnegative('O custo não pode ser negativo.'),
   category: z.nativeEnum(ProductCategory),
   stockKind: z.nativeEnum(StockKind),
-  inventory: z.coerce.number().int().nonnegative('O estoque nao pode ser negativo.').default(0),
+  inventory: z.coerce.number().int().nonnegative('O estoque não pode ser negativo.').default(0),
 });
 
 type ProductFormValues = z.infer<typeof ProductFormSchema>;

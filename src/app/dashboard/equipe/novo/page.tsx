@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
+
+export const dynamic = 'force-dynamic';
 async function createMember(formData: FormData) {
   'use server';
 
@@ -53,7 +55,7 @@ export default function NovoMembroPage() {
             </div>
 
             <div className="grid gap-2">
-              <label htmlFor="isActive" className="text-sm font-bold text-slate-800">Situacao</label>
+              <label htmlFor="isActive" className="text-sm font-bold text-slate-800">Situação</label>
               <select
                 name="isActive"
                 id="isActive"

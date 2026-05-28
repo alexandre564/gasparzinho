@@ -170,7 +170,7 @@ export async function confirmDeliveryPayment(
       });
 
       if (!delivery) {
-        throw new Error('Entrega nao encontrada.');
+        throw new Error('Entrega não encontrada.');
       }
 
       await tx.delivery.update({

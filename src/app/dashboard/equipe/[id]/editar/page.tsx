@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma';
 import type { User } from '@/types';
 
+
+export const dynamic = 'force-dynamic';
 export default async function EditUserPage({ params }: { params: { id: string } }) {
   const user = await prisma.user.findUnique({
     where: { id: params.id },

@@ -6,6 +6,8 @@ import ClosingActions from './ClosingActions';
 import ClosingHistory from './ClosingHistory';
 import ClosingSummary from './ClosingSummary';
 
+
+export const dynamic = 'force-dynamic';
 export default async function FechamentoPage() {
   const closingData = await getDailyClosingData();
   const history = await getClosingHistory();

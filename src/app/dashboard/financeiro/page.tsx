@@ -28,6 +28,8 @@ import {
 } from '@/components/ui/table';
 import SalesChart from '@/components/SalesChart';
 
+
+export const dynamic = 'force-dynamic';
 const currencyFormatter = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 

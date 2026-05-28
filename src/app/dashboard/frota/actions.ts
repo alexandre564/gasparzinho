@@ -16,7 +16,7 @@ const vehicleSchema = z.object({
 export async function createVehicle(data: unknown) {
   const result = vehicleSchema.safeParse(data)
   if (!result.success) {
-    return { success: false as const, message: 'Erro de validacao' }
+    return { success: false as const, message: 'Erro de validação' }
   }
   await prisma.vehicle.create({ data: result.data })
   revalidatePath('/dashboard/frota')
@@ -26,7 +26,7 @@ export async function createVehicle(data: unknown) {
 export async function updateVehicle(id: string, data: unknown) {
   const result = vehicleSchema.safeParse(data)
   if (!result.success) {
-    return { success: false as const, message: 'Erro de validacao' }
+    return { success: false as const, message: 'Erro de validação' }
   }
   await prisma.vehicle.update({ where: { id }, data: result.data })
   revalidatePath('/dashboard/frota')

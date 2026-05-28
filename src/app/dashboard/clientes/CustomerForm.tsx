@@ -16,10 +16,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 const CustomerFormSchema = z.object({
   name: z.string().min(3, { message: 'O nome precisa ter pelo menos 3 caracteres.' }),
-  phone: z.string().min(10, { message: 'O telefone precisa ser valido.' }),
+  phone: z.string().min(10, { message: 'O telefone precisa ser válido.' }),
   cep: z.string().optional(),
   street: z.string().optional(),
-  number: z.string().min(1, { message: 'O numero e obrigatorio.' }),
+  number: z.string().min(1, { message: 'O número é obrigatório.' }),
   complement: z.string().optional(),
   neighborhood: z.string().optional(),
   city: z.string().default('Lavras'),
@@ -31,10 +31,10 @@ type CustomerFormValues = z.infer<typeof CustomerFormSchema>;
 async function fetchCep(cep: string, form: ReturnType<typeof useForm<CustomerFormValues>>) {
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-    if (!response.ok) throw new Error('CEP nao encontrado');
+    if (!response.ok) throw new Error('CEP não encontrado');
     const data = await response.json();
     if (data.erro) {
-      toast.error('CEP nao encontrado. Verifique o numero.');
+      toast.error('CEP não encontrado. Verifique o número.');
       return;
     }
     form.setValue('street', data.logradouro);
@@ -100,7 +100,7 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
       <Card>
         <CardHeader>
           <CardTitle>Cliente cadastrado</CardTitle>
-          <CardDescription>Agora voce pode iniciar o primeiro pedido deste cliente.</CardDescription>
+          <CardDescription>Agora você pode iniciar o primeiro pedido deste cliente.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row">
           <Button className="gap-2" onClick={() => router.push(`/dashboard/vendas/novo?customerId=${createdCustomerId}`)}>
@@ -179,7 +179,7 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
               )} />
               <FormField control={form.control} name="number" render={({ field }) => (
                 <FormItem className="md:col-span-2">
-                  <FormLabel>Numero</FormLabel>
+                  <FormLabel>Número</FormLabel>
                   <FormControl><Input {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -213,15 +213,15 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
               )} />
               <FormField control={form.control} name="reference" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ponto de Referencia</FormLabel>
-                  <FormControl><Input placeholder="Proximo a..." {...field} /></FormControl>
+                  <FormLabel>Ponto de referência</FormLabel>
+                  <FormControl><Input placeholder="Próximo a..." {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
             </div>
 
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Salvando...' : (isUpdate ? 'Salvar Alteracoes' : 'Cadastrar Cliente')}
+              {form.formState.isSubmitting ? 'Salvando...' : (isUpdate ? 'Salvar alterações' : 'Cadastrar cliente')}
             </Button>
           </form>
         </Form>

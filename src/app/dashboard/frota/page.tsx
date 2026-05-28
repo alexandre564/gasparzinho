@@ -20,6 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+
+export const dynamic = 'force-dynamic';
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
