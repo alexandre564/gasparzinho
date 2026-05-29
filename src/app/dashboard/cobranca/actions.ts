@@ -42,6 +42,7 @@ type EnhancedDebt = DebtWithRelations & {
   paymentValue: number;
   daysLate: number;
   isOpen: boolean;
+  effectiveStatus: string;
 };
 
 type ImportDebtsState = {
@@ -88,11 +89,15 @@ function calculateDaysLate(dueDate: Date, paidAt?: Date | null) {
 }
 
 function enhanceDebt(debt: DebtWithRelations): EnhancedDebt {
+  const daysLate = calculateDaysLate(debt.dueDate, debt.paidAt);
+  const isOpen = debt.status !== 'PAGO';
+
   return {
     ...debt,
     paymentValue: debt.renegotiatedValue ?? debt.value,
-    daysLate: calculateDaysLate(debt.dueDate, debt.paidAt),
-    isOpen: debt.status !== 'PAGO',
+    daysLate,
+    isOpen,
+    effectiveStatus: isOpen && daysLate > 0 && debt.status === 'PENDENTE' ? 'VENCIDO' : debt.status,
   };
 }
 
@@ -107,6 +112,7 @@ function debtMatchesSearch(debt: EnhancedDebt, query: string) {
   const textMatch = [
     debt.customer.name,
     debt.customer.phone,
+    debt.effectiveStatus,
     debt.status,
     debt.notes,
     debt.id,
@@ -146,7 +152,7 @@ function compareDebts(left: EnhancedDebt, right: EnhancedDebt, sort: DebtSortKey
   }
 
   if (sort === 'status') {
-    const result = left.status.localeCompare(right.status, 'pt-BR', { sensitivity: 'base' });
+    const result = left.effectiveStatus.localeCompare(right.effectiveStatus, 'pt-BR', { sensitivity: 'base' });
     return direction === 'asc' ? result : -result;
   }
 
@@ -189,7 +195,7 @@ export async function getPaginatedDebts(
   const sortedDebts = debts
     .map(enhanceDebt)
     .filter((debt) => debtMatchesSearch(debt, normalizedQuery))
-    .filter((debt) => !statusFilter || debt.status === statusFilter)
+    .filter((debt) => !statusFilter || debt.effectiveStatus === statusFilter)
     .sort((left, right) => {
       const openOrder = Number(right.isOpen) - Number(left.isOpen);
 

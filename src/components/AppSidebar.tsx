@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Download } from 'lucide-react';
+import { Download, FileSpreadsheet } from 'lucide-react';
 import { auth } from '@/auth';
 import { BrandLogo } from '@/components/BrandLogo';
 import { mainNavLinks, roleLabels, settingsNavLink } from '@/lib/navigation';
@@ -59,14 +59,24 @@ export default async function Sidebar() {
           </Link>
         ) : null}
         {canDownloadBackup ? (
-          <a
-            href="/api/backup"
-            download
-            className="flex h-10 items-center gap-3 rounded-md border border-emerald-400/30 bg-emerald-500 px-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-400"
-          >
-            <Download className="h-4 w-4" />
-            Baixar backup
-          </a>
+          <>
+            <a
+              href="/api/backup"
+              download
+              className="flex h-10 items-center gap-3 rounded-md border border-emerald-400/30 bg-emerald-500 px-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-400"
+            >
+              <Download className="h-4 w-4" />
+              Backup completo
+            </a>
+            <a
+              href="/api/backup/planilha"
+              download
+              className="flex h-10 items-center gap-3 rounded-md border border-emerald-400/30 px-3 text-sm font-semibold text-emerald-100 shadow-sm transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Backup planilha
+            </a>
+          </>
         ) : null}
       </div>
     </aside>

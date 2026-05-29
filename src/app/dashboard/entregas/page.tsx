@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Download } from 'lucide-react';
+import { Download, MapPinned } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +26,7 @@ import DeliveryWorkflowActions from './DeliveryWorkflowActions';
 import DeliveryDateRangeFilter from './DeliveryDateRangeFilter';
 import { getPaginatedDeliveries } from './actions';
 import { getDriverWhatsappNumber } from '../configuracoes/actions';
+import { buildGoogleMapsRouteUrl } from '@/lib/maps';
 
 
 export const dynamic = 'force-dynamic';
@@ -71,6 +72,27 @@ export default async function DeliveriesPage({
   ]);
   const deliveries = deliveryData.deliveries ?? [];
   const totalPages = deliveryData.totalPages ?? 1;
+  const deliveryRows = deliveries.map((delivery) => {
+    const customerAddress = [
+      `${delivery.order.customer.street}, ${delivery.order.customer.number}`,
+      delivery.order.customer.neighborhood,
+      delivery.order.customer.city,
+    ]
+      .filter(Boolean)
+      .join(' - ');
+    const deliveryAddress = delivery.order.deliveryAddress || customerAddress;
+    const deliveryReference = delivery.order.deliveryReference || delivery.order.customer.reference;
+
+    return {
+      delivery,
+      deliveryAddress,
+      deliveryReference,
+    };
+  });
+  const routeAddresses = deliveryRows
+    .filter(({ delivery }) => delivery.status !== 'ENTREGUE' && delivery.status !== 'CANCELADA')
+    .map(({ deliveryAddress }) => deliveryAddress);
+  const routeHref = buildGoogleMapsRouteUrl(routeAddresses);
 
   return (
     <div className="space-y-6">
@@ -81,12 +103,27 @@ export default async function DeliveriesPage({
             Acompanhe endereços, itens e andamento das entregas.
           </p>
         </div>
-        <Button asChild variant="outline" size="sm" className="gap-2">
-          <a href={exportHref} download>
-            <Download className="h-4 w-4" />
-            Exportar CSV
-          </a>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {routeHref !== '#' ? (
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <a href={routeHref} target="_blank" rel="noreferrer">
+                <MapPinned className="h-4 w-4" />
+                Roteiro Maps
+              </a>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="gap-2" disabled>
+              <MapPinned className="h-4 w-4" />
+              Roteiro Maps
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <a href={exportHref} download>
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </a>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -104,8 +141,8 @@ export default async function DeliveriesPage({
           <DeliveryDateRangeFilter />
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-md border">
-            <Table>
+          <div className="overflow-x-auto rounded-md border">
+            <Table className="min-w-[980px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
@@ -117,18 +154,8 @@ export default async function DeliveriesPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {deliveries.length > 0 ? (
-                  deliveries.map((delivery) => {
-                    const customerAddress = [
-                      `${delivery.order.customer.street}, ${delivery.order.customer.number}`,
-                      delivery.order.customer.neighborhood,
-                      delivery.order.customer.city,
-                    ]
-                      .filter(Boolean)
-                      .join(' - ');
-                    const deliveryAddress = delivery.order.deliveryAddress || customerAddress;
-                    const deliveryReference = delivery.order.deliveryReference || delivery.order.customer.reference;
-
+                {deliveryRows.length > 0 ? (
+                  deliveryRows.map(({ delivery, deliveryAddress, deliveryReference }) => {
                     return (
                     <TableRow key={delivery.id}>
                       <TableCell className="font-medium">

@@ -3,6 +3,7 @@ import {
   Bell,
   CircleUser,
   Download,
+  FileSpreadsheet,
   Menu,
 } from "lucide-react";
 import { auth } from "@/auth";
@@ -69,14 +70,24 @@ export default async function Header() {
               </SheetClose>
             ))}
             {canDownloadBackup ? (
-              <a
-                href="/api/backup"
-                download
-                className="flex min-h-11 items-center gap-3 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-white hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
-              >
-                <Download className="h-4 w-4" />
-                Baixar backup
-              </a>
+              <div className="space-y-2 pt-2">
+                <a
+                  href="/api/backup"
+                  download
+                  className="flex min-h-11 items-center gap-3 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-white hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+                >
+                  <Download className="h-4 w-4" />
+                  Backup completo
+                </a>
+                <a
+                  href="/api/backup/planilha"
+                  download
+                  className="flex min-h-11 items-center gap-3 rounded-md border border-emerald-400/40 px-3 text-sm font-semibold text-emerald-100 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Backup em planilha
+                </a>
+              </div>
             ) : null}
           </nav>
         </SheetContent>
@@ -125,6 +136,11 @@ export default async function Header() {
           {canDownloadBackup ? (
             <DropdownMenuItem asChild>
               <a href="/api/backup" download>Baixar backup</a>
+            </DropdownMenuItem>
+          ) : null}
+          {canDownloadBackup ? (
+            <DropdownMenuItem asChild>
+              <a href="/api/backup/planilha" download>Backup em planilha</a>
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem>Suporte</DropdownMenuItem>

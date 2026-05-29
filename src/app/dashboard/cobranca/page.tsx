@@ -56,7 +56,7 @@ const optionalDebtColumns: Array<{ key: OptionalDebtColumn; label: string }> = [
   { key: 'phone', label: 'Contato' },
   { key: 'dueDate', label: 'Vencimento' },
   { key: 'daysLate', label: 'Dias em Atraso' },
-  { key: 'renegotiation', label: 'Renegociacao' },
+  { key: 'renegotiation', label: 'Renegociação' },
   { key: 'paidAt', label: 'Pagamento' },
 ];
 
@@ -226,10 +226,10 @@ function buildCollectionMessage(template: string, debt: DebtListItem) {
 
 function getDelayText(debt: DebtListItem) {
   if (debt.daysLate === 0) {
-    return debt.status === 'PAGO' ? 'Pago no prazo' : 'Sem atraso';
+    return debt.effectiveStatus === 'PAGO' ? 'Pago no prazo' : 'Sem atraso';
   }
 
-  return debt.status === 'PAGO'
+  return debt.effectiveStatus === 'PAGO'
     ? `${debt.daysLate} dia(s) em atraso`
     : `${debt.daysLate} dia(s) atrasado`;
 }
@@ -301,10 +301,10 @@ export default async function CobrancaPage({
         <ColumnControls searchParams={searchParams ?? {}} visibleColumns={visibleColumns} />
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border border-slate-300 bg-white">
-          <Table>
+        <div className="overflow-x-auto rounded-md border border-slate-300 bg-white">
+          <Table className="min-w-[1120px]">
             <TableHeader>
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-slate-950 hover:bg-slate-950">
                 <SortableHeader
                   field="customer"
                   activeSort={sort}
@@ -346,7 +346,7 @@ export default async function CobrancaPage({
                   />
                 ) : null}
                 {showColumn('renegotiation') ? (
-                  <TableHead className="hidden xl:table-cell">Renegociação</TableHead>
+                  <TableHead className="hidden font-extrabold text-white xl:table-cell">Renegociação</TableHead>
                 ) : null}
                 {showColumn('paidAt') ? (
                   <SortableHeader
@@ -363,13 +363,13 @@ export default async function CobrancaPage({
                   activeDirection={direction}
                   searchParams={searchParams ?? {}}
                 />
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-right font-extrabold text-white">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {debts.length > 0 ? (
                 debts.map((debt) => {
-                  const isRenegotiated = Boolean(debt.renegotiatedAt) || debt.status === 'RENEGOCIADO';
+                  const isRenegotiated = Boolean(debt.renegotiatedAt) || debt.effectiveStatus === 'RENEGOCIADO';
                   const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
                   const originalDueDate =
                     debt.originalDueDate && debt.originalDueDate.getTime() !== debt.dueDate.getTime()
@@ -377,7 +377,7 @@ export default async function CobrancaPage({
                       : null;
 
                   return (
-                    <TableRow key={debt.id} className={debt.status === 'PAGO' ? 'bg-emerald-50/50' : undefined}>
+                    <TableRow key={debt.id} className={debt.effectiveStatus === 'PAGO' ? 'bg-emerald-50/50' : undefined}>
                       <TableCell>
                         <div className="font-bold text-slate-950">{debt.customer.name}</div>
                         <div className="text-xs text-slate-500">Compra: {formatDate(debt.order?.createdAt ?? debt.createdAt)}</div>
@@ -398,14 +398,14 @@ export default async function CobrancaPage({
                       ) : null}
                       {showColumn('daysLate') ? (
                         <TableCell className="hidden lg:table-cell">
-                          <Badge variant={debt.daysLate > 0 && debt.status !== 'PAGO' ? 'destructive' : 'secondary'}>
+                          <Badge variant={debt.daysLate > 0 && debt.effectiveStatus !== 'PAGO' ? 'destructive' : 'secondary'}>
                             {getDelayText(debt)}
                           </Badge>
-                          {debt.status !== 'PAGO' && debt.daysLate >= 30 ? (
+                          {debt.effectiveStatus !== 'PAGO' && debt.daysLate >= 30 ? (
                             <div className="mt-1 text-xs font-semibold text-red-700">Alerta 30+ dias</div>
-                          ) : debt.status !== 'PAGO' && debt.daysLate >= 15 ? (
+                          ) : debt.effectiveStatus !== 'PAGO' && debt.daysLate >= 15 ? (
                             <div className="mt-1 text-xs font-semibold text-amber-700">Alerta 15+ dias</div>
-                          ) : debt.status !== 'PAGO' && debt.daysLate >= 7 ? (
+                          ) : debt.effectiveStatus !== 'PAGO' && debt.daysLate >= 7 ? (
                             <div className="mt-1 text-xs font-semibold text-amber-600">Alerta 7+ dias</div>
                           ) : null}
                         </TableCell>
@@ -447,8 +447,8 @@ export default async function CobrancaPage({
                         </TableCell>
                       ) : null}
                       <TableCell>
-                        <Badge variant={getStatusVariant(debt.status as DebtStatus)}>
-                          {labelFrom(debtStatusLabels, debt.status)}
+                        <Badge variant={getStatusVariant(debt.effectiveStatus as DebtStatus)}>
+                          {labelFrom(debtStatusLabels, debt.effectiveStatus)}
                         </Badge>
                       </TableCell>
                       <TableCell>

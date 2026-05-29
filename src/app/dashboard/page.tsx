@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Banknote, CreditCard, Package, Repeat, Truck, Users } from 'lucide-react';
+import { AlertTriangle, Banknote, CreditCard, Package, Repeat, TrendingUp, Truck, Users } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 import SalesChart from '@/components/SalesChart';
@@ -21,23 +21,53 @@ const currency = new Intl.NumberFormat('pt-BR', {
 async function getDashboardData() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const monthStart = new Date(today);
+  monthStart.setDate(1);
 
   const [
     salesToday,
+    salesMonth,
+    expensesMonth,
+    openDebtValue,
+    overdueDebts,
     activeCustomers,
     debtors,
     criticalStock,
+    deliveriesWithChangedAddress,
     deliveriesInProgress,
     recentOrders,
     repurchaseOpportunities,
   ] = await Promise.all([
     prisma.order.aggregate({
       _sum: { grossValue: true },
+      _count: { id: true },
       where: { createdAt: { gte: today }, status: { not: 'CANCELADO' } },
+    }),
+    prisma.order.aggregate({
+      _sum: { grossValue: true, netValue: true },
+      _count: { id: true },
+      where: { createdAt: { gte: monthStart }, status: { not: 'CANCELADO' } },
+    }),
+    prisma.expense.aggregate({
+      _sum: { value: true },
+      where: { date: { gte: monthStart } },
+    }),
+    prisma.debt.aggregate({
+      _sum: { value: true },
+      where: { status: { in: [...OPEN_DEBT_STATUSES] } },
+    }),
+    prisma.debt.count({
+      where: { status: { in: [...OPEN_DEBT_STATUSES] }, dueDate: { lt: today } },
     }),
     prisma.customer.count(),
     prisma.debt.count({ where: { status: { in: [...OPEN_DEBT_STATUSES] } } }),
     prisma.product.count({ where: { inventory: { lt: 10 } } }),
+    prisma.delivery.count({
+      where: {
+        status: { in: ['PENDENTE', 'EM_ROTA'] },
+        order: { deliveryAddressChanged: true },
+      },
+    }),
     prisma.delivery.count({ where: { status: { in: ['PENDENTE', 'EM_ROTA'] } } }),
     prisma.order.findMany({
       take: 5,
@@ -73,9 +103,19 @@ async function getDashboardData() {
 
   return {
     totalSalesToday: salesToday._sum.grossValue ?? 0,
+    salesTodayCount: salesToday._count.id,
+    averageTicketToday:
+      salesToday._count.id > 0 ? (salesToday._sum.grossValue ?? 0) / salesToday._count.id : 0,
+    monthRevenue: salesMonth._sum.grossValue ?? 0,
+    monthProfit: (salesMonth._sum.netValue ?? 0) - (expensesMonth._sum.value ?? 0),
+    monthOrders: salesMonth._count.id,
+    monthExpenses: expensesMonth._sum.value ?? 0,
+    openDebtValue: openDebtValue._sum.value ?? 0,
+    overdueDebts,
     activeCustomers,
     debtors,
     criticalStock,
+    deliveriesWithChangedAddress,
     deliveriesInProgress,
     recentOrders,
     repurchaseOpportunities: repurchaseOpportunities.length,
@@ -134,8 +174,74 @@ function MetricCard({
   );
 }
 
+function OperationalAlert({
+  title,
+  description,
+  href,
+  tone = 'amber',
+}: {
+  title: string;
+  description: string;
+  href: string;
+  tone?: 'amber' | 'rose' | 'sky';
+}) {
+  const toneClass = {
+    amber: 'border-amber-300 bg-amber-50 text-amber-900',
+    rose: 'border-rose-300 bg-rose-50 text-rose-900',
+    sky: 'border-sky-300 bg-sky-50 text-sky-900',
+  }[tone];
+
+  return (
+    <Link
+      href={href}
+      className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-sm transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${toneClass}`}
+    >
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>
+        <strong className="block">{title}</strong>
+        <span className="mt-0.5 block opacity-85">{description}</span>
+      </span>
+    </Link>
+  );
+}
+
+type OperationalAlertItem = {
+  title: string;
+  description: string;
+  href: string;
+  tone: 'amber' | 'rose' | 'sky';
+};
+
 export default async function DashboardPage() {
   const data = await getDashboardData();
+  const operationalAlerts: OperationalAlertItem[] = [];
+
+  if (data.overdueDebts > 0) {
+    operationalAlerts.push({
+      title: `${data.overdueDebts} cobrança(s) vencida(s)`,
+      description: 'Priorize clientes em atraso antes de novas vendas fiadas.',
+      href: '/dashboard/cobranca?sort=daysLate&direction=desc',
+      tone: 'rose',
+    });
+  }
+
+  if (data.criticalStock > 0) {
+    operationalAlerts.push({
+      title: `${data.criticalStock} produto(s) em estoque crítico`,
+      description: 'Revise reposição antes de confirmar pedidos maiores.',
+      href: '/dashboard/estoque?stock=CRITICO',
+      tone: 'amber',
+    });
+  }
+
+  if (data.deliveriesWithChangedAddress > 0) {
+    operationalAlerts.push({
+      title: `${data.deliveriesWithChangedAddress} entrega(s) em endereço diferente`,
+      description: 'Confira referências e rotas antes de enviar ao entregador.',
+      href: '/dashboard/entregas',
+      tone: 'sky',
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -212,7 +318,43 @@ export default async function DashboardPage() {
           tone="slate"
           href="/dashboard/fidelizacao"
         />
+        <MetricCard
+          title="Ticket médio hoje"
+          value={currency.format(data.averageTicketToday)}
+          description={`${data.salesTodayCount} pedido(s) registrado(s) hoje.`}
+          icon={TrendingUp}
+          tone="emerald"
+          href="/dashboard/vendas"
+        />
+        <MetricCard
+          title="Vendas no mês"
+          value={currency.format(data.monthRevenue)}
+          description={`${data.monthOrders} pedido(s), despesas de ${currency.format(data.monthExpenses)}.`}
+          icon={Banknote}
+          tone="blue"
+          href="/dashboard/financeiro?period=monthly"
+        />
+        <MetricCard
+          title="A receber"
+          value={currency.format(data.openDebtValue)}
+          description="Valor aberto em cobranças pendentes, vencidas ou renegociadas."
+          icon={CreditCard}
+          tone="rose"
+          href="/dashboard/cobranca"
+        />
       </div>
+
+      {operationalAlerts.length > 0 ? (
+        <section className="grid gap-3 lg:grid-cols-3">
+          {operationalAlerts.map((alert) => (
+            <OperationalAlert key={alert.title} {...alert} />
+          ))}
+        </section>
+      ) : (
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+          Operação sem alertas críticos no momento.
+        </section>
+      )}
 
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
         <Card className="border-slate-300">

@@ -10,6 +10,8 @@
     "lint": "next lint",
     "db:safe-sync": "node scripts/apply-safe-migrations.js && prisma generate",
     "customers:clean-encoding": "node scripts/clean-customer-encoding.js",
+    "data:audit": "node scripts/audit-operational-data.js",
+    "data:repair": "node scripts/repair-operational-data.js",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

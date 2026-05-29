@@ -24,16 +24,49 @@ function normalizeLocationQuery(address: string) {
   return /\bBrasil\b/i.test(withState) ? withState : `${withState}, Brasil`;
 }
 
+function encodeRouteQuery(address: string) {
+  return encodeURIComponent(normalizeLocationQuery(address));
+}
+
 export function buildGoogleMapsUrl(address: string) {
-  const query = normalizeLocationQuery(address);
+  const query = encodeRouteQuery(address);
   return query
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}&travelmode=driving`
+    ? `https://www.google.com/maps/dir/?api=1&destination=${query}&travelmode=driving`
     : '#';
 }
 
 export function buildWazeUrl(address: string) {
-  const query = normalizeLocationQuery(address);
+  const query = encodeRouteQuery(address);
   return query
-    ? `https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes`
+    ? `https://waze.com/ul?q=${query}&navigate=yes`
+    : '#';
+}
+
+export function buildGoogleMapsRouteUrl(addresses: string[]) {
+  const routeAddresses = addresses
+    .map(normalizeLocationQuery)
+    .filter(Boolean)
+    .filter((address, index, current) => current.indexOf(address) === index)
+    .slice(0, 10);
+
+  if (routeAddresses.length === 0) {
+    return '#';
+  }
+
+  if (routeAddresses.length === 1) {
+    return buildGoogleMapsUrl(routeAddresses[0]);
+  }
+
+  const destination = routeAddresses[routeAddresses.length - 1];
+  const waypoints = routeAddresses.slice(0, -1);
+
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&waypoints=${encodeURIComponent(waypoints.join('|'))}&travelmode=driving`;
+}
+
+export function buildWazeMultiStopFallbackUrl(addresses: string[]) {
+  const firstAddress = addresses.map(normalizeLocationQuery).find(Boolean);
+
+  return firstAddress
+    ? buildWazeUrl(firstAddress)
     : '#';
 }
