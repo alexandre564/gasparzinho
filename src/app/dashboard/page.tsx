@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Banknote, CreditCard, Package, Repeat, Truck, Users } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -8,8 +9,8 @@ import { prisma } from '@/lib/prisma';
 import { labelFrom, orderStatusLabels } from '@/lib/labels';
 import { getRepurchasePredictions } from './recompra/actions';
 
-
 export const dynamic = 'force-dynamic';
+
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -17,28 +18,34 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-
 async function getDashboardData() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [salesToday, activeCustomers, debtors, criticalStock, deliveriesInProgress, recentOrders, repurchaseOpportunities] =
-    await Promise.all([
-      prisma.order.aggregate({
-        _sum: { grossValue: true },
-        where: { createdAt: { gte: today }, status: { not: 'CANCELADO' } },
-      }),
-      prisma.customer.count(),
-      prisma.debt.count({ where: { status: { in: [...OPEN_DEBT_STATUSES] } } }),
-      prisma.product.count({ where: { inventory: { lt: 10 } } }),
-      prisma.delivery.count({ where: { status: { in: ['PENDENTE', 'EM_ROTA'] } } }),
-      prisma.order.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: { customer: true },
-      }),
-      getRepurchasePredictions(3),
-    ]);
+  const [
+    salesToday,
+    activeCustomers,
+    debtors,
+    criticalStock,
+    deliveriesInProgress,
+    recentOrders,
+    repurchaseOpportunities,
+  ] = await Promise.all([
+    prisma.order.aggregate({
+      _sum: { grossValue: true },
+      where: { createdAt: { gte: today }, status: { not: 'CANCELADO' } },
+    }),
+    prisma.customer.count(),
+    prisma.debt.count({ where: { status: { in: [...OPEN_DEBT_STATUSES] } } }),
+    prisma.product.count({ where: { inventory: { lt: 10 } } }),
+    prisma.delivery.count({ where: { status: { in: ['PENDENTE', 'EM_ROTA'] } } }),
+    prisma.order.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: { customer: true },
+    }),
+    getRepurchasePredictions(3),
+  ]);
 
   const salesData = await Promise.all(
     Array.from({ length: 7 }).map(async (_, index) => {
@@ -82,12 +89,14 @@ function MetricCard({
   description,
   icon: Icon,
   tone = 'emerald',
+  href,
 }: {
   title: string;
   value: string | number;
   description: string;
   icon: ComponentType<{ className?: string }>;
   tone?: 'emerald' | 'blue' | 'amber' | 'rose' | 'slate';
+  href?: string;
 }) {
   const toneClass = {
     emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -97,8 +106,8 @@ function MetricCard({
     slate: 'bg-slate-100 text-slate-700 ring-slate-300',
   }[tone];
 
-  return (
-    <Card className="overflow-hidden border-slate-300 shadow-lg shadow-slate-200/80">
+  const card = (
+    <Card className="h-full overflow-hidden border-slate-300 shadow-lg shadow-slate-200/80 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-xl">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 border-b border-slate-200 bg-slate-50 pb-3">
         <CardTitle className="text-base font-extrabold uppercase tracking-wide text-slate-950">
           {title}
@@ -112,6 +121,16 @@ function MetricCard({
         <p className="mt-2 text-sm font-medium leading-5 text-slate-700">{description}</p>
       </CardContent>
     </Card>
+  );
+
+  if (!href) {
+    return card;
+  }
+
+  return (
+    <Link href={href} className="block h-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+      {card}
+    </Link>
   );
 }
 
@@ -132,14 +151,14 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-            <div className="rounded-lg border border-white/10 bg-white/10 p-4">
+            <Link href="/dashboard/vendas" className="rounded-lg border border-white/10 bg-white/10 p-4 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
               <p className="font-bold uppercase text-slate-100">Vendas hoje</p>
               <p className="mt-1 text-xl font-bold text-white">{currency.format(data.totalSalesToday)}</p>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-emerald-500 p-4 text-white">
+            </Link>
+            <Link href="/dashboard/entregas" className="rounded-lg border border-white/10 bg-emerald-500 p-4 text-white transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200">
               <p className="font-bold uppercase text-emerald-50">Entregas</p>
               <p className="mt-1 text-xl font-bold">{data.deliveriesInProgress}</p>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
@@ -151,6 +170,7 @@ export default async function DashboardPage() {
           description="Total bruto vendido desde o início do dia."
           icon={Banknote}
           tone="emerald"
+          href="/dashboard/vendas"
         />
         <MetricCard
           title="Clientes"
@@ -158,13 +178,15 @@ export default async function DashboardPage() {
           description="Cadastros disponíveis para venda e entrega."
           icon={Users}
           tone="blue"
+          href="/dashboard/clientes"
         />
         <MetricCard
           title="Dívidas abertas"
           value={data.debtors}
-          description="Clientes com cobrança pendente ou vencida."
+          description="Clientes com cobrança pendente, vencida ou renegociada."
           icon={CreditCard}
           tone="rose"
+          href="/dashboard/cobranca"
         />
         <MetricCard
           title="Estoque crítico"
@@ -172,6 +194,7 @@ export default async function DashboardPage() {
           description="Produtos com menos de 10 unidades."
           icon={Package}
           tone="amber"
+          href="/dashboard/estoque?stock=CRITICO"
         />
         <MetricCard
           title="Entregas em andamento"
@@ -179,13 +202,15 @@ export default async function DashboardPage() {
           description="Entregas pendentes ou em rota."
           icon={Truck}
           tone="blue"
+          href="/dashboard/entregas"
         />
         <MetricCard
           title="Recompra"
           value={data.repurchaseOpportunities}
-          description="Clientes com previsão de recompra nos próximos 3 dias."
+          description="Clientes com previsão de recompra nos últimos ou próximos 3 dias."
           icon={Repeat}
           tone="slate"
+          href="/dashboard/recompra"
         />
       </div>
 
@@ -208,9 +233,10 @@ export default async function DashboardPage() {
           <CardContent className="space-y-3 pt-6">
             {data.recentOrders.length > 0 ? (
               data.recentOrders.map((order) => (
-                <div
+                <Link
+                  href={`/dashboard/vendas/${order.id}`}
                   key={order.id}
-                  className="flex items-start justify-between gap-3 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 shadow-sm last:mb-0"
+                  className="flex items-start justify-between gap-3 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-950">{order.customer.name}</p>
@@ -224,7 +250,7 @@ export default async function DashboardPage() {
                       {labelFrom(orderStatusLabels, order.status)}
                     </Badge>
                   </div>
-                </div>
+                </Link>
               ))
             ) : (
               <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600">

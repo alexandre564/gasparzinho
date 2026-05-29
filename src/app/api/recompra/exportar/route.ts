@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         .some((value) => value.includes(term));
       const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
 
-      if (daysUntilNextPurchase < 0 || daysUntilNextPurchase > days) return null;
+      if (Math.abs(daysUntilNextPurchase) > days) return null;
       if ((term || digits) && !textMatch && !phoneMatch) return null;
 
       return {
@@ -123,7 +123,11 @@ export async function GET(request: NextRequest) {
     prediction.lastOrder.items[0]?.product.name ?? '',
     prediction.avgInterval,
     prediction.predictedNextPurchaseDate.toLocaleDateString('pt-BR'),
-    prediction.daysUntilNextPurchase <= 0 ? 'hoje' : prediction.daysUntilNextPurchase,
+    prediction.daysUntilNextPurchase < 0
+      ? `atrasada ha ${Math.abs(prediction.daysUntilNextPurchase)} dia(s)`
+      : prediction.daysUntilNextPurchase === 0
+        ? 'hoje'
+        : prediction.daysUntilNextPurchase,
   ]);
 
   const csv = [

@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import {
+  AlertCircle,
   ArrowRight,
   Download,
   DollarSign,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Expense } from '@prisma/client';
 
+import { getTotalOpenDebt } from './actions';
 import { getFinancialSummary, getPaginatedExpenses, getWeeklyChartData } from './despesas/actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,8 +31,8 @@ import {
 } from '@/components/ui/table';
 import SalesChart from '@/components/SalesChart';
 
-
 export const dynamic = 'force-dynamic';
+
 const currencyFormatter = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
@@ -60,10 +62,13 @@ function StatCard({
 }
 
 async function FinancialSummary() {
-  const summary = await getFinancialSummary();
+  const [summary, debtSummary] = await Promise.all([
+    getFinancialSummary(),
+    getTotalOpenDebt(),
+  ]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       <StatCard
         title="Receita do mês"
         value={currencyFormatter(summary.month.revenue)}
@@ -81,6 +86,12 @@ async function FinancialSummary() {
         value={currencyFormatter(summary.month.net)}
         icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
         subtext={`Hoje: ${currencyFormatter(summary.today.net)}`}
+      />
+      <StatCard
+        title="Dívidas abertas"
+        value={currencyFormatter(debtSummary.totalOpen)}
+        icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
+        subtext="Cobranças pendentes ou renegociadas"
       />
     </div>
   );
@@ -154,6 +165,12 @@ export default function FinancialPage() {
           <Button asChild variant="outline">
             <Link href="/dashboard/financeiro/despesas">
               Gerenciar despesas
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/financeiro/dividas">
+              Ver dívidas
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

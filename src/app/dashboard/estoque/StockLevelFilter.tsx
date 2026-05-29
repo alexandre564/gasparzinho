@@ -12,9 +12,9 @@ import {
 
 const STOCK_LEVELS = [
   { value: 'SEM_ESTOQUE', label: 'Sem estoque' },
-  { value: 'CRITICO', label: 'Estoque critico' },
+  { value: 'CRITICO', label: 'Estoque crítico' },
   { value: 'BAIXO', label: 'Estoque baixo' },
-  { value: 'DISPONIVEL', label: 'Disponivel' },
+  { value: 'DISPONIVEL', label: 'Disponível' },
 ];
 
 export function StockLevelFilter() {
@@ -37,8 +37,8 @@ export function StockLevelFilter() {
 
   return (
     <Select defaultValue={searchParams.get('stock') || 'ALL'} onValueChange={handleStockChange}>
-      <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por nivel de estoque">
-        <SelectValue placeholder="Nivel de estoque" />
+      <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por nível de estoque">
+        <SelectValue placeholder="Nível de estoque" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="ALL">Todos os saldos</SelectItem>

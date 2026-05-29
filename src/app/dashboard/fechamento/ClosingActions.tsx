@@ -50,6 +50,10 @@ export default function ClosingActions({ data, isAlreadyClosed }: Props) {
   const handleShareWhatsApp = () => {
     const { totalRevenue, totalExpenses, netBalance, ordersCount } = data.summary;
     const today = format(new Date(), 'dd/MM/yyyy');
+    const salesText = data.sales
+      .slice(0, 10)
+      .map((item) => `- ${item.customer.name}: ${formatCurrency(item.grossValue)}`)
+      .join('\n');
     const stockText = data.stockForecast
       .map((item) => `- ${item.name}: ${item.units}`)
       .join('\n');
@@ -63,6 +67,9 @@ export default function ClosingActions({ data, isAlreadyClosed }: Props) {
 *Entradas:* ${formatCurrency(totalRevenue)}
 *Despesas:* ${formatCurrency(totalExpenses)}
 *Saldo:* ${formatCurrency(netBalance)}
+
+*Vendas do dia:*
+${salesText || '- Nenhuma venda registrada'}
 
 *Despesas do dia:*
 ${expensesText || '- Nenhuma despesa registrada'}

@@ -132,10 +132,6 @@ export async function getRepurchasePredictions(
     .map(buildPrediction)
     .filter((prediction): prediction is RepurchasePrediction => Boolean(prediction))
     .filter((prediction) => predictionMatchesSearch(prediction, query))
-    .filter(
-      (prediction) =>
-        prediction.daysUntilNextPurchase >= 0 &&
-        prediction.daysUntilNextPurchase <= days,
-    )
+    .filter((prediction) => Math.abs(prediction.daysUntilNextPurchase) <= days)
     .sort((a, b) => a.daysUntilNextPurchase - b.daysUntilNextPurchase);
 }

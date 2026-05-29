@@ -26,8 +26,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-
 export const dynamic = 'force-dynamic';
+
 const periodOptions = [3, 7, 15];
 
 function FilterButton({ days, currentDays, query }: { days: number; currentDays: number; query: string }) {
@@ -45,7 +45,11 @@ function FilterButton({ days, currentDays, query }: { days: number; currentDays:
 }
 
 function getUrgencyBadge(daysUntilNextPurchase: number) {
-  if (daysUntilNextPurchase <= 0) {
+  if (daysUntilNextPurchase < 0) {
+    return <Badge variant="destructive">Recompra atrasada</Badge>;
+  }
+
+  if (daysUntilNextPurchase === 0) {
     return <Badge variant="destructive">Comprar hoje</Badge>;
   }
 
@@ -54,6 +58,18 @@ function getUrgencyBadge(daysUntilNextPurchase: number) {
   }
 
   return <Badge variant="secondary">Em breve</Badge>;
+}
+
+function getDaysText(daysUntilNextPurchase: number) {
+  if (daysUntilNextPurchase < 0) {
+    return `atrasada ha ${Math.abs(daysUntilNextPurchase)} dia(s)`;
+  }
+
+  if (daysUntilNextPurchase === 0) {
+    return 'hoje';
+  }
+
+  return `em ${daysUntilNextPurchase} dia(s)`;
 }
 
 function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
@@ -66,7 +82,7 @@ function PredictionCard({ prediction }: { prediction: RepurchasePrediction }) {
   } = prediction;
   const firstName = customer.name.split(' ')[0] || customer.name;
   const lastOrderProduct = lastOrder?.items[0]?.product.name || 'produto';
-  const daysText = daysUntilNextPurchase <= 0 ? 'hoje' : `em ${daysUntilNextPurchase} dia(s)`;
+  const daysText = getDaysText(daysUntilNextPurchase);
   const whatsappMessage = `Olá ${firstName}, tudo bem? Vi aqui que talvez esteja chegando a hora de repor ${lastOrderProduct}. Posso separar um novo pedido para você?`;
   const whatsappUrl = buildWhatsAppUrl(customer.phone, whatsappMessage);
 
@@ -173,7 +189,7 @@ export default async function RecompraPreditivaPage({
           <Hourglass className="mx-auto h-12 w-12 text-slate-400" />
           <h3 className="mt-3 text-sm font-semibold text-slate-950">Nenhuma recompra prevista</h3>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
-            Nenhum cliente entrou nos critérios de recompra para os próximos {days} dias.
+            Nenhum cliente entrou nos critérios de recompra dos últimos ou próximos {days} dias.
             Conforme novas vendas forem registradas, esta lista fica mais precisa.
           </p>
         </div>
