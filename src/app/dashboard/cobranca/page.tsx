@@ -241,7 +241,8 @@ export default async function CobrancaPage({
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
-  const sort = normalizeSort(searchParams?.sort);
+  const requestedSort = searchParams?.sort;
+  const sort = normalizeSort(requestedSort);
   const direction = normalizeDirection(searchParams?.direction);
   const status = searchParams?.status;
   const visibleColumns = getVisibleColumns(searchParams?.cols);
@@ -255,7 +256,7 @@ export default async function CobrancaPage({
 
   const exportHref = `/api/cobranca/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
   const [{ debts, totalPages, totalDebts }, messageTemplate] = await Promise.all([
-    getPaginatedDebts(query, currentPage, sort, direction, status),
+    getPaginatedDebts(query, currentPage, requestedSort ? sort : undefined, direction, status),
     getCollectionMessageTemplate(),
   ]);
 

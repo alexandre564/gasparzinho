@@ -33,6 +33,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { productCategoryLabels, stockKindLabels } from '@/lib/labels';
 import { createProduct, ProductFormState, updateProduct } from './actions';
 
 const ProductFormSchema = z.object({
@@ -50,18 +51,6 @@ type ProductFormValues = z.infer<typeof ProductFormSchema>;
 interface ProductFormProps {
   product?: Product | null;
 }
-
-const categoryLabels: Record<string, string> = {
-  BOTIJAO: 'Botijão',
-  AGUA: 'Água',
-  ACESSORIO: 'Acessório',
-  OUTROS: 'Outros',
-};
-
-const stockKindLabels: Record<string, string> = {
-  UNIDADE: 'Unidade',
-  CHEIO_VAZIO: 'Cheio / vazio',
-};
 
 export default function ProductForm({ product }: ProductFormProps) {
   const router = useRouter();
@@ -180,7 +169,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                       <SelectContent>
                         {Object.values(ProductCategory).map((category) => (
                           <SelectItem key={category} value={category}>
-                            {categoryLabels[category] ?? category}
+                            {productCategoryLabels[category] ?? category}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -109,3 +109,4 @@ Este projeto não será recomeçado do zero. A versão atual publicada no GitHub
 6. Refinar fidelização e exibir oportunidades no dashboard.
 7. Implementar PDF do fechamento.
 8. Limpar arquivos antigos e duplicidades remanescentes com segurança.
+9. Preparar a evolução futura para plataforma Gas multifilial, conforme `docs/PLANO-Gas-Multifilial.md`, sem migrar o banco antes da etapa técnica.

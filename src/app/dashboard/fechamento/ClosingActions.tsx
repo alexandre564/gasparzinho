@@ -3,6 +3,7 @@
 import { useTransition } from 'react';
 import { format } from 'date-fns';
 import { Loader2, Lock, Printer, Share2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { createDailyClosing } from './actions';
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function ClosingActions({ data, isAlreadyClosed }: Props) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handlePrint = () => {
@@ -95,6 +97,7 @@ Mensagem gerada automaticamente pelo sistema.`;
 
       if (result.success) {
         toast.success(result.message);
+        router.refresh();
       } else {
         toast.error(result.message);
       }
@@ -131,7 +134,7 @@ Mensagem gerada automaticamente pelo sistema.`;
 
       <Button variant="outline" onClick={handlePrint} className="w-full sm:w-auto">
         <Printer className="mr-2 h-4 w-4" />
-        Baixar PDF
+        Imprimir / salvar PDF
       </Button>
       <Button variant="outline" onClick={handleShareWhatsApp} className="w-full sm:w-auto">
         <Share2 className="mr-2 h-4 w-4" />

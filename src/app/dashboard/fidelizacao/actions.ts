@@ -7,7 +7,7 @@ import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/
 import type { LoyaltyPrediction } from '@/services/fidelizacao';
 
 const GLOBAL_AVG_INTERVAL_DAYS = 15;
-const REPURCHASE_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CONCLUIDO'] as const;
+const LOYALTY_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CONCLUIDO'] as const;
 
 async function getCustomersWithOrderHistory() {
   return prisma.customer.findMany({
@@ -15,7 +15,7 @@ async function getCustomersWithOrderHistory() {
       orders: {
         where: {
           status: {
-            in: [...REPURCHASE_ORDER_STATUSES],
+            in: [...LOYALTY_ORDER_STATUSES],
           },
         },
         orderBy: {
@@ -120,5 +120,3 @@ export async function getLoyaltyPredictions(
     .filter((prediction) => Math.abs(prediction.daysUntilNextPurchase) <= days)
     .sort((a, b) => a.daysUntilNextPurchase - b.daysUntilNextPurchase);
 }
-
-export const getRepurchasePredictions = getLoyaltyPredictions;

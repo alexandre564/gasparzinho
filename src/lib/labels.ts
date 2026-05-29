@@ -49,6 +49,18 @@ export const vehicleTypeLabels: Record<string, string> = {
   CAMINHAO: 'Caminhão',
 };
 
+export const productCategoryLabels: Record<string, string> = {
+  BOTIJAO: 'Botijão',
+  AGUA: 'Água',
+  ACESSORIO: 'Acessório',
+  OUTROS: 'Outros',
+};
+
+export const stockKindLabels: Record<string, string> = {
+  UNIDADE: 'Unidade',
+  CHEIO_VAZIO: 'Cheio / vazio',
+};
+
 export function labelFrom(map: Record<string, string>, value: string | null | undefined, fallback = '-') {
   if (!value) {
     return fallback;

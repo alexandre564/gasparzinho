@@ -17,9 +17,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { labelFrom, productCategoryLabels, stockKindLabels } from '@/lib/labels';
 import CollectionMessageForm from './CollectionMessageForm';
 import DriverWhatsappForm from './DriverWhatsappForm';
 import { getCollectionMessageTemplate, getDriverWhatsappNumber } from './actions';
+import { expenseLabel } from '../financeiro/despesas/categories';
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -186,10 +188,10 @@ export default async function ConfiguracoesPage() {
                     <TableRow key={product.id}>
                       <TableCell>
                         <div className="font-semibold">{product.name}</div>
-                        <div className="text-xs text-slate-500">{product.stockKind}</div>
+                        <div className="text-xs text-slate-500">{labelFrom(stockKindLabels, product.stockKind)}</div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{product.category}</Badge>
+                        <Badge variant="secondary">{labelFrom(productCategoryLabels, product.category)}</Badge>
                       </TableCell>
                       <TableCell className="text-center font-semibold">{product.inventory}</TableCell>
                       <TableCell className="text-right font-mono">{currency.format(product.cost)}</TableCell>
@@ -266,7 +268,7 @@ export default async function ConfiguracoesPage() {
                     <div key={expense.id} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{expense.description}</p>
-                        <p className="text-xs text-slate-500">{expense.category}</p>
+                        <p className="text-xs text-slate-500">{expenseLabel(expense.category)}</p>
                       </div>
                       <p className="text-sm font-semibold text-red-700">{currency.format(expense.value)}</p>
                     </div>

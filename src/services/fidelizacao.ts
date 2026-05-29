@@ -74,6 +74,3 @@ export async function calculateLoyaltyPredictionForCustomer(
     daysUntilNextPurchase,
   };
 }
-
-export type RepurchasePrediction = LoyaltyPrediction;
-export const calculateRepurchasePredictionForCustomer = calculateLoyaltyPredictionForCustomer;

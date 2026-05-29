@@ -143,6 +143,9 @@ export async function createDailyClosing(
     });
 
     revalidatePath('/dashboard/fechamento');
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/financeiro');
+    revalidatePath('/dashboard/relatorios');
     return { success: true, message: 'Fechamento do dia realizado com sucesso.' };
   } catch (error) {
     console.error('Database Error:', error);

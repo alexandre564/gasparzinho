@@ -37,10 +37,10 @@ const periodLabels: Record<ReportPeriod, string> = {
 };
 
 const periodDescriptions: Record<ReportPeriod, string> = {
-  daily: 'Comparativo dos ultimos 7 dias.',
-  weekly: 'Comparativo das ultimas 8 semanas.',
-  monthly: 'Comparativo dos ultimos 6 meses.',
-  yearly: 'Comparativo dos ultimos 5 anos.',
+  daily: 'Comparativo dos últimos 7 dias.',
+  weekly: 'Comparativo das últimas 8 semanas.',
+  monthly: 'Comparativo dos últimos 6 meses.',
+  yearly: 'Comparativo dos últimos 5 anos.',
 };
 
 function SummaryCard({
@@ -96,7 +96,7 @@ export default async function RelatoriosPage({
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Relatórios</h2>
           <p className="text-sm text-slate-600">
-            Analise vendas, gastos, saldo e ticket medio por dia, semana, mes ou ano.
+            Analise vendas, gastos, saldo e ticket médio por dia, semana, mês ou ano.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -139,7 +139,7 @@ export default async function RelatoriosPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Vendas por periodo</CardTitle>
+          <CardTitle>Vendas por período</CardTitle>
           <CardDescription>{periodDescriptions[period]}</CardDescription>
         </CardHeader>
         <CardContent>

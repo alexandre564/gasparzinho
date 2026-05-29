@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { labelFrom, productCategoryLabels } from '@/lib/labels';
 
 const categories = ['BOTIJAO', 'AGUA', 'ACESSORIO', 'OUTROS'];
 
@@ -39,7 +40,7 @@ export function CategoryFilter() {
         <SelectItem value="ALL">Todas as categorias</SelectItem>
         {categories.map((category) => (
           <SelectItem key={category} value={category}>
-            {category}
+            {labelFrom(productCategoryLabels, category)}
           </SelectItem>
         ))}
       </SelectContent>

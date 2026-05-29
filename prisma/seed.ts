@@ -17,7 +17,7 @@ async function seedUsers() {
     { name: 'Alexandre Admin', email: 'admin@gasparzinho.com', password: passwordAdmin, role: 'ADMIN' },
     { name: 'Alexandre', email: 'alexandrejo@gmail.com', password: passwordAdmin, role: 'ADMIN' },
     { name: 'Jonaina Maria', email: 'jonaina@gasparzinho.com', password: passwordAdmin, role: 'ADMIN' },
-    { name: 'Rodrigo Mendonca', email: 'rodrigo@gasparzinho.com', password: passwordAdmin, role: 'ADMIN' },
+    { name: 'Rodrigo Mendonça', email: 'rodrigo@gasparzinho.com', password: passwordAdmin, role: 'ADMIN' },
     { name: 'Ale Olive', email: 'ale@gasparzinho.com', password: passwordVendedor, role: 'VENDEDOR' },
     { name: 'Alexandre Entregador', email: 'entregador@gasparzinho.com', password: passwordEntregador, role: 'ENTREGADOR' },
   ];
@@ -41,7 +41,7 @@ async function seedDemoData() {
       street: 'Rua das Flores',
       number: '120',
       neighborhood: 'Centro',
-      reference: 'Proximo a padaria',
+      reference: 'Próximo à padaria',
       cep: '37200000',
       city: 'Lavras',
     },
@@ -51,26 +51,45 @@ async function seedDemoData() {
     where: { phone: '35999990002' },
     update: {},
     create: {
-      name: 'Joao Pereira',
+      name: 'João Pereira',
       phone: '35999990002',
       street: 'Avenida Brasil',
       number: '45',
       complement: 'Casa',
-      neighborhood: 'Jardim Gloria',
+      neighborhood: 'Jardim Glória',
       city: 'Lavras',
     },
   });
 
-  const gas13 = await prisma.product.upsert({
-    where: { name: 'Gas P13' },
-    update: { price: 115, cost: 82, category: 'BOTIJAO', stockKind: 'UNIDADE', inventory: 18 },
-    create: { name: 'Gas P13', description: 'Botijão de gas 13kg', price: 115, cost: 82, category: 'BOTIJAO', stockKind: 'UNIDADE', inventory: 18 },
-  });
+  const gas13Data = {
+    name: 'Gás P13',
+    description: 'Botijão de gás 13kg',
+    price: 115,
+    cost: 82,
+    category: 'BOTIJAO',
+    stockKind: 'UNIDADE',
+    inventory: 18,
+  };
+  const gas13Existing =
+    (await prisma.product.findUnique({ where: { name: 'Gás P13' } })) ??
+    (await prisma.product.findUnique({ where: { name: 'Gas P13' } }));
+  const gas13 = gas13Existing
+    ? await prisma.product.update({ where: { id: gas13Existing.id }, data: gas13Data })
+    : await prisma.product.create({ data: gas13Data });
 
+  const aguaData = {
+    name: 'Água mineral 20L',
+    description: 'Galão de água mineral',
+    price: 18,
+    cost: 9,
+    category: 'AGUA',
+    stockKind: 'UNIDADE',
+    inventory: 32,
+  };
   const agua = await prisma.product.upsert({
-    where: { name: 'Água mineral 20L' },
-    update: { price: 18, cost: 9, category: 'AGUA', stockKind: 'UNIDADE', inventory: 32 },
-    create: { name: 'Água mineral 20L', description: 'Galao de agua mineral', price: 18, cost: 9, category: 'AGUA', stockKind: 'UNIDADE', inventory: 32 },
+    where: { name: aguaData.name },
+    update: aguaData,
+    create: aguaData,
   });
 
   await prisma.vehicle.upsert({
@@ -130,7 +149,7 @@ async function seedDemoData() {
 
     await prisma.expense.create({
       data: {
-        description: 'Combustivel para entregas',
+        description: 'Combustível para entregas',
         category: 'Transporte',
         value: 75,
         date: new Date(),

@@ -25,6 +25,7 @@ import ImportProductsButton from './ImportProductsButton';
 import { StockLevelFilter } from './StockLevelFilter';
 import { getPaginatedProducts } from './actions';
 import type { ProductSortKey, SortDirection } from './actions';
+import { labelFrom, productCategoryLabels } from '@/lib/labels';
 
 
 export const dynamic = 'force-dynamic';
@@ -250,7 +251,7 @@ export default async function StockPage({
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{product.category}</Badge>
+                        <Badge variant="outline">{labelFrom(productCategoryLabels, product.category)}</Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <StockBadge inventory={product.inventory} />

@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-const REPURCHASE_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CONCLUIDO'] as const;
+const LOYALTY_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CONCLUIDO'] as const;
 const GLOBAL_AVG_INTERVAL_DAYS = 15;
 
 function csvCell(value: unknown) {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
   const customers = await prisma.customer.findMany({
     include: {
       orders: {
-        where: { status: { in: [...REPURCHASE_ORDER_STATUSES] } },
+        where: { status: { in: [...LOYALTY_ORDER_STATUSES] } },
         orderBy: { createdAt: 'asc' },
         include: {
           items: {

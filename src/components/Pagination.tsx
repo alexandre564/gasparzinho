@@ -29,7 +29,10 @@ export default function Pagination({ totalPages }: PaginationProps) {
   }
 
   return (
-    <div className="mt-4 flex items-center justify-center gap-3">
+    <nav
+      className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
+      aria-label="Paginação"
+    >
       {isFirstPage ? (
         <Button variant="outline" size="sm" disabled>
           <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
@@ -42,7 +45,7 @@ export default function Pagination({ totalPages }: PaginationProps) {
         </Button>
       )}
 
-      <span className="text-sm font-medium text-muted-foreground">
+      <span className="order-first w-full text-center text-sm font-medium text-muted-foreground sm:order-none sm:w-auto">
         Página {currentPage} de {safeTotalPages}
       </span>
 
@@ -57,6 +60,6 @@ export default function Pagination({ totalPages }: PaginationProps) {
           </Link>
         </Button>
       )}
-    </div>
+    </nav>
   );
 }

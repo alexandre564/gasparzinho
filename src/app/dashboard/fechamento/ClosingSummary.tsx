@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
+import { expenseLabel } from '../financeiro/despesas/categories';
 import type { ClosingExpense, ClosingSale, StockForecastItem } from './actions';
 
 interface SummaryData {
@@ -144,7 +145,7 @@ export default function ClosingSummary({ data }: Props) {
                 expenses.map((expense) => (
                   <TableRow key={expense.id}>
                     <TableCell className="font-medium">{expense.description}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{expense.category}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{expenseLabel(expense.category)}</TableCell>
                     <TableCell className="text-right text-red-700">
                       {formatCurrency(expense.value)}
                     </TableCell>
