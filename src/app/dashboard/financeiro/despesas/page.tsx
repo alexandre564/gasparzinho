@@ -66,9 +66,9 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Gerenciamento de despesas</h1>
+          <h1 className="text-2xl font-bold">Gastos</h1>
           <p className="text-sm text-muted-foreground">
-            Registre gastos, importe planilhas e acompanhe despesas recorrentes.
+            Registre gastos por centro de custo, importe planilhas e acompanhe despesas recorrentes.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -93,7 +93,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                <Search placeholder="Buscar por descrição..." />
+                <Search placeholder="Buscar por descricao, categoria, responsavel ou veiculo..." />
                 <Suspense fallback={<div className="h-11 w-full rounded-md border bg-white sm:max-w-xs" />}>
                   <ExpenseCategoryFilter />
                 </Suspense>
@@ -109,8 +109,10 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                     <TableRow>
                       <TableHead>Descrição</TableHead>
                       <TableHead className="hidden sm:table-cell">Categoria</TableHead>
+                      <TableHead className="hidden lg:table-cell">Subcategoria</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="hidden text-center md:table-cell">Data</TableHead>
+                      <TableHead className="hidden xl:table-cell">Pagamento</TableHead>
                       <TableHead>
                         <span className="sr-only">Ações</span>
                       </TableHead>
@@ -129,11 +131,23 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                           <TableCell className="hidden sm:table-cell">
                             <Badge variant="outline">{expense.category}</Badge>
                           </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <div className="text-sm text-slate-700">{expense.subCategory || '-'}</div>
+                            {expense.vehicleLabel ? (
+                              <div className="text-xs text-slate-500">{expense.vehicleLabel}</div>
+                            ) : null}
+                          </TableCell>
                           <TableCell className="text-right font-mono">
                             {currencyFormatter(expense.value)}
                           </TableCell>
                           <TableCell className="hidden text-center md:table-cell">
                             {new Date(expense.date).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            <div className="text-sm text-slate-700">{expense.paymentMethod || '-'}</div>
+                            {expense.responsible ? (
+                              <div className="text-xs text-slate-500">Por: {expense.responsible}</div>
+                            ) : null}
                           </TableCell>
                           <TableCell className="text-right">
                             <DeleteExpenseButton id={expense.id} />
@@ -142,7 +156,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
+                        <TableCell colSpan={7} className="h-24 text-center">
                           Nenhuma despesa encontrada.
                         </TableCell>
                       </TableRow>
@@ -160,8 +174,8 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Nova despesa</CardTitle>
-              <CardDescription>Adicione uma nova despesa ao sistema.</CardDescription>
+              <CardTitle>Novo gasto</CardTitle>
+              <CardDescription>Adicione uma saida ao fluxo financeiro.</CardDescription>
             </CardHeader>
             <CardContent>
               <ExpenseForm />

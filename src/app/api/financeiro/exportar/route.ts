@@ -1,4 +1,4 @@
-import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
+import { endOfDay, endOfMonth, endOfWeek, endOfYear, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns';
 import { NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
@@ -41,6 +41,7 @@ export async function GET() {
     { name: 'hoje', from: startOfDay(now), to: endOfDay(now) },
     { name: 'semana', from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) },
     { name: 'mes', from: startOfMonth(now), to: endOfMonth(now) },
+    { name: 'ano', from: startOfYear(now), to: endOfYear(now) },
   ];
 
   const rows = await Promise.all(
@@ -61,7 +62,7 @@ export async function GET() {
 
   const csv = [
     'sep=;',
-    ['periodo', 'entradas', 'despesas', 'saldo'].map(csvCell).join(';'),
+    ['periodo', 'entradas', 'gastos', 'saldo'].map(csvCell).join(';'),
     ...rows.map((row) => row.map(csvCell).join(';')),
   ].join('\r\n');
 

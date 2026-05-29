@@ -40,6 +40,10 @@ export async function GET(request: NextRequest) {
         OR: [
           { description: { contains: query } },
           { category: { contains: query } },
+          { subCategory: { contains: query } },
+          { paymentMethod: { contains: query } },
+          { responsible: { contains: query } },
+          { vehicleLabel: { contains: query } },
         ],
       }),
       ...(category && { category }),
@@ -55,12 +59,16 @@ export async function GET(request: NextRequest) {
     orderBy: { date: 'desc' },
   });
 
-  const header = ['descricao', 'categoria', 'valor', 'data', 'recorrente', 'criado em'];
+  const header = ['descricao', 'categoria', 'subcategoria', 'valor', 'data', 'metodo pagamento', 'responsavel', 'veiculo', 'recorrente', 'criado em'];
   const rows = expenses.map((expense) => [
     expense.description,
     expense.category,
+    expense.subCategory ?? '',
     expense.value.toFixed(2).replace('.', ','),
     expense.date.toLocaleDateString('pt-BR'),
+    expense.paymentMethod ?? '',
+    expense.responsible ?? '',
+    expense.vehicleLabel ?? '',
     expense.isRecurring ? 'sim' : 'não',
     expense.createdAt.toLocaleDateString('pt-BR'),
   ]);
@@ -77,7 +85,7 @@ export async function GET(request: NextRequest) {
     status: 200,
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="despesas-gasparzinho-${fileDate}.csv"`,
+      'Content-Disposition': `attachment; filename="gastos-gasparzinho-${fileDate}.csv"`,
       'Cache-Control': 'no-store',
     },
   });

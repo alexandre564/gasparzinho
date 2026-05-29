@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 
-export type ReportPeriod = 'daily' | 'monthly';
+export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface SalesReportPoint {
   name: string;
@@ -31,6 +31,60 @@ function startOfMonth(date: Date) {
 
 function endOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+
+function startOfWeek(date: Date) {
+  const value = startOfDay(date);
+  const day = value.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  value.setDate(value.getDate() + diff);
+  return value;
+}
+
+function endOfWeek(date: Date) {
+  const value = startOfWeek(date);
+  value.setDate(value.getDate() + 6);
+  value.setHours(23, 59, 59, 999);
+  return value;
+}
+
+function startOfYear(date: Date) {
+  return new Date(date.getFullYear(), 0, 1);
+}
+
+function endOfYear(date: Date) {
+  return new Date(date.getFullYear(), 11, 31, 23, 59, 59, 999);
+}
+
+function getPointDate(period: ReportPeriod, index: number, now = new Date()) {
+  const date = new Date(now);
+  if (period === 'daily') {
+    date.setDate(now.getDate() - index);
+    return date;
+  }
+  if (period === 'weekly') {
+    date.setDate(now.getDate() - index * 7);
+    return date;
+  }
+  if (period === 'yearly') {
+    date.setFullYear(now.getFullYear() - index);
+    return date;
+  }
+  return new Date(now.getFullYear(), now.getMonth() - index, 1);
+}
+
+function getPointRange(period: ReportPeriod, date: Date) {
+  if (period === 'daily') return { start: startOfDay(date), end: endOfDay(date) };
+  if (period === 'weekly') return { start: startOfWeek(date), end: endOfWeek(date) };
+  if (period === 'yearly') return { start: startOfYear(date), end: endOfYear(date) };
+  return { start: startOfMonth(date), end: endOfMonth(date) };
+}
+
+function getPointName(period: ReportPeriod, date: Date) {
+  if (period === 'daily') return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+  if (period === 'weekly') return `Sem ${startOfWeek(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
+  if (period === 'yearly') return String(date.getFullYear());
+  return date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
 }
 
 async function getPeriodTotals(start: Date, end: Date) {
@@ -64,30 +118,15 @@ async function getPeriodTotals(start: Date, end: Date) {
 export async function getSalesReportData(period: ReportPeriod): Promise<SalesReportPoint[]> {
   const now = new Date();
 
-  if (period === 'monthly') {
-    const points = await Promise.all(
-      Array.from({ length: 6 }).map(async (_, index) => {
-        const monthDate = new Date(now.getFullYear(), now.getMonth() - index, 1);
-        const totals = await getPeriodTotals(startOfMonth(monthDate), endOfMonth(monthDate));
-
-        return {
-          name: monthDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-          ...totals,
-        };
-      })
-    );
-
-    return points.reverse();
-  }
-
+  const length = period === 'yearly' ? 5 : period === 'monthly' ? 6 : period === 'weekly' ? 8 : 7;
   const points = await Promise.all(
-    Array.from({ length: 7 }).map(async (_, index) => {
-      const day = new Date(now);
-      day.setDate(now.getDate() - index);
-      const totals = await getPeriodTotals(startOfDay(day), endOfDay(day));
+    Array.from({ length }).map(async (_, index) => {
+      const pointDate = getPointDate(period, index, now);
+      const range = getPointRange(period, pointDate);
+      const totals = await getPeriodTotals(range.start, range.end);
 
       return {
-        name: day.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
+        name: getPointName(period, pointDate),
         ...totals,
       };
     })

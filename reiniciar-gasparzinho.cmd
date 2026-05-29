@@ -12,6 +12,15 @@ echo.
 echo Limpando cache visual do Next...
 if exist .next rmdir /s /q .next
 echo.
+echo Atualizando banco...
+npm run db:safe-sync
+if errorlevel 1 (
+  echo.
+  echo Nao foi possivel atualizar o banco. Verifique a conexao e tente novamente.
+  pause
+  exit /b 1
+)
+echo.
 echo Abrindo novamente em http://localhost:3004 ...
 npm run dev -- --port 3004
 echo.

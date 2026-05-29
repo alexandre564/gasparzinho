@@ -103,6 +103,10 @@ const OrderFormSchema = z.object({
   paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória.'),
   paymentDueDate: z.string().optional(),
   orderStatus: z.string().min(1, 'Status do pedido é obrigatório.'),
+  deliveryAddress: z.string().trim().max(500, 'Endereço muito longo.').optional(),
+  deliveryReference: z.string().trim().max(250, 'Referência muito longa.').optional(),
+  deliveryAddressChanged: z.boolean().default(false),
+  saveDeliveryAddressToCustomer: z.boolean().default(false),
   items: z
     .array(OrderItemSchema)
     .min(1, 'O pedido deve ter pelo menos um item.'),
@@ -131,11 +135,37 @@ export async function createOrder(
     };
   }
 
-  const { customerId, paymentMethod, paymentDueDate, orderStatus, items } =
-    validatedFields.data;
+  const {
+    customerId,
+    paymentMethod,
+    paymentDueDate,
+    orderStatus,
+    deliveryAddress,
+    deliveryReference,
+    deliveryAddressChanged,
+    saveDeliveryAddressToCustomer,
+    items,
+  } = validatedFields.data;
 
   try {
     const createdOrder = await prisma.$transaction(async (tx) => {
+      const customer = await tx.customer.findUnique({
+        where: { id: customerId },
+        select: {
+          street: true,
+          number: true,
+          complement: true,
+          neighborhood: true,
+          city: true,
+          cep: true,
+          reference: true,
+        },
+      });
+
+      if (!customer) {
+        throw new Error('Cliente não encontrado.');
+      }
+
       const requestedByProduct = items.reduce<Record<string, number>>((acc, item) => {
         acc[item.productId] = (acc[item.productId] ?? 0) + item.quantity;
         return acc;
@@ -171,12 +201,26 @@ export async function createOrder(
       );
 
       const netValue = grossValue - totalCost;
+      const defaultDeliveryAddress = [
+        `${customer.street}, ${customer.number}`,
+        customer.complement,
+        customer.neighborhood,
+        customer.city,
+        customer.cep ? `CEP ${customer.cep}` : null,
+      ]
+        .filter(Boolean)
+        .join(' - ');
+      const selectedDeliveryAddress = deliveryAddress?.trim() || defaultDeliveryAddress;
+      const selectedDeliveryReference = deliveryReference?.trim() || customer.reference || null;
 
       const order = await tx.order.create({
         data: {
           customerId,
           paymentMethod,
           paymentDueDate: paymentDueDate ? new Date(`${paymentDueDate}T12:00:00`) : null,
+          deliveryAddress: selectedDeliveryAddress,
+          deliveryReference: selectedDeliveryReference,
+          deliveryAddressChanged,
           status: orderStatus,
           totalCost,
           grossValue,
@@ -194,6 +238,20 @@ export async function createOrder(
           items: true,
         },
       });
+
+      if (deliveryAddressChanged && saveDeliveryAddressToCustomer && selectedDeliveryAddress) {
+        await tx.customer.update({
+          where: { id: customerId },
+          data: {
+            street: selectedDeliveryAddress,
+            number: 'S/N',
+            complement: null,
+            neighborhood: '',
+            city: customer.city || 'Lavras',
+            reference: selectedDeliveryReference,
+          },
+        });
+      }
 
       if (orderStatus === OrderStatus.CONFIRMADO || orderStatus === OrderStatus.PENDENTE) {
         await tx.delivery.create({
@@ -248,6 +306,9 @@ export async function createOrder(
     revalidatePath('/dashboard/estoque');
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/entregas');
+    revalidatePath('/dashboard/cobranca');
+    revalidatePath('/dashboard/financeiro');
+    revalidatePath('/dashboard/financeiro/dividas');
 
     return {
       success: true,
@@ -468,6 +529,13 @@ export async function getCustomersForSelect() {
       id: true,
       name: true,
       phone: true,
+      street: true,
+      number: true,
+      complement: true,
+      neighborhood: true,
+      city: true,
+      cep: true,
+      reference: true,
     },
     orderBy: {
       name: 'asc',

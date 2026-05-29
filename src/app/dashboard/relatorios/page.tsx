@@ -22,8 +22,26 @@ const currency = new Intl.NumberFormat('pt-BR', {
 });
 
 function getPeriod(searchPeriod?: string): ReportPeriod {
-  return searchPeriod === 'monthly' ? 'monthly' : 'daily';
+  if (searchPeriod === 'daily' || searchPeriod === 'weekly' || searchPeriod === 'monthly' || searchPeriod === 'yearly') {
+    return searchPeriod;
+  }
+
+  return 'daily';
 }
+
+const periodLabels: Record<ReportPeriod, string> = {
+  daily: 'Dias',
+  weekly: 'Semanas',
+  monthly: 'Meses',
+  yearly: 'Anos',
+};
+
+const periodDescriptions: Record<ReportPeriod, string> = {
+  daily: 'Comparativo dos ultimos 7 dias.',
+  weekly: 'Comparativo das ultimas 8 semanas.',
+  monthly: 'Comparativo dos ultimos 6 meses.',
+  yearly: 'Comparativo dos ultimos 5 anos.',
+};
 
 function SummaryCard({
   title,
@@ -78,7 +96,7 @@ export default async function RelatoriosPage({
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Relatórios</h2>
           <p className="text-sm text-slate-600">
-            Analise as vendas por dia ou por mês, sem pedidos cancelados.
+            Analise vendas, gastos, saldo e ticket medio por dia, semana, mes ou ano.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -121,15 +139,11 @@ export default async function RelatoriosPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{period === 'monthly' ? 'Vendas mensais' : 'Vendas diárias'}</CardTitle>
-          <CardDescription>
-            {period === 'monthly'
-              ? 'Comparativo dos últimos 6 meses.'
-              : 'Comparativo dos últimos 7 dias.'}
-          </CardDescription>
+          <CardTitle>Vendas por periodo</CardTitle>
+          <CardDescription>{periodDescriptions[period]}</CardDescription>
         </CardHeader>
         <CardContent>
-          <SalesChart data={chartData} labelPrefix={period === 'monthly' ? 'Mês' : 'Dia'} />
+          <SalesChart data={chartData} labelPrefix={periodLabels[period]} />
         </CardContent>
       </Card>
 
@@ -144,7 +158,7 @@ export default async function RelatoriosPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{period === 'monthly' ? 'Mês' : 'Dia'}</TableHead>
+                <TableHead>{periodLabels[period]}</TableHead>
                 <TableHead className="text-right">Entradas</TableHead>
                 <TableHead className="hidden text-right sm:table-cell">Despesas</TableHead>
                 <TableHead className="text-right">Saldo</TableHead>

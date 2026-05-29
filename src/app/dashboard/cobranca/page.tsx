@@ -43,18 +43,46 @@ const sortLabels: Record<DebtSortKey, string> = {
   phone: 'Contato',
   value: 'Valor',
   dueDate: 'Vencimento',
-  daysLate: 'Dias atraso',
+  daysLate: 'Dias em Atraso',
   status: 'Status',
   paidAt: 'Pagamento',
 };
 
 const formatDate = (date?: Date | null) => (date ? format(date, 'dd/MM/yyyy') : '-');
 
+type OptionalDebtColumn = 'phone' | 'dueDate' | 'daysLate' | 'renegotiation' | 'paidAt';
+
+const optionalDebtColumns: Array<{ key: OptionalDebtColumn; label: string }> = [
+  { key: 'phone', label: 'Contato' },
+  { key: 'dueDate', label: 'Vencimento' },
+  { key: 'daysLate', label: 'Dias em Atraso' },
+  { key: 'renegotiation', label: 'Renegociacao' },
+  { key: 'paidAt', label: 'Pagamento' },
+];
+
+function getVisibleColumns(cols?: string) {
+  if (!cols) {
+    return new Set<OptionalDebtColumn>(optionalDebtColumns.map((column) => column.key));
+  }
+
+  const selected = new Set(
+    cols
+      .split(',')
+      .map((column) => column.trim())
+      .filter((column): column is OptionalDebtColumn =>
+        optionalDebtColumns.some((option) => option.key === column),
+      ),
+  );
+
+  return selected.size > 0 ? selected : new Set<OptionalDebtColumn>(['phone', 'dueDate', 'daysLate']);
+}
+
 function normalizeSort(sort?: string): DebtSortKey {
   if (
     sort === 'customer' ||
     sort === 'phone' ||
     sort === 'value' ||
+    sort === 'dueDate' ||
     sort === 'daysLate' ||
     sort === 'status' ||
     sort === 'paidAt'
@@ -98,7 +126,7 @@ function SortableHeader({
   field: DebtSortKey;
   activeSort: DebtSortKey;
   activeDirection: SortDirection;
-  searchParams: { query?: string; status?: string };
+  searchParams: { query?: string; status?: string; cols?: string };
   className?: string;
 }) {
   const isActive = activeSort === field;
@@ -116,6 +144,9 @@ function SortableHeader({
   if (searchParams.status) {
     params.set('status', searchParams.status);
   }
+  if (searchParams.cols) {
+    params.set('cols', searchParams.cols);
+  }
 
   params.set('page', '1');
   params.set('sort', field);
@@ -127,14 +158,60 @@ function SortableHeader({
     <TableHead className={className}>
       <Link
         href={`/dashboard/cobranca?${params.toString()}`}
-        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-slate-950 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-white transition-colors hover:bg-white/10 hover:text-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label={`Ordenar por ${sortLabels[field]}`}
         title={`Ordenar por ${sortLabels[field]}`}
       >
         {sortLabels[field]}
-        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
+        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-200' : 'text-slate-200'}`} />
       </Link>
     </TableHead>
+  );
+}
+
+function ColumnControls({
+  searchParams,
+  visibleColumns,
+}: {
+  searchParams: { query?: string; status?: string; sort?: string; direction?: string; cols?: string };
+  visibleColumns: Set<OptionalDebtColumn>;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
+      <span className="text-xs font-bold uppercase tracking-wide text-slate-600">Colunas</span>
+      {optionalDebtColumns.map((column) => {
+        const nextColumns = new Set(visibleColumns);
+        if (nextColumns.has(column.key)) {
+          nextColumns.delete(column.key);
+        } else {
+          nextColumns.add(column.key);
+        }
+
+        const params = new URLSearchParams();
+        if (searchParams.query) params.set('query', searchParams.query);
+        if (searchParams.status) params.set('status', searchParams.status);
+        if (searchParams.sort) params.set('sort', searchParams.sort);
+        if (searchParams.direction) params.set('direction', searchParams.direction);
+        params.set('page', '1');
+        if (nextColumns.size > 0) params.set('cols', Array.from(nextColumns).join(','));
+
+        const active = visibleColumns.has(column.key);
+
+        return (
+          <Button
+            key={column.key}
+            asChild
+            size="sm"
+            variant={active ? 'default' : 'outline'}
+            className="h-8"
+          >
+            <Link href={`/dashboard/cobranca?${params.toString()}`} aria-pressed={active}>
+              {column.label}
+            </Link>
+          </Button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -160,13 +237,15 @@ function getDelayText(debt: DebtListItem) {
 export default async function CobrancaPage({
   searchParams,
 }: {
-  searchParams?: { query?: string; page?: string; sort?: string; direction?: string; status?: string };
+  searchParams?: { query?: string; page?: string; sort?: string; direction?: string; status?: string; cols?: string };
 }) {
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const sort = normalizeSort(searchParams?.sort);
   const direction = normalizeDirection(searchParams?.direction);
   const status = searchParams?.status;
+  const visibleColumns = getVisibleColumns(searchParams?.cols);
+  const showColumn = (column: OptionalDebtColumn) => visibleColumns.has(column);
   const exportParams = new URLSearchParams();
 
   if (query) exportParams.set('query', query);
@@ -219,9 +298,10 @@ export default async function CobrancaPage({
             </span>
           </div>
         </div>
+        <ColumnControls searchParams={searchParams ?? {}} visibleColumns={visibleColumns} />
       </CardHeader>
       <CardContent>
-        <div className="overflow-hidden rounded-md border">
+        <div className="rounded-md border border-slate-300 bg-white">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
@@ -231,13 +311,15 @@ export default async function CobrancaPage({
                   activeDirection={direction}
                   searchParams={searchParams ?? {}}
                 />
-                <SortableHeader
-                  field="phone"
-                  activeSort={sort}
-                  activeDirection={direction}
-                  searchParams={searchParams ?? {}}
-                  className="hidden md:table-cell"
-                />
+                {showColumn('phone') ? (
+                  <SortableHeader
+                    field="phone"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden md:table-cell"
+                  />
+                ) : null}
                 <SortableHeader
                   field="value"
                   activeSort={sort}
@@ -245,28 +327,36 @@ export default async function CobrancaPage({
                   searchParams={searchParams ?? {}}
                   className="text-right"
                 />
-                <SortableHeader
-                  field="dueDate"
-                  activeSort={sort}
-                  activeDirection={direction}
-                  searchParams={searchParams ?? {}}
-                  className="hidden lg:table-cell"
-                />
-                <SortableHeader
-                  field="daysLate"
-                  activeSort={sort}
-                  activeDirection={direction}
-                  searchParams={searchParams ?? {}}
-                  className="hidden lg:table-cell"
-                />
-                <TableHead className="hidden xl:table-cell">Renegociação</TableHead>
-                <SortableHeader
-                  field="paidAt"
-                  activeSort={sort}
-                  activeDirection={direction}
-                  searchParams={searchParams ?? {}}
-                  className="hidden xl:table-cell"
-                />
+                {showColumn('dueDate') ? (
+                  <SortableHeader
+                    field="dueDate"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden lg:table-cell"
+                  />
+                ) : null}
+                {showColumn('daysLate') ? (
+                  <SortableHeader
+                    field="daysLate"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden lg:table-cell"
+                  />
+                ) : null}
+                {showColumn('renegotiation') ? (
+                  <TableHead className="hidden xl:table-cell">Renegociação</TableHead>
+                ) : null}
+                {showColumn('paidAt') ? (
+                  <SortableHeader
+                    field="paidAt"
+                    activeSort={sort}
+                    activeDirection={direction}
+                    searchParams={searchParams ?? {}}
+                    className="hidden xl:table-cell"
+                  />
+                ) : null}
                 <SortableHeader
                   field="status"
                   activeSort={sort}
@@ -292,22 +382,36 @@ export default async function CobrancaPage({
                         <div className="font-bold text-slate-950">{debt.customer.name}</div>
                         <div className="text-xs text-slate-500">Compra: {formatDate(debt.order?.createdAt ?? debt.createdAt)}</div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{debt.customer.phone}</TableCell>
+                      {showColumn('phone') ? (
+                        <TableCell className="hidden md:table-cell">{debt.customer.phone}</TableCell>
+                      ) : null}
                       <TableCell className="text-right font-mono font-semibold text-emerald-700">
                         {currency.format(debt.paymentValue)}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <div className="font-medium">{formatDate(debt.dueDate)}</div>
-                        {originalDueDate ? (
-                          <div className="text-xs text-slate-500">Original: {formatDate(originalDueDate)}</div>
-                        ) : null}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <Badge variant={debt.daysLate > 0 && debt.status !== 'PAGO' ? 'destructive' : 'secondary'}>
-                          {getDelayText(debt)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell">
+                      {showColumn('dueDate') ? (
+                        <TableCell className="hidden lg:table-cell">
+                          <div className="font-medium">{formatDate(debt.dueDate)}</div>
+                          {originalDueDate ? (
+                            <div className="text-xs text-slate-500">Original: {formatDate(originalDueDate)}</div>
+                          ) : null}
+                        </TableCell>
+                      ) : null}
+                      {showColumn('daysLate') ? (
+                        <TableCell className="hidden lg:table-cell">
+                          <Badge variant={debt.daysLate > 0 && debt.status !== 'PAGO' ? 'destructive' : 'secondary'}>
+                            {getDelayText(debt)}
+                          </Badge>
+                          {debt.status !== 'PAGO' && debt.daysLate >= 30 ? (
+                            <div className="mt-1 text-xs font-semibold text-red-700">Alerta 30+ dias</div>
+                          ) : debt.status !== 'PAGO' && debt.daysLate >= 15 ? (
+                            <div className="mt-1 text-xs font-semibold text-amber-700">Alerta 15+ dias</div>
+                          ) : debt.status !== 'PAGO' && debt.daysLate >= 7 ? (
+                            <div className="mt-1 text-xs font-semibold text-amber-600">Alerta 7+ dias</div>
+                          ) : null}
+                        </TableCell>
+                      ) : null}
+                      {showColumn('renegotiation') ? (
+                        <TableCell className="hidden xl:table-cell">
                         {isRenegotiated ? (
                           <div className="space-y-1 text-sm">
                             <div className="font-medium text-amber-700">Sim</div>
@@ -331,14 +435,17 @@ export default async function CobrancaPage({
                         ) : (
                           <span className="text-sm text-slate-500">Não</span>
                         )}
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell">
-                        {debt.paidAt ? (
-                          <span className="text-sm font-medium text-emerald-700">{formatDate(debt.paidAt)}</span>
-                        ) : (
-                          <span className="text-sm text-slate-500">Em aberto</span>
-                        )}
-                      </TableCell>
+                        </TableCell>
+                      ) : null}
+                      {showColumn('paidAt') ? (
+                        <TableCell className="hidden xl:table-cell">
+                          {debt.paidAt ? (
+                            <span className="text-sm font-medium text-emerald-700">{formatDate(debt.paidAt)}</span>
+                          ) : (
+                            <span className="text-sm text-slate-500">Em aberto</span>
+                          )}
+                        </TableCell>
+                      ) : null}
                       <TableCell>
                         <Badge variant={getStatusVariant(debt.status as DebtStatus)}>
                           {labelFrom(debtStatusLabels, debt.status)}

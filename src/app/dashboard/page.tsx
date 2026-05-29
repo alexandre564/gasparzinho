@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { prisma } from '@/lib/prisma';
 import { labelFrom, orderStatusLabels } from '@/lib/labels';
-import { getRepurchasePredictions } from './recompra/actions';
+import { getRepurchasePredictions } from './fidelizacao/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -205,12 +205,12 @@ export default async function DashboardPage() {
           href="/dashboard/entregas"
         />
         <MetricCard
-          title="Recompra"
+          title="Fidelização"
           value={data.repurchaseOpportunities}
-          description="Clientes com previsão de recompra nos últimos ou próximos 3 dias."
+          description="Clientes com previsão de nova compra nos últimos ou próximos 3 dias."
           icon={Repeat}
           tone="slate"
-          href="/dashboard/recompra"
+          href="/dashboard/fidelizacao"
         />
       </div>
 

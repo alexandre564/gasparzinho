@@ -100,12 +100,12 @@ function SortableHeader({
     <TableHead className={className}>
       <a
         href={`/dashboard/clientes?${params.toString()}`}
-        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-slate-950 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-white transition-colors hover:bg-white/10 hover:text-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
         aria-label={`Ordenar por ${sortLabels[field]}`}
         title={`Ordenar por ${sortLabels[field]}`}
       >
         {sortLabels[field]}
-        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
+        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-200' : 'text-slate-300'}`} />
       </a>
     </TableHead>
   );
@@ -185,7 +185,7 @@ export default async function CustomersPage({
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
+                <TableRow className="bg-slate-950 hover:bg-slate-950">
                   <SortableHeader
                     field="name"
                     activeSort={sort}
@@ -213,8 +213,8 @@ export default async function CustomersPage({
                     searchParams={searchParams ?? {}}
                     className="hidden lg:table-cell"
                   />
-                  <TableHead className="text-right">Dívida</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right font-extrabold text-white">Dívida</TableHead>
+                  <TableHead className="text-right font-extrabold text-white">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

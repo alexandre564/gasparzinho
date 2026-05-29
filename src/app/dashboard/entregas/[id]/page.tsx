@@ -55,7 +55,7 @@ export default async function DeliveryDetailsPage({
 
   const { order } = delivery;
   const customer = order.customer;
-  const address = [
+  const customerAddress = [
     `${customer.street}, ${customer.number}`,
     customer.complement,
     customer.neighborhood,
@@ -64,6 +64,8 @@ export default async function DeliveryDetailsPage({
   ]
     .filter(Boolean)
     .join(' - ');
+  const address = order.deliveryAddress || customerAddress;
+  const reference = order.deliveryReference || customer.reference;
 
   return (
     <div className="space-y-6">
@@ -103,6 +105,9 @@ export default async function DeliveryDetailsPage({
               paymentMethod={order.paymentMethod}
               hasOpenDebt={Boolean(order.debt && order.debt.status !== 'PAGO')}
               driverWhatsapp={driverWhatsapp}
+              deliveryAddress={address}
+              deliveryReference={reference}
+              deliveryAddressChanged={order.deliveryAddressChanged}
             />
             <div className="grid gap-3 rounded-lg border bg-slate-50 p-4 text-sm md:grid-cols-2">
               <div className="flex items-start gap-2">
@@ -114,7 +119,15 @@ export default async function DeliveryDetailsPage({
               </div>
               <div className="flex items-start gap-2">
                 <Home className="mt-0.5 h-4 w-4 text-slate-500" />
-                <p className="text-slate-700">{address}</p>
+                <div className="space-y-1 text-slate-700">
+                  <p>{address}</p>
+                  {reference ? <p className="text-xs text-slate-500">Referencia: {reference}</p> : null}
+                  {order.deliveryAddressChanged ? (
+                    <Badge variant="secondary" className="w-fit">
+                      Endereco diferente do cadastro
+                    </Badge>
+                  ) : null}
+                </div>
               </div>
               <div className="flex items-start gap-2">
                 <Calendar className="mt-0.5 h-4 w-4 text-slate-500" />

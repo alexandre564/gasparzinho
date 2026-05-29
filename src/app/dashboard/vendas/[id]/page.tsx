@@ -63,6 +63,18 @@ export default async function OrderDetailsPage({
     notFound();
   }
 
+  const customerAddress = [
+    `${order.customer.street}, ${order.customer.number}`,
+    order.customer.complement,
+    order.customer.neighborhood,
+    order.customer.city,
+    order.customer.cep ? `CEP ${order.customer.cep}` : null,
+  ]
+    .filter(Boolean)
+    .join(' - ');
+  const deliveryAddress = order.deliveryAddress || customerAddress;
+  const deliveryReference = order.deliveryReference || order.customer.reference;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -197,6 +209,23 @@ export default async function OrderDetailsPage({
               <p className="text-muted-foreground">
                 {order.customer.neighborhood}, {order.customer.city}
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Truck className="mr-2" /> Entrega
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="font-semibold text-slate-900">{deliveryAddress || 'Endereco nao informado'}</p>
+              {deliveryReference ? (
+                <p className="text-muted-foreground">Referencia: {deliveryReference}</p>
+              ) : null}
+              {order.deliveryAddressChanged ? (
+                <Badge variant="secondary">Endereco diferente do cadastro</Badge>
+              ) : null}
             </CardContent>
           </Card>
 

@@ -44,12 +44,21 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 type CustomerSelectItem = {
   id: string;
   name: string;
   phone: string;
+  street: string;
+  number: string;
+  complement?: string | null;
+  neighborhood: string;
+  city: string;
+  cep?: string | null;
+  reference?: string | null;
 };
 
 type ProductSelectItem = {
@@ -88,6 +97,10 @@ const OrderFormSchema = z.object({
   paymentMethod: z.string().min(1, 'Selecione a forma de pagamento.'),
   paymentDueDate: z.string().optional(),
   orderStatus: z.string().min(1, 'Selecione o status do pedido.'),
+  deliveryAddress: z.string().optional(),
+  deliveryReference: z.string().optional(),
+  deliveryAddressChanged: z.boolean(),
+  saveDeliveryAddressToCustomer: z.boolean(),
   items: z.array(OrderItemSchema).min(1, 'Adicione pelo menos um item ao pedido.'),
 });
 
@@ -114,6 +127,10 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
       paymentMethod: PaymentMethod.DINHEIRO,
       paymentDueDate: '',
       orderStatus: OrderStatus.PENDENTE,
+      deliveryAddress: '',
+      deliveryReference: '',
+      deliveryAddressChanged: false,
+      saveDeliveryAddressToCustomer: false,
       items: [],
     },
   });
@@ -126,6 +143,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   const watchedItems = form.watch('items');
   const selectedPaymentMethod = form.watch('paymentMethod');
   const selectedCustomerId = form.watch('customerId');
+  const deliveryAddressChanged = form.watch('deliveryAddressChanged');
 
   useEffect(() => {
     async function loadInitialData() {
@@ -174,6 +192,27 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   }, [watchedItems]);
 
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
+  const defaultDeliveryAddress = selectedCustomer
+    ? [
+        `${selectedCustomer.street}, ${selectedCustomer.number}`,
+        selectedCustomer.complement,
+        selectedCustomer.neighborhood,
+        selectedCustomer.city,
+        selectedCustomer.cep ? `CEP ${selectedCustomer.cep}` : null,
+      ]
+        .filter(Boolean)
+        .join(' - ')
+    : '';
+  const effectiveDeliveryAddress = deliveryAddressChanged
+    ? form.watch('deliveryAddress') || defaultDeliveryAddress
+    : defaultDeliveryAddress;
+
+  useEffect(() => {
+    form.setValue('deliveryAddress', defaultDeliveryAddress);
+    form.setValue('deliveryReference', selectedCustomer?.reference ?? '');
+    form.setValue('deliveryAddressChanged', false);
+    form.setValue('saveDeliveryAddressToCustomer', false);
+  }, [defaultDeliveryAddress, form, selectedCustomer?.reference]);
 
   const selectedItemsSummary = watchedItems
     .map((item) => {
@@ -193,7 +232,33 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   const driverMessage = selectedCustomer
     ? `Nova entrega Gás Gasparzinho\nCliente: ${selectedCustomer.name}\nTelefone: ${selectedCustomer.phone}\nItens: ${selectedItemsSummary || 'Ver pedido no sistema'}\nTotal: ${formatCurrency(grossValue)}`
     : 'Nova entrega Gás Gasparzinho. Confira os detalhes do pedido no sistema.';
-  const driverWhatsappUrl = buildWhatsAppUrl(driverWhatsapp, driverMessage);
+  const customerWhatsappWithAddress = selectedCustomer
+    ? buildWhatsAppUrl(
+        selectedCustomer.phone,
+        [
+          `Ola ${selectedCustomer.name}, seu pedido na Gas Gasparzinho foi registrado e sera separado para entrega.`,
+          `Total: ${formatCurrency(grossValue)}.`,
+          effectiveDeliveryAddress ? `Endereco de entrega: ${effectiveDeliveryAddress}.` : null,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      )
+    : customerWhatsapp;
+  const driverMessageWithAddress = selectedCustomer
+    ? [
+        'Nova entrega Gas Gasparzinho',
+        `Cliente: ${selectedCustomer.name}`,
+        `Telefone: ${selectedCustomer.phone}`,
+        `Endereco: ${effectiveDeliveryAddress || 'Ver cadastro do cliente'}`,
+        form.watch('deliveryReference') ? `Referencia: ${form.watch('deliveryReference')}` : null,
+        deliveryAddressChanged ? 'Atencao: entrega em endereco diferente do cadastro.' : null,
+        `Itens: ${selectedItemsSummary || 'Ver pedido no sistema'}`,
+        `Total: ${formatCurrency(grossValue)}`,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : driverMessage;
+  const driverWhatsappUrl = buildWhatsAppUrl(driverWhatsapp, driverMessageWithAddress);
 
   async function onSubmit(values: OrderFormValues) {
     const result = await createOrder(values);
@@ -235,7 +300,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button asChild className="gap-2" disabled={!selectedCustomer}>
-              <a href={customerWhatsapp} target="_blank" rel="noreferrer">
+              <a href={customerWhatsappWithAddress} target="_blank" rel="noreferrer">
                 <MessageCircle className="h-4 w-4" />
                 Enviar WhatsApp ao cliente
               </a>
@@ -406,6 +471,105 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                     </FormItem>
                   )}
                 />
+
+                {selectedCustomer ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Endereco de entrega
+                    </div>
+                    <p className="mt-1 text-sm font-medium text-slate-900">
+                      {effectiveDeliveryAddress || 'Endereco nao informado no cadastro.'}
+                    </p>
+                    {form.watch('deliveryReference') ? (
+                      <p className="mt-1 text-xs text-slate-600">
+                        Referencia: {form.watch('deliveryReference')}
+                      </p>
+                    ) : null}
+                    {deliveryAddressChanged ? (
+                      <p className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+                        Entrega em endereco diferente do cadastro.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <FormField
+                  control={form.control}
+                  name="deliveryAddressChanged"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start gap-3 rounded-lg border border-slate-200 p-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                          aria-label="Entregar em outro endereco"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Entregar em outro endereco</FormLabel>
+                        <p className="text-xs text-slate-500">
+                          Use quando o cliente pedir entrega fora do endereco padrao.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {deliveryAddressChanged ? (
+                  <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+                    <FormField
+                      control={form.control}
+                      name="deliveryAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Novo endereco de entrega</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              rows={3}
+                              placeholder="Rua, numero, bairro, cidade e complemento"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="deliveryReference"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Referencia para entrega</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex.: portao azul, proximo a padaria" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="saveDeliveryAddressToCustomer"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start gap-3 rounded-md bg-white p-3">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                              aria-label="Salvar novo endereco no cadastro do cliente"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Salvar este endereco no cadastro do cliente</FormLabel>
+                            <p className="text-xs text-slate-500">
+                              Marque apenas se este sera o novo endereco padrao do cliente.
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ) : null}
 
                 <FormField
                   control={form.control}

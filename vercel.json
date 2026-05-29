@@ -1,0 +1,3 @@
+{
+  "buildCommand": "npm run db:safe-sync && npm run build"
+}

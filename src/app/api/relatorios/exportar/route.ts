@@ -11,7 +11,11 @@ function csvCell(value: unknown) {
 }
 
 function getPeriod(value: string | null): ReportPeriod {
-  return value === 'monthly' ? 'monthly' : 'daily';
+  if (value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly') {
+    return value;
+  }
+
+  return 'daily';
 }
 
 export async function GET(request: NextRequest) {
@@ -55,7 +59,12 @@ export async function GET(request: NextRequest) {
   ].join('\r\n');
 
   const fileDate = new Date().toISOString().slice(0, 10);
-  const periodName = period === 'monthly' ? 'mensal' : 'diario';
+  const periodName = {
+    daily: 'diario',
+    weekly: 'semanal',
+    monthly: 'mensal',
+    yearly: 'anual',
+  }[period];
 
   return new NextResponse(`\uFEFF${csv}`, {
     status: 200,

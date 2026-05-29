@@ -1,6 +1,6 @@
 'use server';
 
-import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek, subDays } from 'date-fns';
+import { endOfDay, endOfMonth, endOfWeek, endOfYear, startOfDay, startOfMonth, startOfWeek, startOfYear, subDays, subMonths, subWeeks, subYears } from 'date-fns';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -16,6 +16,9 @@ export type CreateExpenseState = {
     value?: string[];
     date?: string[];
     category?: string[];
+    subCategory?: string[];
+    paymentMethod?: string[];
+    responsible?: string[];
     isRecurring?: string[];
   };
 };
@@ -30,10 +33,15 @@ const ExpenseSchema = z.object({
   value: z.coerce.number().positive({ message: 'Valor deve ser positivo.' }),
   date: z.coerce.date({ error: 'Data inválida.' }),
   category: z.string().min(1, { message: 'Por favor, selecione uma categoria.' }),
+  subCategory: z.string().trim().min(1, 'Informe a subcategoria.').max(80, 'Subcategoria muito longa.'),
+  paymentMethod: z.string().trim().min(1, 'Informe o metodo de pagamento.').max(80, 'Metodo de pagamento muito longo.'),
+  responsible: z.string().trim().min(2, 'Informe o responsavel pelo lancamento.').max(120, 'Responsavel muito longo.'),
+  vehicleLabel: z.string().trim().max(120, 'Identificacao do veiculo muito longa.').optional(),
   isRecurring: z.preprocess((value) => value === 'true', z.boolean().default(false)),
 });
 
 const ITEMS_PER_PAGE = 10;
+export type FinancialPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 function normalizeHeader(value: string) {
   return value
@@ -149,7 +157,16 @@ export async function getPaginatedExpenses(
 
   const where: Prisma.ExpenseWhereInput = {
     ...(category && { category }),
-    ...(query && { description: { contains: query } }),
+    ...(query && {
+      OR: [
+        { description: { contains: query } },
+        { category: { contains: query } },
+        { subCategory: { contains: query } },
+        { paymentMethod: { contains: query } },
+        { responsible: { contains: query } },
+        { vehicleLabel: { contains: query } },
+      ],
+    }),
     ...(fromDate || toDate
       ? {
           date: {
@@ -205,6 +222,7 @@ export async function createExpense(
     await prisma.expense.create({ data: validatedFields.data });
     revalidatePath('/dashboard/financeiro');
     revalidatePath('/dashboard/financeiro/despesas');
+    revalidatePath('/dashboard/gastos');
     return { success: true, message: 'Despesa criada com sucesso.', errors: {} };
   } catch (error) {
     console.error('Database Error:', error);
@@ -260,6 +278,10 @@ export async function importExpenses(
     const value = parseMoneyValue(pickValue(row, ['valor', 'value']));
     const date = parseDateValue(pickValue(row, ['data', 'date', 'competencia', 'competência']));
     const category = pickValue(row, ['categoria', 'category']) || 'Outros';
+    const subCategory = pickValue(row, ['subcategoria', 'sub categoria', 'subcategory']);
+    const paymentMethod = pickValue(row, ['metodo pagamento', 'método pagamento', 'forma pagamento', 'payment method']);
+    const responsible = pickValue(row, ['responsavel', 'responsável', 'lancado por', 'lançado por', 'responsible']);
+    const vehicleLabel = pickValue(row, ['veiculo', 'veículo', 'placa', 'vehicle']);
     const isRecurring = parseBooleanValue(
       pickValue(row, ['recorrente', 'fixa', 'mensal', 'is recurring']),
     );
@@ -275,6 +297,10 @@ export async function importExpenses(
         value,
         date,
         category,
+        subCategory: subCategory || 'Outros',
+        paymentMethod: paymentMethod || 'Nao informado',
+        responsible: responsible || 'Importacao',
+        vehicleLabel: vehicleLabel || null,
         isRecurring,
       },
     });
@@ -284,6 +310,7 @@ export async function importExpenses(
 
   revalidatePath('/dashboard/financeiro');
   revalidatePath('/dashboard/financeiro/despesas');
+  revalidatePath('/dashboard/gastos');
 
   if (imported === 0) {
     return {
@@ -306,6 +333,7 @@ export async function deleteExpense(id: string): Promise<{ success: boolean; mes
     await prisma.expense.delete({ where: { id } });
     revalidatePath('/dashboard/financeiro');
     revalidatePath('/dashboard/financeiro/despesas');
+    revalidatePath('/dashboard/gastos');
     return { success: true, message: 'Despesa excluída com sucesso.' };
   } catch (error) {
     console.error('Database Error:', error);
@@ -331,8 +359,64 @@ async function getExpenses(from: Date, to: Date) {
   return result._sum.value ?? 0;
 }
 
-export async function getFinancialSummary() {
+function getPeriodRange(period: FinancialPeriod, date = new Date()) {
+  if (period === 'daily') {
+    return { from: startOfDay(date), to: endOfDay(date), label: 'dia' };
+  }
+
+  if (period === 'weekly') {
+    return {
+      from: startOfWeek(date, { weekStartsOn: 1 }),
+      to: endOfWeek(date, { weekStartsOn: 1 }),
+      label: 'semana',
+    };
+  }
+
+  if (period === 'yearly') {
+    return { from: startOfYear(date), to: endOfYear(date), label: 'ano' };
+  }
+
+  return { from: startOfMonth(date), to: endOfMonth(date), label: 'mes' };
+}
+
+function getChartPointDate(period: FinancialPeriod, index: number, now = new Date()) {
+  if (period === 'daily') return subDays(now, index);
+  if (period === 'weekly') return subWeeks(now, index);
+  if (period === 'yearly') return subYears(now, index);
+  return subMonths(now, index);
+}
+
+function getChartPointRange(period: FinancialPeriod, date: Date) {
+  if (period === 'daily') return { from: startOfDay(date), to: endOfDay(date) };
+  if (period === 'weekly') {
+    return {
+      from: startOfWeek(date, { weekStartsOn: 1 }),
+      to: endOfWeek(date, { weekStartsOn: 1 }),
+    };
+  }
+  if (period === 'yearly') return { from: startOfYear(date), to: endOfYear(date) };
+  return { from: startOfMonth(date), to: endOfMonth(date) };
+}
+
+function getChartPointName(period: FinancialPeriod, date: Date) {
+  if (period === 'daily') {
+    return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+  }
+
+  if (period === 'weekly') {
+    return `Sem ${date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
+  }
+
+  if (period === 'yearly') {
+    return String(date.getFullYear());
+  }
+
+  return date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+}
+
+export async function getFinancialSummary(period: FinancialPeriod = 'monthly') {
   const now = new Date();
+  const selectedRange = getPeriodRange(period, now);
   const [revenueToday, expensesToday, revenueWeek, expensesWeek, revenueMonth, expensesMonth] =
     await Promise.all([
       getRevenue(startOfDay(now), endOfDay(now)),
@@ -342,27 +426,39 @@ export async function getFinancialSummary() {
       getRevenue(startOfMonth(now), endOfMonth(now)),
       getExpenses(startOfMonth(now), endOfMonth(now)),
     ]);
+  const [periodRevenue, periodExpenses] = await Promise.all([
+    getRevenue(selectedRange.from, selectedRange.to),
+    getExpenses(selectedRange.from, selectedRange.to),
+  ]);
 
   return {
     today: { revenue: revenueToday, expenses: expensesToday, net: revenueToday - expensesToday },
     week: { revenue: revenueWeek, expenses: expensesWeek, net: revenueWeek - expensesWeek },
     month: { revenue: revenueMonth, expenses: expensesMonth, net: revenueMonth - expensesMonth },
+    current: {
+      revenue: periodRevenue,
+      expenses: periodExpenses,
+      net: periodRevenue - periodExpenses,
+      label: selectedRange.label,
+    },
   };
 }
 
-export async function getWeeklyChartData() {
+export async function getWeeklyChartData(period: FinancialPeriod = 'daily') {
   const today = new Date();
   const data = [];
+  const length = period === 'yearly' ? 5 : period === 'monthly' ? 6 : period === 'weekly' ? 8 : 7;
 
-  for (let index = 6; index >= 0; index -= 1) {
-    const date = subDays(today, index);
-    const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+  for (let index = length - 1; index >= 0; index -= 1) {
+    const date = getChartPointDate(period, index, today);
+    const range = getChartPointRange(period, date);
+    const name = getChartPointName(period, date);
     const [revenue, expenses] = await Promise.all([
-      getRevenue(startOfDay(date), endOfDay(date)),
-      getExpenses(startOfDay(date), endOfDay(date)),
+      getRevenue(range.from, range.to),
+      getExpenses(range.from, range.to),
     ]);
 
-    data.push({ name: dayName, Entradas: revenue, Saidas: expenses });
+    data.push({ name, Entradas: revenue, Saidas: expenses });
   }
 
   return data;

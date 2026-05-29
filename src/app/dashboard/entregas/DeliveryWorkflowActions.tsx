@@ -26,6 +26,9 @@ type DeliveryWorkflowActionsProps = {
   paymentMethod: string;
   hasOpenDebt: boolean;
   driverWhatsapp: string;
+  deliveryAddress?: string | null;
+  deliveryReference?: string | null;
+  deliveryAddressChanged?: boolean;
 };
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -48,15 +51,36 @@ export default function DeliveryWorkflowActions({
   paymentMethod,
   hasOpenDebt,
   driverWhatsapp,
+  deliveryAddress,
+  deliveryReference,
+  deliveryAddressChanged,
 }: DeliveryWorkflowActionsProps) {
   const [pending, setPending] = useState(false);
-  const address = `${customer.street}, ${customer.number} - ${customer.neighborhood}, ${customer.city}`;
+  const address = deliveryAddress || `${customer.street}, ${customer.number} - ${customer.neighborhood}, ${customer.city}`;
+  const reference = deliveryReference || customer.reference || '-';
   const orderSummary = itemsText(items);
   const paymentLabel = labelFrom(paymentMethodLabels, paymentMethod);
   const customerMessage = `Olá ${customer.name}, seu pedido na Gás Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentLabel}.`;
   const driverMessage = `Entrega Gás Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereço: ${address}\nReferência: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentLabel}${hasOpenDebt ? ' / A RECEBER' : ''}`;
-  const customerWhatsapp = buildWhatsAppUrl(customer.phone, customerMessage);
-  const driverWhatsappLink = buildWhatsAppUrl(driverWhatsapp, driverMessage);
+  const customerMessageWithAddress = address
+    ? `${customerMessage} Endereco: ${address}.`
+    : customerMessage;
+  const driverMessageWithAddress = [
+    'Entrega Gas Gasparzinho',
+    `Pedido: ${orderId}`,
+    `Cliente: ${customer.name}`,
+    `Telefone: ${customer.phone}`,
+    `Endereco: ${address}`,
+    `Referencia: ${reference}`,
+    deliveryAddressChanged ? 'Atencao: endereco diferente do cadastro.' : null,
+    `Itens: ${orderSummary}`,
+    `Total: ${currency.format(total)}`,
+    `Pagamento: ${paymentLabel}${hasOpenDebt ? ' / A RECEBER' : ''}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const customerWhatsapp = buildWhatsAppUrl(customer.phone, customerMessageWithAddress);
+  const driverWhatsappLink = buildWhatsAppUrl(driverWhatsapp, driverMessageWithAddress || driverMessage);
 
   async function sendToDriver() {
     setPending(true);

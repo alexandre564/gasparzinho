@@ -8,6 +8,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "db:safe-sync": "node scripts/apply-safe-migrations.js && prisma generate",
+    "customers:clean-encoding": "node scripts/clean-customer-encoding.js",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

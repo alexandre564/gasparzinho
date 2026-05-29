@@ -376,11 +376,82 @@ function pickValue(row: Record<string, string>, keys: string[]) {
   for (const key of keys) {
     const value = row[key];
     if (value !== undefined && value.trim()) {
-      return value.trim();
+      return decodeContactText(value.trim());
     }
   }
 
   return '';
+}
+
+function decodeQuotedPrintable(value: string) {
+  const withoutSoftBreaks = value.replace(/=\r?\n/g, '');
+  const bytes: number[] = [];
+  let output = '';
+
+  for (let index = 0; index < withoutSoftBreaks.length; index += 1) {
+    const char = withoutSoftBreaks[index];
+    const hex = withoutSoftBreaks.slice(index + 1, index + 3);
+
+    if (char === '=' && /^[0-9A-Fa-f]{2}$/.test(hex)) {
+      bytes.push(Number.parseInt(hex, 16));
+      index += 2;
+      continue;
+    }
+
+    if (bytes.length > 0) {
+      output += Buffer.from(bytes).toString('utf8');
+      bytes.length = 0;
+    }
+
+    output += char;
+  }
+
+  if (bytes.length > 0) {
+    output += Buffer.from(bytes).toString('utf8');
+  }
+
+  return output;
+}
+
+function decodeRfc2047Words(value: string) {
+  return value.replace(/=\?([^?]+)\?([QB])\?([^?]+)\?=/gi, (_match, charset: string, encoding: string, encoded: string) => {
+    const normalizedEncoding = String(encoding).toUpperCase();
+    const normalizedCharset = String(charset).toLowerCase();
+    let decoded = encoded;
+
+    if (normalizedEncoding === 'Q') {
+      decoded = decodeQuotedPrintable(String(encoded).replace(/_/g, ' '));
+    } else {
+      try {
+        decoded = Buffer.from(String(encoded), 'base64').toString('utf8');
+      } catch {
+        decoded = String(encoded);
+      }
+    }
+
+    if (normalizedCharset.includes('utf') || normalizedCharset.includes('iso') || normalizedCharset.includes('windows')) {
+      return decoded;
+    }
+
+    return decoded;
+  });
+}
+
+function looksQuotedPrintable(value: string) {
+  return /(?:=[0-9A-Fa-f]{2}){2,}/.test(value) || /=\r?\n/.test(value);
+}
+
+function decodeContactText(value: string) {
+  const trimmed = value.replace(/^"+|"+$/g, '').trim();
+  const rfcDecoded = decodeRfc2047Words(trimmed);
+  const decoded = looksQuotedPrintable(rfcDecoded) ? decodeQuotedPrintable(rfcDecoded) : rfcDecoded;
+
+  return decoded
+    .replace(/\\n/gi, ' ')
+    .replace(/\\,/g, ',')
+    .replace(/\\;/g, ';')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function pickPhoneValue(row: Record<string, string>) {
@@ -420,7 +491,7 @@ function pickPhoneValue(row: Record<string, string>) {
 }
 
 function normalizeImportedPhone(value: string) {
-  return value.replace(/^"+|"+$/g, '').replace(/\s+/g, ' ').trim();
+  return decodeContactText(value).replace(/^"+|"+$/g, '').replace(/\s+/g, ' ').trim();
 }
 
 function getPhoneDigits(value: string) {
@@ -479,7 +550,7 @@ function parseCustomersCsv(text: string): ImportedCustomer[] {
     const row: Record<string, string> = {};
 
     headers.forEach((header, index) => {
-      row[header] = values[index] ?? '';
+      row[header] = decodeContactText(values[index] ?? '');
     });
 
     const name = buildNameFromRow(row);
@@ -502,16 +573,14 @@ function parseCustomersCsv(text: string): ImportedCustomer[] {
 }
 
 function decodeVcardValue(value: string) {
-  return value
-    .replace(/\\n/gi, ' ')
-    .replace(/\\,/g, ',')
-    .replace(/\\;/g, ';')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return decodeContactText(value);
 }
 
 function parseCustomersVcf(text: string): ImportedCustomer[] {
-  const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const cleanText = text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n[ \t]/g, '');
   const cards = cleanText.split(/BEGIN:VCARD/i).slice(1);
 
   return cards

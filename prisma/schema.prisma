@@ -90,6 +90,9 @@ model Order {
   status        String    @default("PENDENTE")
   paymentMethod String
   paymentDueDate DateTime?
+  deliveryAddress String?
+  deliveryReference String?
+  deliveryAddressChanged Boolean @default(false)
   grossValue    Float
   totalCost     Float
   netValue      Float
@@ -148,8 +151,12 @@ model Expense {
   id          String   @id @default(cuid())
   description String
   category    String
+  subCategory String?
   value       Float
   date        DateTime
+  paymentMethod String?
+  responsible String?
+  vehicleLabel String?
   isRecurring Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -24,11 +24,11 @@ function ImportButton({ onClick, fileName }: { onClick: () => void; fileName: st
       className="w-full gap-2 sm:w-auto"
       disabled={pending}
       onClick={onClick}
-      aria-label="Importar despesas de arquivo CSV, CDSV ou TXT"
-      title="Importar despesas"
+      aria-label="Importar gastos de arquivo CSV, CDSV ou TXT"
+      title="Importar gastos"
     >
       {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
-      {pending ? 'Importando...' : fileName || 'Importar despesas'}
+      {pending ? 'Importando...' : fileName || 'Importar gastos'}
     </Button>
   );
 }
