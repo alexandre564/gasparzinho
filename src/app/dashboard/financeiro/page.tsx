@@ -13,6 +13,7 @@ import { Expense } from '@prisma/client';
 
 import { getTotalOpenDebt } from './actions';
 import { getFinancialSummary, getPaginatedExpenses, getWeeklyChartData, type FinancialPeriod } from './despesas/actions';
+import { expenseLabel } from './despesas/categories';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -48,7 +49,7 @@ function getPeriod(searchPeriod?: string): FinancialPeriod {
 const periodTitle: Record<FinancialPeriod, string> = {
   daily: 'do dia',
   weekly: 'da semana',
-  monthly: 'do mes',
+  monthly: 'do mês',
   yearly: 'do ano',
 };
 
@@ -134,7 +135,10 @@ async function RecentExpenses() {
           <TableBody>
             {expenses.slice(0, 5).map((expense: Expense) => (
               <TableRow key={expense.id}>
-                <TableCell>{expense.description}</TableCell>
+                <TableCell>
+                  <div className="font-medium text-slate-950">{expense.description}</div>
+                  <div className="text-xs text-slate-500">{expenseLabel(expense.category)}</div>
+                </TableCell>
                 <TableCell className="text-right font-mono">
                   {currencyFormatter(expense.value)}
                 </TableCell>
@@ -157,7 +161,7 @@ async function WeeklyChart({ period }: { period: FinancialPeriod }) {
     <Card>
       <CardHeader>
         <CardTitle>Fluxo financeiro</CardTitle>
-        <CardDescription>Receitas e gastos no periodo selecionado.</CardDescription>
+        <CardDescription>Receitas e gastos no período selecionado.</CardDescription>
       </CardHeader>
       <CardContent>
         <SalesChart data={chartData} />

@@ -66,7 +66,7 @@ function normalizeStatusFilter(status?: string) {
 }
 
 function calculateDaysLate(dueDate: Date, paidAt?: Date | null) {
-  const referenceDate = paidAt ?? new Date();
+  const referenceDate = paidAt ? new Date(paidAt) : new Date();
   const due = new Date(dueDate);
   due.setHours(0, 0, 0, 0);
   referenceDate.setHours(0, 0, 0, 0);

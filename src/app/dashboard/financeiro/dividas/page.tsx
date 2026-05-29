@@ -243,8 +243,8 @@ export default async function Page({ searchParams }: PageProps) {
                           <div className="flex flex-wrap items-center justify-end gap-2">
                             <WhatsAppButton debt={debt} template={messageTemplate} />
                             {debt.status !== 'PAGO' ? <MarkAsPaidButton id={debt.id} /> : null}
-                            <Button asChild size="sm" className="gap-2">
-                              <Link href={`/dashboard/cobranca/${debt.id}`}>
+                            <Button asChild size="sm" className="gap-2" title={`Editar cobrança de ${debt.customer.name}`}>
+                              <Link href={`/dashboard/cobranca/${debt.id}`} aria-label={`Editar cobrança de ${debt.customer.name}`}>
                                 <Pencil className="h-4 w-4" />
                                 <span className="hidden xl:inline">Editar</span>
                               </Link>

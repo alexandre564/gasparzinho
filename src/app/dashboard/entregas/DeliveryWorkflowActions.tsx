@@ -66,18 +66,18 @@ export default function DeliveryWorkflowActions({
   const customerMessage = `Olá ${customer.name}, seu pedido na Gás Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentLabel}.`;
   const driverMessage = `Entrega Gás Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereço: ${address}\nReferência: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentLabel}${hasOpenDebt ? ' / A RECEBER' : ''}`;
   const customerMessageWithAddress = address
-    ? `${customerMessage} Endereco: ${address}.`
+    ? `${customerMessage} Endereço: ${address}.`
     : customerMessage;
   const driverMessageWithAddress = [
-    'Entrega Gas Gasparzinho',
+    'Entrega Gás Gasparzinho',
     `Pedido: ${orderId}`,
     `Cliente: ${customer.name}`,
     `Telefone: ${customer.phone}`,
-    `Endereco: ${address}`,
-    `Referencia: ${reference}`,
+    `Endereço: ${address}`,
+    `Referência: ${reference}`,
     `Google Maps: ${googleMapsUrl}`,
     `Waze: ${wazeUrl}`,
-    deliveryAddressChanged ? 'Atencao: endereco diferente do cadastro.' : null,
+    deliveryAddressChanged ? 'Atenção: endereço diferente do cadastro.' : null,
     `Itens: ${orderSummary}`,
     `Total: ${currency.format(total)}`,
     `Pagamento: ${paymentLabel}${hasOpenDebt ? ' / A RECEBER' : ''}`,

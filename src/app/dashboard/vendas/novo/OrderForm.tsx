@@ -260,9 +260,9 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
     ? buildWhatsAppUrl(
         selectedCustomer.phone,
         [
-          `Ola ${selectedCustomer.name}, seu pedido na Gas Gasparzinho foi registrado e sera separado para entrega.`,
+          `Olá ${selectedCustomer.name}, seu pedido na Gás Gasparzinho foi registrado e será separado para entrega.`,
           `Total: ${formatCurrency(grossValue)}.`,
-          effectiveDeliveryAddress ? `Endereco de entrega: ${effectiveDeliveryAddress}.` : null,
+          effectiveDeliveryAddress ? `Endereço de entrega: ${effectiveDeliveryAddress}.` : null,
         ]
           .filter(Boolean)
           .join('\n'),
@@ -272,14 +272,14 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   const wazeUrl = buildWazeUrl(effectiveDeliveryAddress);
   const driverMessageWithAddress = selectedCustomer
     ? [
-        'Nova entrega Gas Gasparzinho',
+        'Nova entrega Gás Gasparzinho',
         `Cliente: ${selectedCustomer.name}`,
         `Telefone: ${selectedCustomer.phone}`,
-        `Endereco: ${effectiveDeliveryAddress || 'Ver cadastro do cliente'}`,
-        form.watch('deliveryReference') ? `Referencia: ${form.watch('deliveryReference')}` : null,
+        `Endereço: ${effectiveDeliveryAddress || 'Ver cadastro do cliente'}`,
+        form.watch('deliveryReference') ? `Referência: ${form.watch('deliveryReference')}` : null,
         effectiveDeliveryAddress ? `Google Maps: ${googleMapsUrl}` : null,
         effectiveDeliveryAddress ? `Waze: ${wazeUrl}` : null,
-        deliveryAddressChanged ? 'Atencao: entrega em endereco diferente do cadastro.' : null,
+        deliveryAddressChanged ? 'Atenção: entrega em endereço diferente do cadastro.' : null,
         `Itens: ${selectedItemsSummary || 'Ver pedido no sistema'}`,
         `Total: ${formatCurrency(grossValue)}`,
       ]
@@ -545,19 +545,19 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                 {selectedCustomer ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Endereco de entrega
+                      Endereço de entrega
                     </div>
                     <p className="mt-1 text-sm font-medium text-slate-900">
-                      {effectiveDeliveryAddress || 'Endereco nao informado no cadastro.'}
+                      {effectiveDeliveryAddress || 'Endereço não informado no cadastro.'}
                     </p>
                     {form.watch('deliveryReference') ? (
                       <p className="mt-1 text-xs text-slate-600">
-                        Referencia: {form.watch('deliveryReference')}
+                        Referência: {form.watch('deliveryReference')}
                       </p>
                     ) : null}
                     {deliveryAddressChanged ? (
                       <p className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
-                        Entrega em endereco diferente do cadastro.
+                        Entrega em endereço diferente do cadastro.
                       </p>
                     ) : null}
                   </div>
@@ -572,13 +572,13 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={(checked) => field.onChange(Boolean(checked))}
-                          aria-label="Entregar em outro endereco"
+                          aria-label="Entregar em outro endereço"
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Entregar em outro endereco</FormLabel>
+                        <FormLabel>Entregar em outro endereço</FormLabel>
                         <p className="text-xs text-slate-500">
-                          Use quando o cliente pedir entrega fora do endereco padrao.
+                          Use quando o cliente pedir entrega fora do endereço padrão.
                         </p>
                       </div>
                     </FormItem>
@@ -627,7 +627,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                       name="deliveryAddress"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Novo endereco de entrega</FormLabel>
+                          <FormLabel>Novo endereço de entrega</FormLabel>
                           <FormControl>
                             <Textarea
                               rows={3}
@@ -644,9 +644,9 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                       name="deliveryReference"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Referencia para entrega</FormLabel>
+                          <FormLabel>Referência para entrega</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex.: portao azul, proximo a padaria" {...field} />
+                            <Input placeholder="Ex.: portão azul, próximo à padaria" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -661,13 +661,13 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={(checked) => field.onChange(Boolean(checked))}
-                              aria-label="Salvar novo endereco no cadastro do cliente"
+                              aria-label="Salvar novo endereço no cadastro do cliente"
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel>Salvar este endereco no cadastro do cliente</FormLabel>
+                            <FormLabel>Salvar este endereço no cadastro do cliente</FormLabel>
                             <p className="text-xs text-slate-500">
-                              Marque apenas se este sera o novo endereco padrao do cliente.
+                              Marque apenas se este será o novo endereço padrão do cliente.
                             </p>
                           </div>
                         </FormItem>

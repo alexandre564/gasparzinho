@@ -124,10 +124,10 @@ export default async function DeliveryDetailsPage({
                 <Home className="mt-0.5 h-4 w-4 text-slate-500" />
                 <div className="space-y-1 text-slate-700">
                   <p>{address}</p>
-                  {reference ? <p className="text-xs text-slate-500">Referencia: {reference}</p> : null}
+                  {reference ? <p className="text-xs text-slate-500">Referência: {reference}</p> : null}
                   {order.deliveryAddressChanged ? (
                     <Badge variant="secondary" className="w-fit">
-                      Endereco diferente do cadastro
+                      Endereço diferente do cadastro
                     </Badge>
                   ) : null}
                   <div className="flex flex-wrap gap-2 pt-2">

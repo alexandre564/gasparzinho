@@ -34,9 +34,9 @@ const ExpenseSchema = z.object({
   date: z.coerce.date({ error: 'Data inválida.' }),
   category: z.string().min(1, { message: 'Por favor, selecione uma categoria.' }),
   subCategory: z.string().trim().min(1, 'Informe a subcategoria.').max(80, 'Subcategoria muito longa.'),
-  paymentMethod: z.string().trim().min(1, 'Informe o metodo de pagamento.').max(80, 'Metodo de pagamento muito longo.'),
-  responsible: z.string().trim().min(2, 'Informe o responsavel pelo lancamento.').max(120, 'Responsavel muito longo.'),
-  vehicleLabel: z.string().trim().max(120, 'Identificacao do veiculo muito longa.').optional(),
+  paymentMethod: z.string().trim().min(1, 'Informe o método de pagamento.').max(80, 'Método de pagamento muito longo.'),
+  responsible: z.string().trim().min(2, 'Informe o responsável pelo lançamento.').max(120, 'Responsável muito longo.'),
+  vehicleLabel: z.string().trim().max(120, 'Identificação do veículo muito longa.').optional(),
   isRecurring: z.preprocess((value) => value === 'true', z.boolean().default(false)),
 });
 

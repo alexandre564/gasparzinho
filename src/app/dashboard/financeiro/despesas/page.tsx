@@ -9,6 +9,7 @@ import { ExpenseCategoryFilter } from './ExpenseCategoryFilter';
 import { ExpenseDateRangeFilter } from './ExpenseDateRangeFilter';
 import ExpenseForm from './ExpenseForm';
 import ImportExpensesButton from './ImportExpensesButton';
+import { expenseLabel } from './categories';
 import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import { Badge } from '@/components/ui/badge';
@@ -93,7 +94,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                <Search placeholder="Buscar por descricao, categoria, responsavel ou veiculo..." />
+                <Search placeholder="Buscar por descrição, categoria, responsável ou veículo..." />
                 <Suspense fallback={<div className="h-11 w-full rounded-md border bg-white sm:max-w-xs" />}>
                   <ExpenseCategoryFilter />
                 </Suspense>
@@ -129,10 +130,10 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                             </div>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
-                            <Badge variant="outline">{expense.category}</Badge>
+                            <Badge variant="outline">{expenseLabel(expense.category)}</Badge>
                           </TableCell>
                           <TableCell className="hidden lg:table-cell">
-                            <div className="text-sm text-slate-700">{expense.subCategory || '-'}</div>
+                            <div className="text-sm text-slate-700">{expenseLabel(expense.subCategory)}</div>
                             {expense.vehicleLabel ? (
                               <div className="text-xs text-slate-500">{expense.vehicleLabel}</div>
                             ) : null}
@@ -175,7 +176,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
           <Card>
             <CardHeader>
               <CardTitle>Novo gasto</CardTitle>
-              <CardDescription>Adicione uma saida ao fluxo financeiro.</CardDescription>
+              <CardDescription>Adicione uma saída ao fluxo financeiro.</CardDescription>
             </CardHeader>
             <CardContent>
               <ExpenseForm />

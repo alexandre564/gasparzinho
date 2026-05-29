@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { EXPENSE_CATEGORIES } from './categories';
+import { EXPENSE_CATEGORIES, expenseLabel } from './categories';
 
 export function ExpenseCategoryFilter() {
   const searchParams = useSearchParams();
@@ -35,7 +35,7 @@ export function ExpenseCategoryFilter() {
         <option value="TODAS">Todas as categorias</option>
         {EXPENSE_CATEGORIES.map((category) => (
           <option key={category} value={category}>
-            {category}
+            {expenseLabel(category)}
           </option>
         ))}
       </select>

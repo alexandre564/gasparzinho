@@ -1,7 +1,7 @@
 # PRD - Gás Gasparzinho v1
 
 ## Objetivo
-Construir e evoluir o Gás Gasparzinho como painel operacional único para revenda de gás e água, usando uma única fonte de dados em PostgreSQL. O sistema deve apoiar vendas, entregas, clientes, estoque, cobrança, financeiro, frota, recompra, fechamento do dia e configurações, com interface moderna, responsiva e segura.
+Construir e evoluir o Gás Gasparzinho como painel operacional único para revenda de gás e água, usando uma única fonte de dados em PostgreSQL. O sistema deve apoiar vendas, entregas, clientes, estoque, cobrança, financeiro, frota, fidelização, fechamento do dia e configurações, com interface moderna, responsiva e segura.
 
 ## Decisão de evolução
 Este projeto não será recomeçado do zero. A versão atual publicada no GitHub é a base v1. As melhorias serão aplicadas por etapas, mantendo o banco único, corrigindo divergências estruturais e evitando reescrever módulos que já funcionam.
@@ -12,7 +12,7 @@ Este projeto não será recomeçado do zero. A versão atual publicada no GitHub
 3. Fluxo operacional: clientes, vendas, estoque, entregas e cobrança funcionando de ponta a ponta.
 4. Visual: interface menos branca, tabelas com contraste, dashboard vivo e navegação responsiva.
 5. Financeiro: entradas, saídas, dívidas, despesas e fechamento do dia confiáveis.
-6. Recompra: previsão baseada no histórico real de compras.
+6. Fidelização: previsão baseada no histórico real de compras.
 7. Permissões: ADMIN, VENDEDOR e ENTREGADOR com acesso coerente.
 
 ## Módulos
@@ -21,7 +21,7 @@ Este projeto não será recomeçado do zero. A versão atual publicada no GitHub
 - KPIs de vendas, clientes, dívidas, estoque crítico e entregas.
 - Gráfico de vendas ou financeiro.
 - Pedidos recentes.
-- Oportunidades de recompra nos próximos dias.
+- Oportunidades de fidelização nos próximos dias.
 
 ### Clientes
 - Cadastro completo com nome, telefone, CEP, rua, número, bairro, cidade e referência.
@@ -66,7 +66,7 @@ Este projeto não será recomeçado do zero. A versão atual publicada no GitHub
 - Cadastro de veículos, status e custo médio.
 - Evolução futura: logs de manutenção e custos.
 
-### Recompra
+### Fidelização
 - Previsão por intervalo médio individual entre compras.
 - Ação para iniciar venda com cliente já selecionado.
 
@@ -106,6 +106,6 @@ Este projeto não será recomeçado do zero. A versão atual publicada no GitHub
 3. Revisar responsividade mobile de clientes, vendas e entregas.
 4. Melhorar dashboard financeiro com entradas, saídas e saldo.
 5. Adicionar logs de frota.
-6. Refinar recompra e exibir oportunidades no dashboard.
+6. Refinar fidelização e exibir oportunidades no dashboard.
 7. Implementar PDF do fechamento.
 8. Limpar arquivos antigos e duplicidades remanescentes com segurança.

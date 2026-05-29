@@ -349,7 +349,9 @@ export async function confirmDeliveryPayment(
         return;
       }
 
-      const dueDate = delivery.order.paymentDueDate ?? new Date();
+      const dueDate = delivery.order.paymentDueDate
+        ? new Date(delivery.order.paymentDueDate)
+        : new Date();
 
       if (!delivery.order.paymentDueDate) {
         dueDate.setDate(dueDate.getDate() + 30);

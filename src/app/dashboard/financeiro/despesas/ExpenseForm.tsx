@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { createExpense, CreateExpenseState } from './actions';
-import { EXPENSE_CATEGORIES, EXPENSE_PAYMENT_METHODS, EXPENSE_SUBCATEGORIES } from './categories';
+import { EXPENSE_CATEGORIES, EXPENSE_PAYMENT_METHODS, EXPENSE_SUBCATEGORIES, expenseLabel } from './categories';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -50,7 +50,7 @@ export default function ExpenseForm() {
   return (
     <form ref={formRef} id="expense-form" action={dispatch} className="space-y-4">
       <div className="space-y-1">
-        <Label htmlFor="description">Descricao</Label>
+        <Label htmlFor="description">Descrição</Label>
         <Input id="description" name="description" required />
         {state.errors?.description ? <p className="text-sm text-red-600">{state.errors.description[0]}</p> : null}
       </div>
@@ -79,7 +79,7 @@ export default function ExpenseForm() {
             <SelectContent>
               {EXPENSE_CATEGORIES.map((item) => (
                 <SelectItem key={item} value={item}>
-                  {item}
+                  {expenseLabel(item)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -96,7 +96,7 @@ export default function ExpenseForm() {
             <SelectContent>
               {subcategories.map((item) => (
                 <SelectItem key={item} value={item}>
-                  {item}
+                  {expenseLabel(item)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -106,14 +106,14 @@ export default function ExpenseForm() {
 
       {category === 'Frota/Veiculos' ? (
         <div className="space-y-1">
-          <Label htmlFor="vehicleLabel">Veiculo</Label>
+          <Label htmlFor="vehicleLabel">Veículo</Label>
           <Input id="vehicleLabel" name="vehicleLabel" placeholder="Ex.: placa, moto ou entregador" />
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label htmlFor="paymentMethod">Metodo de pagamento</Label>
+          <Label htmlFor="paymentMethod">Método de pagamento</Label>
           <Select name="paymentMethod" defaultValue="Pix" required>
             <SelectTrigger id="paymentMethod">
               <SelectValue placeholder="Selecione..." />
@@ -121,7 +121,7 @@ export default function ExpenseForm() {
             <SelectContent>
               {EXPENSE_PAYMENT_METHODS.map((item) => (
                 <SelectItem key={item} value={item}>
-                  {item}
+                  {expenseLabel(item)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -129,8 +129,8 @@ export default function ExpenseForm() {
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="responsible">Responsavel</Label>
-          <Input id="responsible" name="responsible" placeholder="Quem lancou o gasto" required />
+          <Label htmlFor="responsible">Responsável</Label>
+          <Input id="responsible" name="responsible" placeholder="Quem lançou o gasto" required />
         </div>
       </div>
 

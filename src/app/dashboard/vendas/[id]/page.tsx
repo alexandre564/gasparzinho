@@ -224,12 +224,12 @@ export default async function OrderDetailsPage({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <p className="font-semibold text-slate-900">{deliveryAddress || 'Endereco nao informado'}</p>
+              <p className="font-semibold text-slate-900">{deliveryAddress || 'Endereço não informado'}</p>
               {deliveryReference ? (
-                <p className="text-muted-foreground">Referencia: {deliveryReference}</p>
+                <p className="text-muted-foreground">Referência: {deliveryReference}</p>
               ) : null}
               {order.deliveryAddressChanged ? (
-                <Badge variant="secondary">Endereco diferente do cadastro</Badge>
+                <Badge variant="secondary">Endereço diferente do cadastro</Badge>
               ) : null}
               <div className="flex flex-wrap gap-2 pt-2">
                 <Button asChild size="sm" variant="outline" className="gap-2">
