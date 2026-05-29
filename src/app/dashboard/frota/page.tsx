@@ -145,7 +145,11 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
                   <TableCell className="text-right">{currency.format(vehicle.custoMedioKm)}</TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="outline" size="sm" className="gap-2">
-                      <Link href={`/dashboard/frota/${vehicle.id}/editar`} aria-label={`Editar ${vehicle.placa}`}>
+                      <Link
+                        href={`/dashboard/frota/${vehicle.id}/editar`}
+                        aria-label={`Editar ${vehicle.placa}`}
+                        title={`Editar ${vehicle.placa}`}
+                      >
                         <Pencil className="h-4 w-4" />
                         Editar
                       </Link>

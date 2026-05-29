@@ -105,12 +105,12 @@ function SortableHeader({
     <TableHead className={className}>
       <Link
         href={`/dashboard/estoque?${params.toString()}`}
-        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-slate-950 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        className="inline-flex items-center gap-1.5 rounded px-1 py-1 font-extrabold text-white transition-colors hover:bg-white/10 hover:text-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label={`Ordenar por ${sortLabels[field]}`}
         title={`Ordenar por ${sortLabels[field]}`}
       >
         {sortLabels[field]}
-        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
+        <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-200' : 'text-slate-300'}`} />
       </Link>
     </TableHead>
   );
@@ -264,7 +264,11 @@ export default async function StockPage({
                       <TableCell>
                         <div className="flex justify-end gap-2">
                           <Button asChild variant="outline" size="icon" className="h-8 w-8">
-                            <Link href={`/dashboard/estoque/${product.id}/editar`}>
+                            <Link
+                              href={`/dashboard/estoque/${product.id}/editar`}
+                              aria-label={`Editar ${product.name}`}
+                              title={`Editar ${product.name}`}
+                            >
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Editar</span>
                             </Link>

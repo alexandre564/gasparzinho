@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { getRepurchasePredictions } from './actions';
+import { getLoyaltyPredictions } from './actions';
 import { LoyaltyPrediction } from '@/services/fidelizacao';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -148,7 +148,7 @@ export default async function FidelizacaoPage({
   exportParams.set('days', String(days));
   if (query) exportParams.set('query', query);
 
-  const predictions = await getRepurchasePredictions(days, query);
+  const predictions = await getLoyaltyPredictions(days, query);
 
   return (
     <div className="space-y-6">

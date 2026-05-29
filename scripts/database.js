@@ -38,7 +38,23 @@ async function withDatabase(callback) {
   }
 }
 
+function formatDatabaseError(error) {
+  if (!error) {
+    return 'Erro desconhecido.';
+  }
+
+  const parts = [
+    error.message,
+    error.code ? `codigo=${error.code}` : null,
+    error.address ? `host=${error.address}` : null,
+    error.port ? `porta=${error.port}` : null,
+  ].filter(Boolean);
+
+  return parts.join(' | ') || String(error);
+}
+
 module.exports = {
+  formatDatabaseError,
   getConnectionUrl,
   getSchemaName,
   quoteIdentifier,

@@ -1,4 +1,4 @@
-const { quoteIdentifier, withDatabase } = require('./database');
+const { formatDatabaseError, quoteIdentifier, withDatabase } = require('./database');
 const { decodeContactText, phoneDigits } = require('./contact-cleaning');
 
 const CUSTOMER_TEXT_FIELDS = [
@@ -192,6 +192,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Falha no reparo operacional:', error.message);
+  console.error('Falha no reparo operacional:', formatDatabaseError(error));
   process.exit(1);
 });

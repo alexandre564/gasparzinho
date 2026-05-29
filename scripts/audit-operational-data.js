@@ -1,4 +1,4 @@
-const { withDatabase } = require('./database');
+const { formatDatabaseError, withDatabase } = require('./database');
 
 const checks = [
   {
@@ -114,6 +114,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Falha na auditoria operacional:', error.message);
+  console.error('Falha na auditoria operacional:', formatDatabaseError(error));
   process.exit(1);
 });

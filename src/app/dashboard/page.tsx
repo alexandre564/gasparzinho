@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { prisma } from '@/lib/prisma';
 import { labelFrom, orderStatusLabels } from '@/lib/labels';
-import { getRepurchasePredictions } from './fidelizacao/actions';
+import { getLoyaltyPredictions } from './fidelizacao/actions';
 import { decodeContactText } from '@/lib/contact-text';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +37,7 @@ async function getDashboardData() {
     deliveriesWithChangedAddress,
     deliveriesInProgress,
     recentOrders,
-    repurchaseOpportunities,
+    loyaltyOpportunities,
   ] = await Promise.all([
     prisma.order.aggregate({
       _sum: { grossValue: true },
@@ -75,7 +75,7 @@ async function getDashboardData() {
       orderBy: { createdAt: 'desc' },
       include: { customer: true },
     }),
-    getRepurchasePredictions(3),
+    getLoyaltyPredictions(3),
   ]);
 
   const salesData = await Promise.all(
@@ -119,7 +119,7 @@ async function getDashboardData() {
     deliveriesWithChangedAddress,
     deliveriesInProgress,
     recentOrders,
-    repurchaseOpportunities: repurchaseOpportunities.length,
+    loyaltyOpportunities: loyaltyOpportunities.length,
     salesData,
   };
 }
@@ -313,7 +313,7 @@ export default async function DashboardPage() {
         />
         <MetricCard
           title="Fidelização"
-          value={data.repurchaseOpportunities}
+          value={data.loyaltyOpportunities}
           description="Clientes com previsão de nova compra nos últimos ou próximos 3 dias."
           icon={Repeat}
           tone="slate"

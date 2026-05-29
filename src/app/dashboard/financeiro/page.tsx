@@ -175,7 +175,7 @@ export default function FinancialPage({ searchParams }: { searchParams?: { perio
         <h1 className="text-2xl font-bold">Painel financeiro</h1>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="outline">
-            <a href="/api/financeiro/exportar" download>
+            <a href={`/api/financeiro/exportar?period=${period}`} download>
               <Download className="mr-2 h-4 w-4" />
               Exportar resumo
             </a>

@@ -1,5 +1,5 @@
 import { endOfDay, endOfMonth, endOfWeek, endOfYear, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
@@ -29,7 +29,32 @@ async function getExpenses(from: Date, to: Date) {
   return result._sum.value ?? 0;
 }
 
-export async function GET() {
+function getSelectedPeriod(period: string | null, now = new Date()) {
+  if (period === 'daily') {
+    return [{ name: 'dia', from: startOfDay(now), to: endOfDay(now) }];
+  }
+
+  if (period === 'weekly') {
+    return [{ name: 'semana', from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) }];
+  }
+
+  if (period === 'yearly') {
+    return [{ name: 'ano', from: startOfYear(now), to: endOfYear(now) }];
+  }
+
+  if (period === 'monthly') {
+    return [{ name: 'mes', from: startOfMonth(now), to: endOfMonth(now) }];
+  }
+
+  return [
+    { name: 'hoje', from: startOfDay(now), to: endOfDay(now) },
+    { name: 'semana', from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) },
+    { name: 'mes', from: startOfMonth(now), to: endOfMonth(now) },
+    { name: 'ano', from: startOfYear(now), to: endOfYear(now) },
+  ];
+}
+
+export async function GET(request: NextRequest) {
   const denied = await requireApiAccess(["ADMIN"]);
 
   if (denied) {
@@ -37,12 +62,7 @@ export async function GET() {
   }
 
   const now = new Date();
-  const periods = [
-    { name: 'hoje', from: startOfDay(now), to: endOfDay(now) },
-    { name: 'semana', from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) },
-    { name: 'mes', from: startOfMonth(now), to: endOfMonth(now) },
-    { name: 'ano', from: startOfYear(now), to: endOfYear(now) },
-  ];
+  const periods = getSelectedPeriod(request.nextUrl.searchParams.get('period'), now);
 
   const rows = await Promise.all(
     periods.map(async (period) => {

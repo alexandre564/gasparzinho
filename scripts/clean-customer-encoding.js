@@ -1,4 +1,4 @@
-const { quoteIdentifier, withDatabase } = require('./database');
+const { formatDatabaseError, quoteIdentifier, withDatabase } = require('./database');
 const { decodeContactText } = require('./contact-cleaning');
 
 const TEXT_FIELDS = [
@@ -50,6 +50,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Falha ao limpar codificacao dos clientes:', error.message);
+  console.error('Falha ao limpar codificacao dos clientes:', formatDatabaseError(error));
   process.exit(1);
 });

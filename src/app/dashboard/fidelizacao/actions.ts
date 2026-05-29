@@ -107,12 +107,7 @@ function predictionMatchesSearch(prediction: LoyaltyPrediction, query: string) {
   return textMatch || phoneMatch;
 }
 
-/**
- * Gets repurchase predictions for customers based on a specified time frame.
- * @param days - The number of days ahead to look for predicted repurchases.
- * @returns A list of repurchase predictions.
- */
-export async function getRepurchasePredictions(
+export async function getLoyaltyPredictions(
   days: number = 3,
   query: string = '',
 ): Promise<LoyaltyPrediction[]> {
@@ -125,3 +120,5 @@ export async function getRepurchasePredictions(
     .filter((prediction) => Math.abs(prediction.daysUntilNextPurchase) <= days)
     .sort((a, b) => a.daysUntilNextPurchase - b.daysUntilNextPurchase);
 }
+
+export const getRepurchasePredictions = getLoyaltyPredictions;
