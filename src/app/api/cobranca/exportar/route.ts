@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { getDebtPaymentBreakdown } from '@/lib/debts';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -167,24 +168,32 @@ export async function GET(request: NextRequest) {
     'pagamento',
     'renegociado em',
     'valor renegociado',
+    'valor pago renegociacao',
+    'restante registrado',
     'observacoes',
   ];
 
-  const rows = filteredDebts.map((debt) => [
-    debt.id,
-    debt.orderId,
-    debt.customer.name,
-    debt.customer.phone,
-    (debt.renegotiatedValue ?? debt.value).toFixed(2).replace('.', ','),
-    formatDate(debt.dueDate),
-    daysLate(debt.dueDate, debt.paidAt),
-    debt.status,
-    formatDate(debt.order?.createdAt ?? debt.createdAt),
-    formatDate(debt.paidAt),
-    formatDate(debt.renegotiatedAt),
-    debt.renegotiatedValue?.toFixed(2).replace('.', ',') ?? '',
-    debt.notes,
-  ]);
+  const rows = filteredDebts.map((debt) => {
+    const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
+
+    return [
+      debt.id,
+      debt.orderId,
+      debt.customer.name,
+      debt.customer.phone,
+      (debt.renegotiatedValue ?? debt.value).toFixed(2).replace('.', ','),
+      formatDate(debt.dueDate),
+      daysLate(debt.dueDate, debt.paidAt),
+      debt.status,
+      formatDate(debt.order?.createdAt ?? debt.createdAt),
+      formatDate(debt.paidAt),
+      formatDate(debt.renegotiatedAt),
+      debt.renegotiatedValue?.toFixed(2).replace('.', ',') ?? '',
+      paymentBreakdown.paidAmount?.toFixed(2).replace('.', ',') ?? '',
+      paymentBreakdown.remainingValue?.toFixed(2).replace('.', ',') ?? '',
+      debt.notes,
+    ];
+  });
 
   const csv = [
     'sep=;',

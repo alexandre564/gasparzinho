@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { requireActionAccess } from '@/lib/api-auth'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -102,6 +103,9 @@ function normalizeVehicleStatus(value: string) {
 }
 
 export async function createVehicle(data: unknown) {
+  const denied = await requireActionAccess(['ADMIN'])
+  if (denied) return denied
+
   const result = vehicleSchema.safeParse(data)
   if (!result.success) {
     return { success: false as const, message: 'Erro de validação' }
@@ -112,6 +116,9 @@ export async function createVehicle(data: unknown) {
 }
 
 export async function updateVehicle(id: string, data: unknown) {
+  const denied = await requireActionAccess(['ADMIN'])
+  if (denied) return denied
+
   const result = vehicleSchema.safeParse(data)
   if (!result.success) {
     return { success: false as const, message: 'Erro de validação' }
@@ -122,14 +129,21 @@ export async function updateVehicle(id: string, data: unknown) {
 }
 
 export async function deleteVehicle(id: string) {
+  const denied = await requireActionAccess(['ADMIN'])
+  if (denied) return denied
+
   await prisma.vehicle.delete({ where: { id } })
   revalidatePath('/dashboard/frota')
+  return { success: true as const, message: 'Veículo excluído com sucesso!' }
 }
 
 export async function importVehicles(
   _previousState: ImportVehiclesState,
   formData: FormData,
 ): Promise<ImportVehiclesState> {
+  const denied = await requireActionAccess(['ADMIN'])
+  if (denied) return denied
+
   const file = formData.get('file')
 
   if (!(file instanceof File) || file.size === 0) {

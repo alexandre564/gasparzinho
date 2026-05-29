@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 
@@ -114,6 +115,9 @@ function normalizeStockKind(value: string) {
 }
 
 export async function createProduct(values: z.infer<typeof ProductFormSchema>): Promise<ProductFormState> {
+    const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+    if (denied) return denied;
+
     const validatedFields = ProductFormSchema.safeParse(values);
     if (!validatedFields.success) {
         return { success: false, message: "Erro de validação", errors: validatedFields.error.issues };
@@ -150,6 +154,9 @@ export async function createProduct(values: z.infer<typeof ProductFormSchema>): 
 }
 
 export async function updateProduct(id: string, values: z.infer<typeof ProductFormSchema>): Promise<ProductFormState> {
+    const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+    if (denied) return denied;
+
     const validatedFields = ProductFormSchema.safeParse(values);
      if (!validatedFields.success) {
         return { success: false, message: "Erro de validação", errors: validatedFields.error.issues };
@@ -187,6 +194,9 @@ export async function updateProduct(id: string, values: z.infer<typeof ProductFo
 }
 
 export async function deleteProduct(id: string): Promise<{ success: boolean; message: string }> {
+    const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+    if (denied) return denied;
+
     try {
         const orderItemsCount = await prisma.orderItem.count({ where: { productId: id } });
         if (orderItemsCount > 0) {
@@ -206,6 +216,9 @@ export async function importProducts(
     _previousState: ImportProductsState,
     formData: FormData,
 ): Promise<ImportProductsState> {
+    const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+    if (denied) return denied;
+
     const file = formData.get('file');
 
     if (!(file instanceof File) || file.size === 0) {

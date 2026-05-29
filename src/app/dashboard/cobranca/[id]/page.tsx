@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import DebtRenegotiationForm from './DebtRenegotiationForm';
+import { getDebtPaymentBreakdown } from '@/lib/debts';
 
 async function getDebt(id: string) {
   const debt = await prisma.debt.findUnique({
@@ -31,6 +32,7 @@ const formatDate = (date?: Date | null) => (date ? format(date, 'dd/MM/yyyy') : 
 
 export default async function RenegotiateDebtPage({ params }: { params: { id: string } }) {
   const debt = await getDebt(params.id);
+  const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
@@ -64,6 +66,14 @@ export default async function RenegotiateDebtPage({ params }: { params: { id: st
             <div>
               <p className="text-slate-500">Pagamento</p>
               <p className="font-semibold">{formatDate(debt.paidAt)}</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Pago na renegociação</p>
+              <p className="font-semibold">{paymentBreakdown.paidAmount !== null ? currency.format(paymentBreakdown.paidAmount) : '-'}</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Restante registrado</p>
+              <p className="font-semibold">{paymentBreakdown.remainingValue !== null ? currency.format(paymentBreakdown.remainingValue) : currency.format(debt.renegotiatedValue ?? debt.value)}</p>
             </div>
           </div>
           {debt.renegotiatedAt ? (

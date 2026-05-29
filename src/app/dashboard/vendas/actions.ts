@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 
@@ -117,6 +118,9 @@ export type OrderFormState = {
 export async function createOrder(
   values: z.infer<typeof OrderFormSchema>,
 ): Promise<OrderFormState> {
+  const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+  if (denied) return denied;
+
   const validatedFields = OrderFormSchema.safeParse(values);
 
   if (!validatedFields.success) {
@@ -264,6 +268,9 @@ export async function updateOrderStatus(
   orderId: string,
   status: keyof typeof OrderStatus,
 ) {
+  const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+  if (denied) return denied;
+
   try {
     await prisma.order.update({
       where: { id: orderId },
@@ -373,6 +380,9 @@ export async function getOrderById(id: string) {
 export async function deleteOrder(
   orderId: string,
 ): Promise<{ success: boolean; message: string }> {
+  const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+  if (denied) return denied;
+
   try {
     const createdOrder = await prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({

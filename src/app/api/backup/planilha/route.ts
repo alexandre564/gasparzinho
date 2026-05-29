@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { getDebtPaymentBreakdown } from '@/lib/debts';
 import { labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
 import { prisma } from '@/lib/prisma';
 
@@ -111,20 +112,28 @@ export async function GET() {
         'vencimento original',
         'pago em',
         'renegociado em',
+        'valor pago renegociacao',
+        'restante registrado',
         'observacoes',
       ],
-      debts.map((debt) => [
-        debt.customer.name,
-        debt.customer.phone,
-        debt.status,
-        debt.value.toFixed(2).replace('.', ','),
-        (debt.renegotiatedValue ?? debt.value).toFixed(2).replace('.', ','),
-        debt.dueDate.toLocaleDateString('pt-BR'),
-        debt.originalDueDate?.toLocaleDateString('pt-BR') ?? '',
-        debt.paidAt?.toLocaleDateString('pt-BR') ?? '',
-        debt.renegotiatedAt?.toLocaleDateString('pt-BR') ?? '',
-        debt.notes ?? '',
-      ]),
+      debts.map((debt) => {
+        const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
+
+        return [
+          debt.customer.name,
+          debt.customer.phone,
+          debt.status,
+          debt.value.toFixed(2).replace('.', ','),
+          (debt.renegotiatedValue ?? debt.value).toFixed(2).replace('.', ','),
+          debt.dueDate.toLocaleDateString('pt-BR'),
+          debt.originalDueDate?.toLocaleDateString('pt-BR') ?? '',
+          debt.paidAt?.toLocaleDateString('pt-BR') ?? '',
+          debt.renegotiatedAt?.toLocaleDateString('pt-BR') ?? '',
+          paymentBreakdown.paidAmount?.toFixed(2).replace('.', ',') ?? '',
+          paymentBreakdown.remainingValue?.toFixed(2).replace('.', ',') ?? '',
+          debt.notes ?? '',
+        ];
+      }),
     ),
     section(
       'DESPESAS',

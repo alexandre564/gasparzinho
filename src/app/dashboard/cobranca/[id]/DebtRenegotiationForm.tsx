@@ -83,12 +83,16 @@ export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormPro
       return;
     }
 
-    if (result.errors) {
+    if ('errors' in result && result.errors) {
       result.errors.forEach((error) => {
-        form.setError(error.path[0] as keyof RenegotiationFormValues, {
-          type: 'manual',
-          message: error.message,
-        });
+        const fieldName = String(error.path[0] ?? '') as keyof RenegotiationFormValues;
+
+        if (fieldName) {
+          form.setError(fieldName, {
+            type: 'manual',
+            message: error.message,
+          });
+        }
       });
 
       toast.error('Erro de validação. Verifique os campos.');

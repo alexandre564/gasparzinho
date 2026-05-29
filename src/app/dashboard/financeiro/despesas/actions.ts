@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 
 export type CreateExpenseState = {
   success: boolean;
@@ -181,6 +182,9 @@ export async function createExpense(
   prevState: CreateExpenseState,
   formData: FormData,
 ): Promise<CreateExpenseState> {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const rawFormData = Object.fromEntries(formData.entries());
 
   if (!rawFormData.isRecurring) {
@@ -212,6 +216,9 @@ export async function importExpenses(
   _previousState: ImportExpensesState,
   formData: FormData,
 ): Promise<ImportExpensesState> {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const file = formData.get('file');
 
   if (!(file instanceof File) || file.size === 0) {
@@ -292,6 +299,9 @@ export async function importExpenses(
 }
 
 export async function deleteExpense(id: string): Promise<{ success: boolean; message: string }> {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   try {
     await prisma.expense.delete({ where: { id } });
     revalidatePath('/dashboard/financeiro');

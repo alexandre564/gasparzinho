@@ -13,7 +13,7 @@ const routePermissions = [
   { prefix: '/dashboard/estoque', roles: ['ADMIN', 'VENDEDOR'] },
   { prefix: '/dashboard/recompra', roles: ['ADMIN', 'VENDEDOR'] },
   { prefix: '/dashboard/entregas', roles: ['ADMIN', 'ENTREGADOR'] },
-  { prefix: '/dashboard/configuracoes', roles: ['ADMIN', 'VENDEDOR', 'ENTREGADOR'] },
+  { prefix: '/dashboard/configuracoes', roles: ['ADMIN'] },
   { prefix: '/dashboard', roles: ['ADMIN', 'VENDEDOR', 'ENTREGADOR'] },
 ];
 

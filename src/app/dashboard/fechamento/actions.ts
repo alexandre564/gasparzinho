@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 import { OrderStatus } from '@/types/enums';
 
 const DailyClosingSchema = z.object({
@@ -107,6 +108,9 @@ export async function getDailyClosingData() {
 export async function createDailyClosing(
   data: unknown,
 ): Promise<{ success: boolean; message: string }> {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const validatedFields = DailyClosingSchema.safeParse(data);
 
   if (!validatedFields.success) {

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 import type { User } from '@/types';
 import { TEAM_ROLE_VALUES } from './roles';
 
@@ -131,6 +132,9 @@ export async function getTeamMembers(): Promise<User[]> {
 }
 
 export async function createUser(data: UserFormInput) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const validatedFields = UserFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -174,6 +178,9 @@ export async function createUser(data: UserFormInput) {
 }
 
 export async function updateUser(id: string, data: UserFormInput) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const validatedFields = UserFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -237,6 +244,9 @@ export async function importTeamMembers(
   _previousState: ImportTeamState,
   formData: FormData,
 ): Promise<ImportTeamState> {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const file = formData.get('file');
 
   if (!(file instanceof File) || file.size === 0) {
@@ -337,6 +347,9 @@ export async function importTeamMembers(
 }
 
 export async function deleteUser(formData: FormData) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const id = formData.get('id') as string;
 
   if (!id) {
@@ -354,6 +367,9 @@ export async function deleteUser(formData: FormData) {
 }
 
 export async function updateUserRole(userId: string, role: string) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const parsedRole = z.enum(TEAM_ROLE_VALUES).safeParse(role);
 
   if (!parsedRole.success) {

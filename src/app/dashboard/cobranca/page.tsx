@@ -28,6 +28,7 @@ import ImportDebtsButton from './ImportDebtsButton';
 import type { DebtStatus } from '@/types/enums';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
+import { getDebtPaymentBreakdown } from '@/lib/debts';
 import StatusFilter from './StatusFilter';
 
 export const dynamic = 'force-dynamic';
@@ -279,6 +280,7 @@ export default async function CobrancaPage({
               {debts.length > 0 ? (
                 debts.map((debt) => {
                   const isRenegotiated = Boolean(debt.renegotiatedAt) || debt.status === 'RENEGOCIADO';
+                  const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
                   const originalDueDate =
                     debt.originalDueDate && debt.originalDueDate.getTime() !== debt.dueDate.getTime()
                       ? debt.originalDueDate
@@ -310,6 +312,16 @@ export default async function CobrancaPage({
                           <div className="space-y-1 text-sm">
                             <div className="font-medium text-amber-700">Sim</div>
                             <div className="text-xs text-slate-600">Em: {formatDate(debt.renegotiatedAt)}</div>
+                            {paymentBreakdown.paidAmount !== null ? (
+                              <div className="text-xs text-slate-700">
+                                Pago: {currency.format(paymentBreakdown.paidAmount)}
+                              </div>
+                            ) : null}
+                            {paymentBreakdown.remainingValue !== null ? (
+                              <div className="text-xs font-semibold text-slate-800">
+                                Restante: {currency.format(paymentBreakdown.remainingValue)}
+                              </div>
+                            ) : null}
                             {debt.notes ? (
                               <div className="max-w-xs truncate text-xs text-slate-600" title={debt.notes}>
                                 {debt.notes}

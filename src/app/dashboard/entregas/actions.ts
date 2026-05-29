@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 import { DeliveryStatus } from '@/types/enums';
 
 const ITEMS_PER_PAGE = 15;
@@ -89,6 +90,9 @@ export async function updateDeliveryStatus(
   deliveryId: string,
   status: DeliveryStatus,
 ): Promise<{ success: boolean; message: string }> {
+  const denied = await requireActionAccess(['ADMIN', 'ENTREGADOR']);
+  if (denied) return denied;
+
   if (!deliveryId || !status) {
     return { success: false, message: 'ID da entrega e status são obrigatórios.' };
   }
@@ -154,6 +158,9 @@ export async function getOrderById(id: string) {
 }
 
 export async function updateDelivery(id: string, data: Prisma.DeliveryUpdateInput) {
+  const denied = await requireActionAccess(['ADMIN', 'ENTREGADOR']);
+  if (denied) return denied;
+
   try {
     await prisma.delivery.update({
       where: { id },
@@ -171,6 +178,9 @@ export async function updateDelivery(id: string, data: Prisma.DeliveryUpdateInpu
 export async function markDeliverySentToDriver(
   deliveryId: string,
 ): Promise<{ success: boolean; message: string }> {
+  const denied = await requireActionAccess(['ADMIN', 'ENTREGADOR']);
+  if (denied) return denied;
+
   try {
     const delivery = await prisma.delivery.update({
       where: { id: deliveryId },
@@ -197,6 +207,9 @@ export async function confirmDeliveryPayment(
   deliveryId: string,
   paymentResult: 'PAGO' | 'A_RECEBER',
 ): Promise<{ success: boolean; message: string }> {
+  const denied = await requireActionAccess(['ADMIN', 'ENTREGADOR']);
+  if (denied) return denied;
+
   try {
     await prisma.$transaction(async (tx) => {
       const delivery = await tx.delivery.findUnique({

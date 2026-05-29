@@ -10,7 +10,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { Button } from "@/components/ui/button";
-import { appNavLinks, roleLabels } from "@/lib/navigation";
+import { appNavLinks, roleLabels, settingsNavLink } from "@/lib/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,7 @@ export default async function Header() {
   const visibleMobileLinks = appNavLinks.filter((link) =>
     (link.roles as readonly string[]).includes(userRole),
   );
+  const canAccessSettings = (settingsNavLink.roles as readonly string[]).includes(userRole);
   const canDownloadBackup = userRole === "ADMIN";
 
   return (
@@ -116,9 +117,11 @@ export default async function Header() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/configuracoes">Configurações</Link>
-          </DropdownMenuItem>
+          {canAccessSettings ? (
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/configuracoes">Configurações</Link>
+            </DropdownMenuItem>
+          ) : null}
           {canDownloadBackup ? (
             <DropdownMenuItem asChild>
               <a href="/api/backup" download>Baixar backup</a>

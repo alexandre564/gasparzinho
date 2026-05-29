@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 
 const COLLECTION_MESSAGE_KEY = 'collection_whatsapp_template';
 const DRIVER_WHATSAPP_KEY = 'delivery_driver_whatsapp';
@@ -21,6 +22,9 @@ export async function updateCollectionMessageTemplate(
   _previousState: { success: boolean; message: string },
   formData: FormData,
 ) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const value = String(formData.get('collectionMessage') ?? '').trim();
 
   if (!value) {
@@ -51,6 +55,9 @@ export async function updateDriverWhatsappNumber(
   _previousState: { success: boolean; message: string },
   formData: FormData,
 ) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const rawValue = String(formData.get('driverWhatsapp') ?? '').trim();
   const digits = rawValue.replace(/\D/g, '');
 

@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -26,6 +27,9 @@ export type CustomerFormState = {
 };
 
 export async function createCustomer(values: z.infer<typeof CustomerFormSchema>): Promise<CustomerFormState> {
+    const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+    if (denied) return denied;
+
     const validatedFields = CustomerFormSchema.safeParse(values);
 
     if (!validatedFields.success) {
@@ -57,6 +61,9 @@ export async function createCustomer(values: z.infer<typeof CustomerFormSchema>)
 }
 
 export async function updateCustomer(id: string, values: z.infer<typeof CustomerFormSchema>): Promise<CustomerFormState> {
+    const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+    if (denied) return denied;
+
     const validatedFields = CustomerFormSchema.safeParse(values);
 
     if (!validatedFields.success) {
@@ -90,6 +97,9 @@ export async function updateCustomer(id: string, values: z.infer<typeof Customer
 }
 
 export async function deleteCustomer(id: string) {
+  const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+  if (denied) return denied;
+
   try {
     // Para evitar erros de deleção por restrições de chave estrangeira, 
     // é mais seguro desassociar ou deletar registros relacionados primeiro.
@@ -550,6 +560,9 @@ export async function importCustomers(
   _prevState: ImportCustomersState,
   formData: FormData
 ): Promise<ImportCustomersState> {
+  const denied = await requireActionAccess(['ADMIN', 'VENDEDOR']);
+  if (denied) return denied;
+
   const file = formData.get('file');
 
   if (!(file instanceof File) || file.size === 0) {

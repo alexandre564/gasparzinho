@@ -35,7 +35,7 @@ export const appNavLinks = [
     href: '/dashboard/configuracoes',
     icon: Settings,
     label: 'Configurações',
-    roles: ['ADMIN', 'VENDEDOR', 'ENTREGADOR'],
+    roles: ['ADMIN'],
   },
 ] as const;
 

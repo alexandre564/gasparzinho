@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -213,6 +214,9 @@ export async function getPaginatedDebts(
 }
 
 export async function updateDebt(id: string, data: unknown) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const validatedData = DebtActionSchema.safeParse(data);
 
   if (!validatedData.success) {
@@ -237,6 +241,7 @@ export async function updateDebt(id: string, data: unknown) {
       ? existingDebt.renegotiatedValue ?? existingDebt.value
       : remainingValue;
     const paymentInfo = [
+      `Renegociação registrada em ${new Date().toLocaleDateString('pt-BR')}`,
       `Valor pago nesta renegociação: R$ ${paidAmount.toFixed(2)}`,
       paymentDate ? `Data do pagamento parcial: ${paymentDate.toLocaleDateString('pt-BR')}` : null,
       `Restante a receber: R$ ${remainingValue.toFixed(2)}`,
@@ -244,6 +249,7 @@ export async function updateDebt(id: string, data: unknown) {
     ]
       .filter(Boolean)
       .join('\n');
+    const fullNotes = [existingDebt.notes, paymentInfo].filter(Boolean).join('\n\n');
 
     await prisma.debt.update({
       where: { id },
@@ -254,7 +260,7 @@ export async function updateDebt(id: string, data: unknown) {
         renegotiatedAt: new Date(),
         renegotiatedValue: nextRenegotiatedValue,
         paidAt: fullPayment ? paymentDate ?? new Date() : null,
-        notes: paymentInfo,
+        notes: fullNotes,
         status: fullPayment ? 'PAGO' : 'RENEGOCIADO',
       },
     });
@@ -276,6 +282,9 @@ export async function updateDebt(id: string, data: unknown) {
 }
 
 export async function markAsPaid(id: string) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   try {
     await prisma.debt.update({
       where: { id },
@@ -383,6 +392,20 @@ function parseMoneyValue(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function parseOptionalMoneyValue(value: string) {
+  if (!value.trim()) {
+    return null;
+  }
+
+  const clean = value
+    .replace(/[R$\s]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  const parsed = Number(clean);
+
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function normalizeImportedDebtStatus(value: string, paidAt: Date | null) {
   const normalized = normalizeHeader(value);
 
@@ -425,6 +448,12 @@ function parseDebtsCsv(text: string) {
       id: pickValue(row, ['id', 'codigo']),
       customerName: pickValue(row, ['cliente', 'nome', 'customer']),
       phone: pickValue(row, ['telefone', 'celular', 'whatsapp', 'phone']),
+      paidAmount: parseOptionalMoneyValue(
+        pickValue(row, ['valor pago renegociacao', 'valor pago renegociação', 'valor pago', 'pago']),
+      ),
+      remainingValue: parseOptionalMoneyValue(
+        pickValue(row, ['restante registrado', 'restante a receber', 'restante']),
+      ),
       value: parseMoneyValue(pickValue(row, ['valor para pagamento', 'valor', 'dívida', 'divida', 'restante'])),
       dueDate: parseDateValue(pickValue(row, ['vencimento', 'data vencimento', 'due date'])),
       paidAt: parseDateValue(pickValue(row, ['pagamento', 'pago em', 'paid at'])),
@@ -439,6 +468,9 @@ export async function importDebts(
   _prevState: ImportDebtsState,
   formData: FormData,
 ): Promise<ImportDebtsState> {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
   const file = formData.get('file');
 
   if (!(file instanceof File) || file.size === 0) {
@@ -460,11 +492,26 @@ export async function importDebts(
     let updated = 0;
 
     for (const row of rows) {
-      const importedStatus = normalizeImportedDebtStatus(row.status, row.paidAt);
+      const paidAmount = row.paidAmount ?? 0;
+      const valueToReceive =
+        row.remainingValue ?? (paidAmount > 0 ? Math.max(row.value - paidAmount, 0) : row.value);
+      let importedStatus = normalizeImportedDebtStatus(row.status, row.paidAt);
 
-      if (!row.dueDate || row.value < 0 || (row.value === 0 && importedStatus !== 'PAGO') || (!row.customerName && !row.phone)) {
+      if (!row.status && paidAmount > 0) {
+        importedStatus = valueToReceive <= 0 ? 'PAGO' : 'RENEGOCIADO';
+      }
+
+      if (!row.dueDate || valueToReceive < 0 || (valueToReceive === 0 && importedStatus !== 'PAGO') || (!row.customerName && !row.phone)) {
         continue;
       }
+
+      const importedNotes = [
+        row.notes,
+        paidAmount > 0 ? `Valor pago nesta renegociação: R$ ${paidAmount.toFixed(2)}` : null,
+        row.remainingValue !== null ? `Restante a receber: R$ ${valueToReceive.toFixed(2)}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       const phone = row.phone || `sem-telefone-${row.customerName}`;
       const customer = await prisma.customer.upsert({
@@ -487,13 +534,13 @@ export async function importDebts(
           where: { id: existingDebt.id },
           data: {
             customerId: customer.id,
-            value: row.value,
-            renegotiatedValue: row.value,
+            value: valueToReceive,
+            renegotiatedValue: valueToReceive,
             dueDate: row.dueDate,
             paidAt: row.paidAt,
-            renegotiatedAt: row.renegotiatedAt,
+            renegotiatedAt: row.renegotiatedAt ?? (paidAmount > 0 ? new Date() : null),
             status: importedStatus,
-            notes: row.notes,
+            notes: importedNotes,
           },
         });
         await prisma.order.update({
@@ -501,8 +548,8 @@ export async function importDebts(
           data: {
             customerId: customer.id,
             paymentDueDate: row.dueDate,
-            grossValue: row.value,
-            netValue: row.value,
+            grossValue: valueToReceive,
+            netValue: valueToReceive,
             status: importedStatus === 'PAGO' ? 'CONCLUIDO' : 'PENDENTE',
           },
         });
@@ -516,9 +563,9 @@ export async function importDebts(
           status: importedStatus === 'PAGO' ? 'CONCLUIDO' : 'PENDENTE',
           paymentMethod: 'FIADO',
           paymentDueDate: row.dueDate,
-          grossValue: row.value,
+          grossValue: valueToReceive,
           totalCost: 0,
-          netValue: row.value,
+          netValue: valueToReceive,
         },
       });
 
@@ -527,13 +574,13 @@ export async function importDebts(
           id: row.id || undefined,
           customerId: customer.id,
           orderId: order.id,
-          value: row.value,
+          value: valueToReceive,
           dueDate: row.dueDate,
           paidAt: row.paidAt,
-          renegotiatedAt: row.renegotiatedAt,
-          renegotiatedValue: row.value,
+          renegotiatedAt: row.renegotiatedAt ?? (paidAmount > 0 ? new Date() : null),
+          renegotiatedValue: valueToReceive,
           status: importedStatus,
-          notes: row.notes,
+          notes: importedNotes,
         },
       });
       created += 1;
