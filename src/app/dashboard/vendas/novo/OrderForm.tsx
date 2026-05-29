@@ -97,6 +97,14 @@ const OrderItemSchema = z.object({
   unitCost: z.number(),
 });
 
+function hasDeliveryAddressNumber(value: string | null | undefined) {
+  const address = value ?? '';
+  return (
+    /,\s*(\d+[A-Za-z]?|s\/n|sn)\b/i.test(address) ||
+    /\b(n[ºo]?|numero|número)\s*[:.]?\s*(\d+[A-Za-z]?|s\/n|sn)\b/i.test(address)
+  );
+}
+
 const OrderFormSchema = z.object({
   customerId: z.string().min(1, 'Selecione um cliente.'),
   paymentMethod: z.string().min(1, 'Selecione a forma de pagamento.'),
@@ -107,6 +115,14 @@ const OrderFormSchema = z.object({
   deliveryAddressChanged: z.boolean(),
   saveDeliveryAddressToCustomer: z.boolean(),
   items: z.array(OrderItemSchema).min(1, 'Adicione pelo menos um item ao pedido.'),
+}).superRefine((values, context) => {
+  if (values.deliveryAddressChanged && !hasDeliveryAddressNumber(values.deliveryAddress)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['deliveryAddress'],
+      message: 'Informe o número do endereço para o Maps/Waze localizar corretamente.',
+    });
+  }
 });
 
 type OrderFormValues = z.infer<typeof OrderFormSchema>;
@@ -284,7 +300,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
       setDeliveryCepLoading(true);
       const address = await fetchAddressByCep(cep);
       const formattedAddress = [
-        address.street ? `${address.street}, número` : '',
+        address.street,
         address.neighborhood,
         address.city && address.state ? `${address.city}/${address.state}` : address.city,
         `CEP ${address.cep}`,
@@ -294,7 +310,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
 
       form.setValue('deliveryAddress', formattedAddress);
       form.setValue('deliveryAddressChanged', true);
-      toast.success('Endereço de entrega preenchido. Confira o número antes de finalizar.');
+      toast.success('Endereço de entrega preenchido. Digite o número antes de finalizar.');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Falha ao buscar CEP. Tente novamente.');
     } finally {
@@ -615,7 +631,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                           <FormControl>
                             <Textarea
                               rows={3}
-                              placeholder="Rua, numero, bairro, cidade e complemento"
+                              placeholder="Rua, número, bairro, cidade e complemento"
                               {...field}
                             />
                           </FormControl>

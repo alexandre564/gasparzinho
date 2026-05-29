@@ -98,6 +98,14 @@ const OrderItemSchema = z.object({
   unitCost: z.coerce.number(),
 });
 
+function hasDeliveryAddressNumber(value: string | null | undefined) {
+  const address = value ?? '';
+  return (
+    /,\s*(\d+[A-Za-z]?|s\/n|sn)\b/i.test(address) ||
+    /\b(n[ºo]?|numero|número)\s*[:.]?\s*(\d+[A-Za-z]?|s\/n|sn)\b/i.test(address)
+  );
+}
+
 const OrderFormSchema = z.object({
   customerId: z.string().min(1, 'Cliente é obrigatório.'),
   paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória.'),
@@ -110,7 +118,72 @@ const OrderFormSchema = z.object({
   items: z
     .array(OrderItemSchema)
     .min(1, 'O pedido deve ter pelo menos um item.'),
+}).superRefine((values, context) => {
+  if (values.deliveryAddressChanged && !hasDeliveryAddressNumber(values.deliveryAddress)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['deliveryAddress'],
+      message: 'Informe o número do endereço para o Maps/Waze localizar corretamente.',
+    });
+  }
 });
+
+type CustomerAddressFallback = {
+  street: string;
+  number: string;
+  complement?: string | null;
+  neighborhood: string;
+  city: string;
+  cep?: string | null;
+};
+
+function cleanAddressPart(value: string | null | undefined) {
+  return (value ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/^[,\s-]+|[,\s-]+$/g, '')
+    .trim();
+}
+
+function parseDeliveryAddressForCustomer(address: string, fallback: CustomerAddressFallback) {
+  const cepMatch = address.match(/\b(?:CEP\s*)?(\d{5}-?\d{3})\b/i);
+  const cep = cepMatch?.[1]?.replace(/\D/g, '') || fallback.cep || '';
+  const addressWithoutCep = address.replace(/\bCEP\s*\d{5}-?\d{3}\b/gi, '').trim();
+  const dashedParts = addressWithoutCep.split(/\s+-\s+/).map(cleanAddressPart).filter(Boolean);
+  const commaParts = addressWithoutCep.split(',').map(cleanAddressPart).filter(Boolean);
+  const parts = dashedParts.length > 1 ? dashedParts : commaParts;
+  const firstPart = parts[0] ?? addressWithoutCep;
+  let street = fallback.street;
+  let number = fallback.number;
+  let neighborhood = fallback.neighborhood;
+  let city = fallback.city || 'Lavras';
+  let complement = fallback.complement ?? '';
+
+  if (dashedParts.length > 1) {
+    const streetNumberMatch = firstPart.match(/^(.+?),\s*(.+)$/);
+    street = cleanAddressPart(streetNumberMatch?.[1] ?? firstPart) || fallback.street;
+    const parsedNumber = cleanAddressPart(streetNumberMatch?.[2]);
+    number = parsedNumber && !/^n[uú]mero$/i.test(parsedNumber) ? parsedNumber : fallback.number || 'S/N';
+    neighborhood = cleanAddressPart(parts[1]) || fallback.neighborhood;
+    city = cleanAddressPart((parts[2] ?? fallback.city).split('/')[0]) || fallback.city || 'Lavras';
+    complement = cleanAddressPart(parts.slice(3).filter((part) => !/^cep\b/i.test(part)).join(' - '));
+  } else if (commaParts.length >= 2) {
+    street = cleanAddressPart(commaParts[0]) || fallback.street;
+    const parsedNumber = cleanAddressPart(commaParts[1]);
+    number = parsedNumber && !/^n[uú]mero$/i.test(parsedNumber) ? parsedNumber : fallback.number || 'S/N';
+    neighborhood = cleanAddressPart(commaParts[2]) || fallback.neighborhood;
+    city = cleanAddressPart((commaParts[3] ?? fallback.city).split('/')[0]) || fallback.city || 'Lavras';
+    complement = cleanAddressPart(commaParts.slice(4).join(', '));
+  }
+
+  return {
+    street,
+    number,
+    complement: complement || null,
+    neighborhood,
+    city,
+    cep,
+  };
+}
 
 export type OrderFormState = {
   success: boolean;
@@ -240,14 +313,17 @@ export async function createOrder(
       });
 
       if (deliveryAddressChanged && saveDeliveryAddressToCustomer && selectedDeliveryAddress) {
+        const parsedAddress = parseDeliveryAddressForCustomer(selectedDeliveryAddress, customer);
+
         await tx.customer.update({
           where: { id: customerId },
           data: {
-            street: selectedDeliveryAddress,
-            number: 'S/N',
-            complement: null,
-            neighborhood: '',
-            city: customer.city || 'Lavras',
+            street: parsedAddress.street,
+            number: parsedAddress.number,
+            complement: parsedAddress.complement,
+            neighborhood: parsedAddress.neighborhood,
+            city: parsedAddress.city,
+            cep: parsedAddress.cep,
             reference: selectedDeliveryReference,
           },
         });
