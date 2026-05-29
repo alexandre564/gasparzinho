@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-function normalizeText(value: string | null | undefined) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function onlyDigits(value: string | null | undefined) {
-  return (value ?? '').replace(/\D/g, '');
-}
 
 function escapeVCard(value: string | null | undefined) {
   return (value ?? '')
@@ -39,25 +28,26 @@ function customerMatchesSearch(
   },
   query: string,
 ) {
-  const term = normalizeText(query);
+  const cleanedCustomer = cleanCustomerTextFields(customer);
+  const term = normalizeSearchText(query);
   const digits = onlyDigits(query);
 
   if (!term && !digits) return true;
 
   const textMatch = [
-    customer.name,
-    customer.phone,
-    customer.cep,
-    customer.street,
-    customer.number,
-    customer.complement,
-    customer.neighborhood,
-    customer.city,
-    customer.reference,
+    cleanedCustomer.name,
+    cleanedCustomer.phone,
+    cleanedCustomer.cep,
+    cleanedCustomer.street,
+    cleanedCustomer.number,
+    cleanedCustomer.complement,
+    cleanedCustomer.neighborhood,
+    cleanedCustomer.city,
+    cleanedCustomer.reference,
   ]
-    .map(normalizeText)
+    .map(normalizeSearchText)
     .some((value) => value.includes(term));
-  const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
+  const phoneMatch = Boolean(digits) && onlyDigits(cleanedCustomer.phone).includes(digits);
 
   return textMatch || phoneMatch;
 }
@@ -86,19 +76,20 @@ export async function GET(request: NextRequest) {
   });
   const filteredCustomers = customers.filter((customer) => customerMatchesSearch(customer, query));
   const cards = filteredCustomers.map((customer) => {
-    const streetAddress = [customer.street, customer.number, customer.complement]
+    const cleanedCustomer = cleanCustomerTextFields(customer);
+    const streetAddress = [cleanedCustomer.street, cleanedCustomer.number, cleanedCustomer.complement]
       .filter(Boolean)
       .join(' ');
-    const notes = [customer.reference, customer.neighborhood].filter(Boolean).join(' - ');
+    const notes = [cleanedCustomer.reference, cleanedCustomer.neighborhood].filter(Boolean).join(' - ');
 
     return [
       'BEGIN:VCARD',
       'VERSION:3.0',
-      `FN:${escapeVCard(customer.name)}`,
-      `N:${escapeVCard(customer.name)};;;;`,
-      `TEL;TYPE=CELL:${escapeVCard(customer.phone)}`,
-      streetAddress || customer.city
-        ? `ADR;TYPE=HOME:;;${escapeVCard(streetAddress)};${escapeVCard(customer.city)};;;${escapeVCard(customer.cep)}`
+      `FN:${escapeVCard(cleanedCustomer.name)}`,
+      `N:${escapeVCard(cleanedCustomer.name)};;;;`,
+      `TEL;TYPE=CELL:${escapeVCard(cleanedCustomer.phone)}`,
+      streetAddress || cleanedCustomer.city
+        ? `ADR;TYPE=HOME:;;${escapeVCard(streetAddress)};${escapeVCard(cleanedCustomer.city)};;;${escapeVCard(cleanedCustomer.cep)}`
         : '',
       notes ? `NOTE:${escapeVCard(notes)}` : '',
       'END:VCARD',

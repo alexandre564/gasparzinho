@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { getDebtPaymentBreakdown } from '@/lib/debts';
 import { prisma } from '@/lib/prisma';
 
@@ -23,18 +24,6 @@ function daysLate(dueDate: Date, paidAt?: Date | null) {
   return Math.max(Math.floor((reference.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)), 0);
 }
 
-function normalizeText(value: string | null | undefined) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function onlyDigits(value: string | null | undefined) {
-  return (value ?? '').replace(/\D/g, '');
-}
-
 type ExportDebt = Awaited<ReturnType<typeof prisma.debt.findMany>>[number] & {
   customer: { name: string; phone: string };
   order: { id: string; createdAt: Date; paymentMethod: string } | null;
@@ -46,15 +35,17 @@ type DebtSortKey = (typeof debtSortKeys)[number];
 type SortDirection = 'asc' | 'desc';
 
 function debtMatchesSearch(debt: ExportDebt, query: string) {
-  const term = normalizeText(query);
+  const term = normalizeSearchText(query);
   const digits = onlyDigits(query);
 
   if (!term && !digits) return true;
 
-  const textMatch = [debt.customer.name, debt.customer.phone, debt.status, debt.notes, debt.id]
-    .map(normalizeText)
+  const customerName = decodeContactText(debt.customer.name);
+  const customerPhone = decodeContactText(debt.customer.phone);
+  const textMatch = [customerName, customerPhone, debt.status, debt.notes, debt.id]
+    .map(normalizeSearchText)
     .some((value) => value.includes(term));
-  const phoneMatch = Boolean(digits) && onlyDigits(debt.customer.phone).includes(digits);
+  const phoneMatch = Boolean(digits) && onlyDigits(customerPhone).includes(digits);
 
   return textMatch || phoneMatch;
 }
@@ -179,8 +170,8 @@ export async function GET(request: NextRequest) {
     return [
       debt.id,
       debt.orderId,
-      debt.customer.name,
-      debt.customer.phone,
+      decodeContactText(debt.customer.name),
+      decodeContactText(debt.customer.phone),
       (debt.renegotiatedValue ?? debt.value).toFixed(2).replace('.', ','),
       formatDate(debt.dueDate),
       daysLate(debt.dueDate, debt.paidAt),

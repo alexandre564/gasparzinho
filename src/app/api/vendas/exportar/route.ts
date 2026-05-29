@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 import { requireApiAccess } from '@/lib/api-auth';
 import { deliveryStatusLabels, labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels'
 import { prisma } from '@/lib/prisma'
+import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,6 +62,53 @@ function buildOrderBy(sort: OrderSortKey, direction: SortDirection): Prisma.Orde
   return { createdAt: direction }
 }
 
+function cleanOrderCustomer<T extends { customer: Record<string, unknown> }>(order: T) {
+  return {
+    ...order,
+    customer: cleanCustomerTextFields(order.customer),
+  }
+}
+
+function orderMatchesSearch<T extends { id: string; status: string; paymentMethod: string; customer: Record<string, unknown> }>(
+  order: T,
+  query: string,
+) {
+  const term = normalizeSearchText(query)
+  const digits = onlyDigits(query)
+  const cleanedOrder = cleanOrderCustomer(order)
+  const customer = cleanedOrder.customer as {
+    name?: string
+    phone?: string
+    street?: string
+    number?: string
+    neighborhood?: string
+    city?: string
+    reference?: string
+  }
+
+  if (!term && !digits) {
+    return true
+  }
+
+  const textMatch = [
+    order.id,
+    order.status,
+    order.paymentMethod,
+    customer.name,
+    customer.phone,
+    customer.street,
+    customer.number,
+    customer.neighborhood,
+    customer.city,
+    customer.reference,
+  ]
+    .map(normalizeSearchText)
+    .some((field) => field.includes(term))
+  const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits)
+
+  return textMatch || phoneMatch
+}
+
 export async function GET(request: NextRequest) {
   const denied = await requireApiAccess(['ADMIN', 'VENDEDOR'])
 
@@ -82,7 +130,13 @@ export async function GET(request: NextRequest) {
     dayEnd.setHours(23, 59, 59, 999)
   }
 
+  const baseWhere: Prisma.OrderWhereInput = {
+    ...(status && status !== 'ALL' && { status }),
+    ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
+    ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
+  }
   const where: Prisma.OrderWhereInput = {
+    ...baseWhere,
     ...(query && {
       OR: [
         { customer: { name: { contains: query } } },
@@ -92,13 +146,10 @@ export async function GET(request: NextRequest) {
         { status: { contains: normalizedQuery } },
       ],
     }),
-    ...(status && status !== 'ALL' && { status }),
-    ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
-    ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
   }
 
-  const orders = await prisma.order.findMany({
-    where,
+  const rawOrders = await prisma.order.findMany({
+    where: query ? baseWhere : where,
     include: {
       customer: true,
       items: {
@@ -111,6 +162,8 @@ export async function GET(request: NextRequest) {
     },
     orderBy: buildOrderBy(sort, direction),
   })
+  const orders = (query ? rawOrders.filter((order) => orderMatchesSearch(order, query)) : rawOrders)
+    .map(cleanOrderCustomer)
 
   const header = [
     'pedido',

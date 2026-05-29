@@ -4,6 +4,13 @@ import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import {
+  cleanCustomerTextFields,
+  decodeContactText as decodeImportedContactText,
+  normalizeImportedPhone as normalizeImportedPhoneValue,
+  normalizeSearchText,
+  onlyDigits as getContactDigits,
+} from '@/lib/contact-text';
 
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
 
@@ -141,42 +148,40 @@ type CustomerWithRelations = Awaited<ReturnType<typeof prisma.customer.findMany>
 };
 
 function normalizeText(value: string | null | undefined) {
-    return (value ?? '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    return normalizeSearchText(value);
 }
 
 function onlyDigits(value: string | null | undefined) {
-    return (value ?? '').replace(/\D/g, '');
+    return getContactDigits(value);
 }
 
 function customerMatchesSearch(customer: CustomerWithRelations, query: string) {
     const term = normalizeText(query);
     const digits = onlyDigits(query);
+    const cleanedCustomer = cleanCustomerTextFields(customer);
 
     if (!term && !digits) {
         return true;
     }
 
     const textFields = [
-        customer.name,
-        customer.phone,
-        customer.city,
-        customer.neighborhood,
-        customer.street,
-        customer.reference,
+        cleanedCustomer.name,
+        cleanedCustomer.phone,
+        cleanedCustomer.city,
+        cleanedCustomer.neighborhood,
+        cleanedCustomer.street,
+        cleanedCustomer.reference,
     ].map(normalizeText);
 
     const textMatch = textFields.some((field) => field.includes(term));
-    const phoneDigits = onlyDigits(customer.phone);
+    const phoneDigits = onlyDigits(cleanedCustomer.phone);
     const phoneMatch = Boolean(digits) && phoneDigits.includes(digits);
 
     return textMatch || phoneMatch;
 }
 
 function enhanceCustomer(customer: CustomerWithRelations) {
+    const cleanedCustomer = cleanCustomerTextFields(customer);
     const lastPurchase = customer.orders[0]?.createdAt;
     const daysSinceLastPurchase = lastPurchase
         ? Math.floor((new Date().getTime() - new Date(lastPurchase).getTime()) / (1000 * 60 * 60 * 24))
@@ -184,7 +189,7 @@ function enhanceCustomer(customer: CustomerWithRelations) {
     const totalDebt = customer.debts.reduce((sum, debt) => sum + debt.value, 0);
 
     return {
-        ...customer,
+        ...cleanedCustomer,
         lastPurchase,
         daysSinceLastPurchase,
         totalOrders: customer._count.orders,
@@ -305,7 +310,7 @@ export async function getPaginatedCustomers(
 export async function getCustomerById(id: string) {
   try {
     const customer = await prisma.customer.findUnique({ where: { id } });
-    return customer;
+    return customer ? cleanCustomerTextFields(customer) : customer;
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Falha ao buscar cliente.');
@@ -383,75 +388,8 @@ function pickValue(row: Record<string, string>, keys: string[]) {
   return '';
 }
 
-function decodeQuotedPrintable(value: string) {
-  const withoutSoftBreaks = value.replace(/=\r?\n/g, '');
-  const bytes: number[] = [];
-  let output = '';
-
-  for (let index = 0; index < withoutSoftBreaks.length; index += 1) {
-    const char = withoutSoftBreaks[index];
-    const hex = withoutSoftBreaks.slice(index + 1, index + 3);
-
-    if (char === '=' && /^[0-9A-Fa-f]{2}$/.test(hex)) {
-      bytes.push(Number.parseInt(hex, 16));
-      index += 2;
-      continue;
-    }
-
-    if (bytes.length > 0) {
-      output += Buffer.from(bytes).toString('utf8');
-      bytes.length = 0;
-    }
-
-    output += char;
-  }
-
-  if (bytes.length > 0) {
-    output += Buffer.from(bytes).toString('utf8');
-  }
-
-  return output;
-}
-
-function decodeRfc2047Words(value: string) {
-  return value.replace(/=\?([^?]+)\?([QB])\?([^?]+)\?=/gi, (_match, charset: string, encoding: string, encoded: string) => {
-    const normalizedEncoding = String(encoding).toUpperCase();
-    const normalizedCharset = String(charset).toLowerCase();
-    let decoded = encoded;
-
-    if (normalizedEncoding === 'Q') {
-      decoded = decodeQuotedPrintable(String(encoded).replace(/_/g, ' '));
-    } else {
-      try {
-        decoded = Buffer.from(String(encoded), 'base64').toString('utf8');
-      } catch {
-        decoded = String(encoded);
-      }
-    }
-
-    if (normalizedCharset.includes('utf') || normalizedCharset.includes('iso') || normalizedCharset.includes('windows')) {
-      return decoded;
-    }
-
-    return decoded;
-  });
-}
-
-function looksQuotedPrintable(value: string) {
-  return /(?:=[0-9A-Fa-f]{2}){2,}/.test(value) || /=\r?\n/.test(value);
-}
-
 function decodeContactText(value: string) {
-  const trimmed = value.replace(/^"+|"+$/g, '').trim();
-  const rfcDecoded = decodeRfc2047Words(trimmed);
-  const decoded = looksQuotedPrintable(rfcDecoded) ? decodeQuotedPrintable(rfcDecoded) : rfcDecoded;
-
-  return decoded
-    .replace(/\\n/gi, ' ')
-    .replace(/\\,/g, ',')
-    .replace(/\\;/g, ';')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return decodeImportedContactText(value);
 }
 
 function pickPhoneValue(row: Record<string, string>) {
@@ -491,11 +429,11 @@ function pickPhoneValue(row: Record<string, string>) {
 }
 
 function normalizeImportedPhone(value: string) {
-  return decodeContactText(value).replace(/^"+|"+$/g, '').replace(/\s+/g, ' ').trim();
+  return normalizeImportedPhoneValue(value);
 }
 
 function getPhoneDigits(value: string) {
-  return value.replace(/\D/g, '');
+  return getContactDigits(value);
 }
 
 function detectDelimiter(headerLine: string) {

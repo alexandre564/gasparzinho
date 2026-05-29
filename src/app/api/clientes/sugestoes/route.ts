@@ -1,22 +1,11 @@
 import { NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
-
-function normalizeText(value: string | null | undefined) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function onlyDigits(value: string | null | undefined) {
-  return (value ?? '').replace(/\D/g, '');
-}
 
 function matchesCustomer(customer: {
   name: string;
@@ -26,17 +15,18 @@ function matchesCustomer(customer: {
   street: string;
   reference: string | null;
 }, query: string) {
-  const term = normalizeText(query);
+  const cleanedCustomer = cleanCustomerTextFields(customer);
+  const term = normalizeSearchText(query);
   const digits = onlyDigits(query);
   const textFields = [
-    customer.name,
-    customer.phone,
-    customer.city,
-    customer.neighborhood,
-    customer.street,
-    customer.reference,
-  ].map(normalizeText);
-  const phoneDigits = onlyDigits(customer.phone);
+    cleanedCustomer.name,
+    cleanedCustomer.phone,
+    cleanedCustomer.city,
+    cleanedCustomer.neighborhood,
+    cleanedCustomer.street,
+    cleanedCustomer.reference,
+  ].map(normalizeSearchText);
+  const phoneDigits = onlyDigits(cleanedCustomer.phone);
 
   return textFields.some((field) => field.includes(term)) || Boolean(digits && phoneDigits.includes(digits));
 }
@@ -76,13 +66,17 @@ export async function GET(request: Request) {
   const filtered = customers
     .filter((customer) => matchesCustomer(customer, query))
     .slice(0, 6)
-    .map((customer) => ({
-      id: customer.id,
-      name: customer.name,
-      phone: customer.phone,
-      address: [customer.street, customer.neighborhood, customer.city].filter(Boolean).join(' - '),
-      totalDebt: customer.debts.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0),
-    }));
+    .map((customer) => {
+      const cleanedCustomer = cleanCustomerTextFields(customer);
+
+      return {
+        id: cleanedCustomer.id,
+        name: cleanedCustomer.name,
+        phone: cleanedCustomer.phone,
+        address: [cleanedCustomer.street, cleanedCustomer.neighborhood, cleanedCustomer.city].filter(Boolean).join(' - '),
+        totalDebt: customer.debts.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0),
+      };
+    });
 
   return NextResponse.json({ customers: filtered });
 }

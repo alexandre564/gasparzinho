@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { DeliveryStatus } from '@/types/enums';
+import { cleanCustomerTextFields, decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -15,6 +16,78 @@ function parseFilterDate(value?: string) {
 
   const date = new Date(`${value}T00:00:00`);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function cleanDeliveryCustomer<
+  T extends {
+    order: {
+      deliveryAddress?: string | null;
+      deliveryReference?: string | null;
+      customer: Record<string, unknown>;
+    };
+  },
+>(delivery: T) {
+  return {
+    ...delivery,
+    order: {
+      ...delivery.order,
+      deliveryAddress: decodeContactText(delivery.order.deliveryAddress),
+      deliveryReference: decodeContactText(delivery.order.deliveryReference),
+      customer: cleanCustomerTextFields(delivery.order.customer),
+    },
+  };
+}
+
+function deliveryMatchesSearch<
+  T extends {
+    id: string;
+    orderId: string;
+    status: string;
+    order: {
+      paymentMethod: string;
+      deliveryAddress?: string | null;
+      deliveryReference?: string | null;
+      customer: Record<string, unknown>;
+    };
+  },
+>(delivery: T, query: string) {
+  const term = normalizeSearchText(query);
+  const digits = onlyDigits(query);
+  const cleanedDelivery = cleanDeliveryCustomer(delivery);
+  const customer = cleanedDelivery.order.customer as {
+    name?: string;
+    phone?: string;
+    street?: string;
+    number?: string;
+    neighborhood?: string;
+    city?: string;
+    reference?: string;
+  };
+
+  if (!term && !digits) {
+    return true;
+  }
+
+  const textMatch = [
+    delivery.id,
+    delivery.orderId,
+    delivery.status,
+    delivery.order.paymentMethod,
+    cleanedDelivery.order.deliveryAddress,
+    cleanedDelivery.order.deliveryReference,
+    customer.name,
+    customer.phone,
+    customer.street,
+    customer.number,
+    customer.neighborhood,
+    customer.city,
+    customer.reference,
+  ]
+    .map(normalizeSearchText)
+    .some((field) => field.includes(term));
+  const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
+
+  return textMatch || phoneMatch;
 }
 
 export async function getPaginatedDeliveries(
@@ -32,7 +105,8 @@ export async function getPaginatedDeliveries(
     toDate.setHours(23, 59, 59, 999);
   }
 
-  const where: Prisma.DeliveryWhereInput = {
+  const trimmedQuery = query.trim();
+  const baseWhere: Prisma.DeliveryWhereInput = {
     ...(status && { status }),
     ...(fromDate || toDate
       ? {
@@ -44,36 +118,56 @@ export async function getPaginatedDeliveries(
           },
         }
       : {}),
-    ...(query && {
+  };
+  const where: Prisma.DeliveryWhereInput = {
+    ...baseWhere,
+    ...(trimmedQuery && {
       OR: [
-        { order: { customer: { name: { contains: query } } } },
-        { order: { customer: { phone: { contains: query } } } },
-        { order: { customer: { street: { contains: query } } } },
-        { order: { customer: { number: { contains: query } } } },
-        { order: { customer: { neighborhood: { contains: query } } } },
-        { order: { customer: { city: { contains: query } } } },
-        { order: { customer: { reference: { contains: query } } } },
-        { order: { deliveryAddress: { contains: query } } },
-        { order: { deliveryReference: { contains: query } } },
-        { order: { paymentMethod: { contains: query.toUpperCase() } } },
-        { status: { contains: query.toUpperCase() } },
-        { orderId: { contains: query } },
+        { order: { customer: { name: { contains: trimmedQuery } } } },
+        { order: { customer: { phone: { contains: trimmedQuery } } } },
+        { order: { customer: { street: { contains: trimmedQuery } } } },
+        { order: { customer: { number: { contains: trimmedQuery } } } },
+        { order: { customer: { neighborhood: { contains: trimmedQuery } } } },
+        { order: { customer: { city: { contains: trimmedQuery } } } },
+        { order: { customer: { reference: { contains: trimmedQuery } } } },
+        { order: { deliveryAddress: { contains: trimmedQuery } } },
+        { order: { deliveryReference: { contains: trimmedQuery } } },
+        { order: { paymentMethod: { contains: trimmedQuery.toUpperCase() } } },
+        { status: { contains: trimmedQuery.toUpperCase() } },
+        { orderId: { contains: trimmedQuery } },
       ],
     }),
   };
+  const include = {
+    order: {
+      include: {
+        customer: true,
+        items: { include: { product: true } },
+        debt: true,
+      },
+    },
+  } as const;
 
   try {
+    if (trimmedQuery) {
+      const allDeliveries = await prisma.delivery.findMany({
+        where: baseWhere,
+        include,
+        orderBy: { createdAt: 'desc' },
+      });
+      const filteredDeliveries = allDeliveries
+        .filter((delivery) => deliveryMatchesSearch(delivery, trimmedQuery))
+        .map(cleanDeliveryCustomer);
+
+      return {
+        deliveries: filteredDeliveries.slice(offset, offset + ITEMS_PER_PAGE),
+        totalPages: Math.ceil(filteredDeliveries.length / ITEMS_PER_PAGE),
+      };
+    }
+
     const deliveries = await prisma.delivery.findMany({
       where,
-      include: {
-        order: {
-          include: {
-            customer: true,
-            items: { include: { product: true } },
-            debt: true,
-          },
-        },
-      },
+      include,
       orderBy: { createdAt: 'desc' },
       take: ITEMS_PER_PAGE,
       skip: offset,
@@ -81,7 +175,7 @@ export async function getPaginatedDeliveries(
 
     const totalDeliveries = await prisma.delivery.count({ where });
 
-    return { deliveries, totalPages: Math.ceil(totalDeliveries / ITEMS_PER_PAGE) };
+    return { deliveries: deliveries.map(cleanDeliveryCustomer), totalPages: Math.ceil(totalDeliveries / ITEMS_PER_PAGE) };
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Falha ao buscar entregas.');
@@ -124,7 +218,7 @@ export async function updateDeliveryStatus(
 
 export async function getDeliveryDetails(id: string) {
   try {
-    return await prisma.delivery.findUnique({
+    const delivery = await prisma.delivery.findUnique({
       where: { id },
       include: {
         order: {
@@ -136,6 +230,8 @@ export async function getDeliveryDetails(id: string) {
         },
       },
     });
+
+    return delivery ? cleanDeliveryCustomer(delivery) : delivery;
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Falha ao buscar detalhes da entrega.');
@@ -144,7 +240,7 @@ export async function getDeliveryDetails(id: string) {
 
 export async function getOrderById(id: string) {
   try {
-    return await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -153,6 +249,15 @@ export async function getOrderById(id: string) {
         delivery: true,
       },
     });
+
+    return order
+      ? {
+          ...order,
+          deliveryAddress: decodeContactText(order.deliveryAddress),
+          deliveryReference: decodeContactText(order.deliveryReference),
+          customer: cleanCustomerTextFields(order.customer),
+        }
+      : order;
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Falha ao buscar pedido.');

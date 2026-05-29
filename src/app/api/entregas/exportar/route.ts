@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 import { requireApiAccess } from '@/lib/api-auth';
 import { deliveryStatusLabels, labelFrom, paymentMethodLabels } from '@/lib/labels'
 import { prisma } from '@/lib/prisma'
+import { cleanCustomerTextFields, decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,78 @@ function parseFilterDate(value?: string | null) {
 
   const date = new Date(`${value}T00:00:00`)
   return Number.isNaN(date.getTime()) ? null : date
+}
+
+function cleanDeliveryCustomer<
+  T extends {
+    order: {
+      deliveryAddress?: string | null
+      deliveryReference?: string | null
+      customer: Record<string, unknown>
+    }
+  },
+>(delivery: T) {
+  return {
+    ...delivery,
+    order: {
+      ...delivery.order,
+      deliveryAddress: decodeContactText(delivery.order.deliveryAddress),
+      deliveryReference: decodeContactText(delivery.order.deliveryReference),
+      customer: cleanCustomerTextFields(delivery.order.customer),
+    },
+  }
+}
+
+function deliveryMatchesSearch<
+  T extends {
+    id: string
+    orderId: string
+    status: string
+    order: {
+      paymentMethod: string
+      deliveryAddress?: string | null
+      deliveryReference?: string | null
+      customer: Record<string, unknown>
+    }
+  },
+>(delivery: T, query: string) {
+  const term = normalizeSearchText(query)
+  const digits = onlyDigits(query)
+  const cleanedDelivery = cleanDeliveryCustomer(delivery)
+  const customer = cleanedDelivery.order.customer as {
+    name?: string
+    phone?: string
+    street?: string
+    number?: string
+    neighborhood?: string
+    city?: string
+    reference?: string
+  }
+
+  if (!term && !digits) {
+    return true
+  }
+
+  const textMatch = [
+    delivery.id,
+    delivery.orderId,
+    delivery.status,
+    delivery.order.paymentMethod,
+    cleanedDelivery.order.deliveryAddress,
+    cleanedDelivery.order.deliveryReference,
+    customer.name,
+    customer.phone,
+    customer.street,
+    customer.number,
+    customer.neighborhood,
+    customer.city,
+    customer.reference,
+  ]
+    .map(normalizeSearchText)
+    .some((field) => field.includes(term))
+  const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits)
+
+  return textMatch || phoneMatch
 }
 
 export async function GET(request: NextRequest) {
@@ -37,7 +110,7 @@ export async function GET(request: NextRequest) {
     toDate.setHours(23, 59, 59, 999)
   }
 
-  const where: Prisma.DeliveryWhereInput = {
+  const baseWhere: Prisma.DeliveryWhereInput = {
     ...(status && status !== 'TODOS' && { status }),
     ...(fromDate || toDate
       ? {
@@ -49,6 +122,9 @@ export async function GET(request: NextRequest) {
           },
         }
       : {}),
+  }
+  const where: Prisma.DeliveryWhereInput = {
+    ...baseWhere,
     ...(query && {
       OR: [
         { order: { customer: { name: { contains: query } } } },
@@ -65,8 +141,8 @@ export async function GET(request: NextRequest) {
     }),
   }
 
-  const deliveries = await prisma.delivery.findMany({
-    where,
+  const rawDeliveries = await prisma.delivery.findMany({
+    where: query ? baseWhere : where,
     include: {
       order: {
         include: {
@@ -78,6 +154,10 @@ export async function GET(request: NextRequest) {
     },
     orderBy: { createdAt: 'desc' },
   })
+  const deliveries = (query
+    ? rawDeliveries.filter((delivery) => deliveryMatchesSearch(delivery, query))
+    : rawDeliveries
+  ).map(cleanDeliveryCustomer)
 
   const header = [
     'data',
@@ -93,7 +173,7 @@ export async function GET(request: NextRequest) {
 
   const rows = deliveries.map((delivery) => {
     const customer = delivery.order.customer
-    const address = [
+    const fallbackAddress = [
       customer.street,
       customer.number,
       customer.neighborhood,
@@ -102,6 +182,7 @@ export async function GET(request: NextRequest) {
     ]
       .filter(Boolean)
       .join(', ')
+    const address = delivery.order.deliveryAddress || fallbackAddress
 
     return [
       delivery.order.createdAt.toLocaleDateString('pt-BR'),

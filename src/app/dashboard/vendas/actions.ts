@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
+import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 
 const OrderStatus = {
   PENDENTE: 'PENDENTE',
@@ -458,7 +459,13 @@ export async function getPaginatedOrders(
       dayEnd.setHours(23, 59, 59, 999);
     }
 
+    const baseWhere: Prisma.OrderWhereInput = {
+      ...(status && status !== 'ALL' && { status }),
+      ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
+      ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
+    };
     const where: Prisma.OrderWhereInput = {
+      ...baseWhere,
       ...(trimmedQuery && {
         OR: [
           { customer: { name: { contains: trimmedQuery } } },
@@ -468,14 +475,28 @@ export async function getPaginatedOrders(
           { status: { contains: normalizedQuery } },
         ],
       }),
-      ...(status && status !== 'ALL' && { status }),
-      ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
-      ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
     };
+    const include = { customer: true } as const;
+
+    if (trimmedQuery) {
+      const allOrders = await prisma.order.findMany({
+        where: baseWhere,
+        include,
+        orderBy: buildOrderBy(sortKey, sortDirection),
+      });
+      const filteredOrders = allOrders
+        .filter((order) => orderMatchesSearch(order, trimmedQuery))
+        .map(cleanOrderCustomer);
+
+      return {
+        orders: filteredOrders.slice(offset, offset + ITEMS_PER_PAGE),
+        totalPages: Math.ceil(filteredOrders.length / ITEMS_PER_PAGE),
+      };
+    }
 
     const orders = await prisma.order.findMany({
       where,
-      include: { customer: true },
+      include,
       orderBy: buildOrderBy(sortKey, sortDirection),
       take: ITEMS_PER_PAGE,
       skip: offset,
@@ -484,7 +505,7 @@ export async function getPaginatedOrders(
     const count = await prisma.order.count({ where });
 
     return {
-      orders,
+      orders: orders.map(cleanOrderCustomer),
       totalPages: Math.ceil(count / ITEMS_PER_PAGE),
     };
   } catch (err) {
@@ -495,7 +516,7 @@ export async function getPaginatedOrders(
 
 export async function getOrderById(id: string) {
   try {
-    return await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -508,6 +529,8 @@ export async function getOrderById(id: string) {
         debt: true,
       },
     });
+
+    return order ? cleanOrderCustomer(order) : order;
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Falha ao buscar detalhes do pedido.');
@@ -618,7 +641,54 @@ export async function getCustomersForSelect() {
     },
   });
 
-  return customers;
+  return customers.map(cleanCustomerTextFields);
+}
+
+function cleanOrderCustomer<T extends { customer: Record<string, unknown> }>(order: T) {
+  return {
+    ...order,
+    customer: cleanCustomerTextFields(order.customer),
+  };
+}
+
+function orderMatchesSearch<T extends { id: string; status: string; paymentMethod: string; customer: Record<string, unknown> }>(
+  order: T,
+  query: string,
+) {
+  const term = normalizeSearchText(query);
+  const digits = onlyDigits(query);
+  const cleanedOrder = cleanOrderCustomer(order);
+  const customer = cleanedOrder.customer as {
+    name?: string;
+    phone?: string;
+    street?: string;
+    number?: string;
+    neighborhood?: string;
+    city?: string;
+    reference?: string;
+  };
+
+  if (!term && !digits) {
+    return true;
+  }
+
+  const textMatch = [
+    order.id,
+    order.status,
+    order.paymentMethod,
+    customer.name,
+    customer.phone,
+    customer.street,
+    customer.number,
+    customer.neighborhood,
+    customer.city,
+    customer.reference,
+  ]
+    .map(normalizeSearchText)
+    .some((field) => field.includes(term));
+  const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
+
+  return textMatch || phoneMatch;
 }
 
 export async function getProductsForSelect() {

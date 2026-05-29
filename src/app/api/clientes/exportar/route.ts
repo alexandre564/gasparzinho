@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -9,43 +10,32 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-function normalizeText(value: string | null | undefined) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function onlyDigits(value: string | null | undefined) {
-  return (value ?? '').replace(/\D/g, '');
-}
-
 type ExportCustomer = Awaited<ReturnType<typeof prisma.customer.findMany>>[number] & {
   orders: { createdAt: Date }[];
   debts: { value: number; renegotiatedValue: number | null }[];
 };
 
 function customerMatchesSearch(customer: ExportCustomer, query: string) {
-  const term = normalizeText(query);
+  const cleanedCustomer = cleanCustomerTextFields(customer);
+  const term = normalizeSearchText(query);
   const digits = onlyDigits(query);
 
   if (!term && !digits) return true;
 
   const textMatch = [
-    customer.name,
-    customer.phone,
-    customer.cep,
-    customer.street,
-    customer.number,
-    customer.complement,
-    customer.neighborhood,
-    customer.city,
-    customer.reference,
+    cleanedCustomer.name,
+    cleanedCustomer.phone,
+    cleanedCustomer.cep,
+    cleanedCustomer.street,
+    cleanedCustomer.number,
+    cleanedCustomer.complement,
+    cleanedCustomer.neighborhood,
+    cleanedCustomer.city,
+    cleanedCustomer.reference,
   ]
-    .map(normalizeText)
+    .map(normalizeSearchText)
     .some((value) => value.includes(term));
-  const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
+  const phoneMatch = Boolean(digits) && onlyDigits(cleanedCustomer.phone).includes(digits);
 
   return textMatch || phoneMatch;
 }
@@ -130,25 +120,26 @@ export async function GET(request: NextRequest) {
   ];
 
   const rows = filteredCustomers.map((customer) => {
+    const cleanedCustomer = cleanCustomerTextFields(customer);
     const metrics = getCustomerMetrics(customer);
 
     return [
-      customer.name,
-      customer.name,
+      cleanedCustomer.name,
+      cleanedCustomer.name,
       'Mobile',
-      customer.phone,
-      [customer.street, customer.number, customer.complement, customer.neighborhood].filter(Boolean).join(', '),
-      customer.city,
-      customer.reference,
-      customer.name,
-      customer.phone,
-      customer.cep,
-      customer.street,
-      customer.number,
-      customer.complement,
-      customer.neighborhood,
-      customer.city,
-      customer.reference,
+      cleanedCustomer.phone,
+      [cleanedCustomer.street, cleanedCustomer.number, cleanedCustomer.complement, cleanedCustomer.neighborhood].filter(Boolean).join(', '),
+      cleanedCustomer.city,
+      cleanedCustomer.reference,
+      cleanedCustomer.name,
+      cleanedCustomer.phone,
+      cleanedCustomer.cep,
+      cleanedCustomer.street,
+      cleanedCustomer.number,
+      cleanedCustomer.complement,
+      cleanedCustomer.neighborhood,
+      cleanedCustomer.city,
+      cleanedCustomer.reference,
       customer.createdAt.toLocaleDateString('pt-BR'),
       metrics.lastPurchase?.toLocaleDateString('pt-BR') ?? '',
       metrics.daysSinceLastPurchase ?? '',

@@ -2,6 +2,7 @@ import { addDays, differenceInCalendarDays } from 'date-fns';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -31,18 +32,6 @@ function calculateAverageInterval(orders: { createdAt: Date }[]) {
   }
 
   return Math.max(1, Math.round(intervals.reduce((sum, value) => sum + value, 0) / intervals.length));
-}
-
-function normalizeText(value: string | null | undefined) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function onlyDigits(value: string | null | undefined) {
-  return (value ?? '').replace(/\D/g, '');
 }
 
 export async function GET(request: NextRequest) {
@@ -78,26 +67,27 @@ export async function GET(request: NextRequest) {
       if (!customer.orders.length) return null;
 
       const lastOrder = customer.orders[customer.orders.length - 1];
+      const cleanedCustomer = cleanCustomerTextFields(customer);
       const avgInterval = calculateAverageInterval(customer.orders);
       const predictedNextPurchaseDate = addDays(lastOrder.createdAt, avgInterval);
       const daysUntilNextPurchase = differenceInCalendarDays(predictedNextPurchaseDate, new Date());
-      const term = normalizeText(query);
+      const term = normalizeSearchText(query);
       const digits = onlyDigits(query);
       const textMatch = [
-        customer.name,
-        customer.phone,
-        customer.city,
+        cleanedCustomer.name,
+        cleanedCustomer.phone,
+        cleanedCustomer.city,
         lastOrder.items[0]?.product.name,
       ]
-        .map(normalizeText)
+        .map(normalizeSearchText)
         .some((value) => value.includes(term));
-      const phoneMatch = Boolean(digits) && onlyDigits(customer.phone).includes(digits);
+      const phoneMatch = Boolean(digits) && onlyDigits(cleanedCustomer.phone).includes(digits);
 
       if (Math.abs(daysUntilNextPurchase) > days) return null;
       if ((term || digits) && !textMatch && !phoneMatch) return null;
 
       return {
-        customer,
+        customer: cleanedCustomer,
         lastOrder,
         avgInterval,
         predictedNextPurchaseDate,

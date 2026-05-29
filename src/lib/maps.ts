@@ -16,10 +16,12 @@ function normalizeLocationQuery(address: string) {
     return '';
   }
 
+  const hasCityHint = /\bLavras\b/i.test(query);
   const hasBrazilState = /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO|Minas Gerais)\b/i.test(query);
+  const withCity = hasCityHint || hasBrazilState ? query : `${query}, Lavras`;
   const withState = hasBrazilState
-    ? query
-    : `${query}, Minas Gerais`;
+    ? withCity
+    : `${withCity}, Minas Gerais`;
 
   return /\bBrasil\b/i.test(withState) ? withState : `${withState}, Brasil`;
 }

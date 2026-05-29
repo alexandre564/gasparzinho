@@ -3,6 +3,7 @@
 import type { Order } from '@prisma/client';
 import { addDays, differenceInCalendarDays } from 'date-fns';
 import { prisma } from '@/lib/prisma';
+import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import type { LoyaltyPrediction } from '@/services/fidelizacao';
 
 const GLOBAL_AVG_INTERVAL_DAYS = 15;
@@ -76,9 +77,10 @@ function buildPrediction(customer: CustomerWithOrderHistory): LoyaltyPrediction 
     new Date(),
   );
   const { orders, ...customerData } = customer;
+  const cleanedCustomer = cleanCustomerTextFields(customerData);
 
   return {
-    customer: customerData,
+    customer: cleanedCustomer,
     lastOrder,
     avgInterval,
     predictedNextPurchaseDate,
@@ -86,20 +88,8 @@ function buildPrediction(customer: CustomerWithOrderHistory): LoyaltyPrediction 
   };
 }
 
-function normalizeText(value: string | null | undefined) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function onlyDigits(value: string | null | undefined) {
-  return (value ?? '').replace(/\D/g, '');
-}
-
 function predictionMatchesSearch(prediction: LoyaltyPrediction, query: string) {
-  const term = normalizeText(query);
+  const term = normalizeSearchText(query);
   const digits = onlyDigits(query);
 
   if (!term && !digits) return true;
@@ -110,7 +100,7 @@ function predictionMatchesSearch(prediction: LoyaltyPrediction, query: string) {
     prediction.customer.city,
     prediction.lastOrder?.items[0]?.product.name,
   ]
-    .map(normalizeText)
+    .map(normalizeSearchText)
     .some((value) => value.includes(term));
   const phoneMatch = Boolean(digits) && onlyDigits(prediction.customer.phone).includes(digits);
 

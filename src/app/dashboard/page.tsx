@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma';
 import { labelFrom, orderStatusLabels } from '@/lib/labels';
 import { getRepurchasePredictions } from './fidelizacao/actions';
+import { decodeContactText } from '@/lib/contact-text';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,8 +53,8 @@ async function getDashboardData() {
       _sum: { value: true },
       where: { date: { gte: monthStart } },
     }),
-    prisma.debt.aggregate({
-      _sum: { value: true },
+    prisma.debt.findMany({
+      select: { value: true, renegotiatedValue: true },
       where: { status: { in: [...OPEN_DEBT_STATUSES] } },
     }),
     prisma.debt.count({
@@ -110,7 +111,7 @@ async function getDashboardData() {
     monthProfit: (salesMonth._sum.netValue ?? 0) - (expensesMonth._sum.value ?? 0),
     monthOrders: salesMonth._count.id,
     monthExpenses: expensesMonth._sum.value ?? 0,
-    openDebtValue: openDebtValue._sum.value ?? 0,
+    openDebtValue: openDebtValue.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0),
     overdueDebts,
     activeCustomers,
     debtors,
@@ -381,7 +382,7 @@ export default async function DashboardPage() {
                   className="flex items-start justify-between gap-3 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-950">{order.customer.name}</p>
+                    <p className="truncate text-sm font-bold text-slate-950">{decodeContactText(order.customer.name)}</p>
                     <p className="text-xs font-medium text-slate-600">
                       {new Date(order.createdAt).toLocaleDateString('pt-BR')}
                     </p>

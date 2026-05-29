@@ -48,6 +48,55 @@ const checks = [
          OR COALESCE("city", '') = ''
     `,
   },
+  {
+    key: 'clientes_codificacao_suspeita',
+    label: 'Clientes com codificacao importada suspeita',
+    sql: `
+      SELECT COUNT(*)::int AS count
+      FROM "Customer"
+      WHERE "name" ~ '(=[0-9A-Fa-f]{2}){2,}'
+         OR "street" ~ '(=[0-9A-Fa-f]{2}){2,}'
+         OR "reference" ~ '(=[0-9A-Fa-f]{2}){2,}'
+         OR "name" ILIKE '%BEGIN:VCARD%'
+         OR "name" ILIKE '%END:VCARD%'
+    `,
+  },
+  {
+    key: 'telefones_duplicados',
+    label: 'Telefones duplicados por digitos',
+    sql: `
+      SELECT COUNT(*)::int AS count
+      FROM (
+        SELECT digits
+        FROM (
+          SELECT REGEXP_REPLACE("phone", '\\D', '', 'g') AS digits
+          FROM "Customer"
+        ) cleaned
+        WHERE LENGTH(digits) >= 8
+        GROUP BY digits
+        HAVING COUNT(*) > 1
+      ) duplicates
+    `,
+  },
+  {
+    key: 'pedidos_sem_endereco_entrega',
+    label: 'Pedidos sem endereco de entrega registrado',
+    sql: `
+      SELECT COUNT(*)::int AS count
+      FROM "Order" o
+      WHERE o."status" <> 'CANCELADO'
+        AND COALESCE(o."deliveryAddress", '') = ''
+    `,
+  },
+  {
+    key: 'usuarios_perfil_invalido',
+    label: 'Usuarios com perfil invalido',
+    sql: `
+      SELECT COUNT(*)::int AS count
+      FROM "User"
+      WHERE UPPER(COALESCE("role", '')) NOT IN ('ADMIN', 'VENDEDOR', 'ENTREGADOR')
+    `,
+  },
 ];
 
 async function main() {

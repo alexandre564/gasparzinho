@@ -1,33 +1,6 @@
 import type { NextAuthConfig } from 'next-auth';
 import { NextResponse } from 'next/server';
-
-const routePermissions = [
-  { prefix: '/dashboard/cobranca', roles: ['ADMIN'] },
-  { prefix: '/dashboard/financeiro', roles: ['ADMIN'] },
-  { prefix: '/dashboard/relatorios', roles: ['ADMIN'] },
-  { prefix: '/dashboard/equipe', roles: ['ADMIN'] },
-  { prefix: '/dashboard/frota', roles: ['ADMIN'] },
-  { prefix: '/dashboard/fechamento', roles: ['ADMIN'] },
-  { prefix: '/dashboard/clientes', roles: ['ADMIN', 'VENDEDOR'] },
-  { prefix: '/dashboard/vendas', roles: ['ADMIN', 'VENDEDOR'] },
-  { prefix: '/dashboard/estoque', roles: ['ADMIN', 'VENDEDOR'] },
-  { prefix: '/dashboard/fidelizacao', roles: ['ADMIN', 'VENDEDOR'] },
-  { prefix: '/dashboard/gastos', roles: ['ADMIN'] },
-  { prefix: '/dashboard/entregas', roles: ['ADMIN', 'ENTREGADOR'] },
-  { prefix: '/dashboard/configuracoes', roles: ['ADMIN'] },
-  { prefix: '/dashboard', roles: ['ADMIN', 'VENDEDOR', 'ENTREGADOR'] },
-];
-
-function canAccessPath(pathname: string, role?: string | null) {
-  const normalizedRole = role?.toUpperCase();
-  const permission = routePermissions.find((route) => pathname.startsWith(route.prefix));
-
-  if (!permission) {
-    return true;
-  }
-
-  return normalizedRole ? permission.roles.includes(normalizedRole) : false;
-}
+import { canAccessPath } from '@/lib/permissions';
 
 const authConfig = {
   pages: {

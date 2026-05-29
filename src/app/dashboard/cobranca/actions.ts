@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 
 export type DebtSortKey =
   | 'customer'
@@ -50,18 +51,6 @@ type ImportDebtsState = {
   message: string;
 };
 
-function normalizeText(value: string | null | undefined) {
-  return (value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
-
-function onlyDigits(value: string | null | undefined) {
-  return (value ?? '').replace(/\D/g, '');
-}
-
 function normalizeSortKey(sort?: string): DebtSortKey {
   return debtSortKeys.includes(sort as DebtSortKey) ? (sort as DebtSortKey) : 'dueDate';
 }
@@ -94,6 +83,11 @@ function enhanceDebt(debt: DebtWithRelations): EnhancedDebt {
 
   return {
     ...debt,
+    customer: {
+      ...debt.customer,
+      name: decodeContactText(debt.customer.name),
+      phone: decodeContactText(debt.customer.phone),
+    },
     paymentValue: debt.renegotiatedValue ?? debt.value,
     daysLate,
     isOpen,
@@ -102,7 +96,7 @@ function enhanceDebt(debt: DebtWithRelations): EnhancedDebt {
 }
 
 function debtMatchesSearch(debt: EnhancedDebt, query: string) {
-  const term = normalizeText(query);
+  const term = normalizeSearchText(query);
   const digits = onlyDigits(query);
 
   if (!term && !digits) {
@@ -117,7 +111,7 @@ function debtMatchesSearch(debt: EnhancedDebt, query: string) {
     debt.notes,
     debt.id,
   ]
-    .map(normalizeText)
+    .map(normalizeSearchText)
     .some((field) => field.includes(term));
   const phoneMatch = Boolean(digits) && onlyDigits(debt.customer.phone).includes(digits);
 
