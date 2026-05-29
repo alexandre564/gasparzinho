@@ -118,7 +118,18 @@ export default async function DeliveriesPage({
               </TableHeader>
               <TableBody>
                 {deliveries.length > 0 ? (
-                  deliveries.map((delivery) => (
+                  deliveries.map((delivery) => {
+                    const customerAddress = [
+                      `${delivery.order.customer.street}, ${delivery.order.customer.number}`,
+                      delivery.order.customer.neighborhood,
+                      delivery.order.customer.city,
+                    ]
+                      .filter(Boolean)
+                      .join(' - ');
+                    const deliveryAddress = delivery.order.deliveryAddress || customerAddress;
+                    const deliveryReference = delivery.order.deliveryReference || delivery.order.customer.reference;
+
+                    return (
                     <TableRow key={delivery.id}>
                       <TableCell className="font-medium">
                         {new Date(delivery.order.createdAt).toLocaleDateString('pt-BR')}
@@ -128,7 +139,9 @@ export default async function DeliveriesPage({
                         <div className="text-sm text-muted-foreground">{delivery.order.customer.phone}</div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {delivery.order.customer.street}, {delivery.order.customer.number}
+                        <span title={deliveryAddress} className="line-clamp-2">
+                          {deliveryAddress}
+                        </span>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell max-w-xs">
                         <ItemsSummary items={delivery.order.items} />
@@ -148,6 +161,9 @@ export default async function DeliveriesPage({
                             paymentMethod={delivery.order.paymentMethod}
                             hasOpenDebt={Boolean(delivery.order.debt && delivery.order.debt.status !== 'PAGO')}
                             driverWhatsapp={driverWhatsapp}
+                            deliveryAddress={deliveryAddress}
+                            deliveryReference={deliveryReference}
+                            deliveryAddressChanged={delivery.order.deliveryAddressChanged}
                           />
                           <div className="flex justify-end">
                             <Button asChild variant="ghost" size="sm">
@@ -160,7 +176,8 @@ export default async function DeliveriesPage({
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">

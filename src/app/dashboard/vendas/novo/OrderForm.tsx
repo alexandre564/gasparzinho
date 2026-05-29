@@ -8,9 +8,12 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Loader2,
+  MapPinned,
   MessageCircle,
+  Navigation,
   PlusCircle,
   Save,
+  Search,
   Trash2,
   Truck,
 } from 'lucide-react';
@@ -46,6 +49,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { fetchAddressByCep, normalizeCep } from '@/lib/cep';
+import { buildGoogleMapsUrl, buildWazeUrl } from '@/lib/maps';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 type CustomerSelectItem = {
@@ -119,6 +124,8 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   const [driverWhatsapp, setDriverWhatsapp] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [deliveryCep, setDeliveryCep] = useState('');
+  const [isDeliveryCepLoading, setDeliveryCepLoading] = useState(false);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(OrderFormSchema),
@@ -212,6 +219,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
     form.setValue('deliveryReference', selectedCustomer?.reference ?? '');
     form.setValue('deliveryAddressChanged', false);
     form.setValue('saveDeliveryAddressToCustomer', false);
+    setDeliveryCep('');
   }, [defaultDeliveryAddress, form, selectedCustomer?.reference]);
 
   const selectedItemsSummary = watchedItems
@@ -244,6 +252,8 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
           .join('\n'),
       )
     : customerWhatsapp;
+  const googleMapsUrl = buildGoogleMapsUrl(effectiveDeliveryAddress);
+  const wazeUrl = buildWazeUrl(effectiveDeliveryAddress);
   const driverMessageWithAddress = selectedCustomer
     ? [
         'Nova entrega Gas Gasparzinho',
@@ -251,6 +261,8 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
         `Telefone: ${selectedCustomer.phone}`,
         `Endereco: ${effectiveDeliveryAddress || 'Ver cadastro do cliente'}`,
         form.watch('deliveryReference') ? `Referencia: ${form.watch('deliveryReference')}` : null,
+        effectiveDeliveryAddress ? `Google Maps: ${googleMapsUrl}` : null,
+        effectiveDeliveryAddress ? `Waze: ${wazeUrl}` : null,
         deliveryAddressChanged ? 'Atencao: entrega em endereco diferente do cadastro.' : null,
         `Itens: ${selectedItemsSummary || 'Ver pedido no sistema'}`,
         `Total: ${formatCurrency(grossValue)}`,
@@ -259,6 +271,36 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
         .join('\n')
     : driverMessage;
   const driverWhatsappUrl = buildWhatsAppUrl(driverWhatsapp, driverMessageWithAddress);
+
+  async function handleAlternateDeliveryCepSearch() {
+    const cep = normalizeCep(deliveryCep);
+
+    if (cep.length !== 8) {
+      toast.error('Informe um CEP com 8 dígitos.');
+      return;
+    }
+
+    try {
+      setDeliveryCepLoading(true);
+      const address = await fetchAddressByCep(cep);
+      const formattedAddress = [
+        address.street ? `${address.street}, número` : '',
+        address.neighborhood,
+        address.city && address.state ? `${address.city}/${address.state}` : address.city,
+        `CEP ${address.cep}`,
+      ]
+        .filter(Boolean)
+        .join(' - ');
+
+      form.setValue('deliveryAddress', formattedAddress);
+      form.setValue('deliveryAddressChanged', true);
+      toast.success('Endereço de entrega preenchido. Confira o número antes de finalizar.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Falha ao buscar CEP. Tente novamente.');
+    } finally {
+      setDeliveryCepLoading(false);
+    }
+  }
 
   async function onSubmit(values: OrderFormValues) {
     const result = await createOrder(values);
@@ -309,6 +351,18 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
               <a href={driverWhatsappUrl} target="_blank" rel="noreferrer">
                 <Truck className="h-4 w-4" />
                 Enviar ao entregador
+              </a>
+            </Button>
+            <Button asChild className="gap-2" variant="outline">
+              <a href={googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Abrir entrega no Google Maps">
+                <MapPinned className="h-4 w-4" />
+                Maps
+              </a>
+            </Button>
+            <Button asChild className="gap-2" variant="outline">
+              <a href={wazeUrl} target="_blank" rel="noreferrer" aria-label="Abrir entrega no Waze">
+                <Navigation className="h-4 w-4" />
+                Waze
               </a>
             </Button>
             <Button className="gap-2" variant="outline" onClick={() => router.push('/dashboard/entregas')}>
@@ -517,6 +571,41 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
 
                 {deliveryAddressChanged ? (
                   <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="alternate-delivery-cep"
+                        className="text-sm font-medium text-slate-900"
+                      >
+                        CEP do outro endereço
+                      </label>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Input
+                          id="alternate-delivery-cep"
+                          value={deliveryCep}
+                          onChange={(event) => setDeliveryCep(event.target.value)}
+                          onBlur={(event) => {
+                            if (normalizeCep(event.target.value).length === 8) {
+                              void handleAlternateDeliveryCepSearch();
+                            }
+                          }}
+                          inputMode="numeric"
+                          placeholder="37200-000"
+                          disabled={isDeliveryCepLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={handleAlternateDeliveryCepSearch}
+                          disabled={isDeliveryCepLoading}
+                          aria-label="Buscar outro endereço pelo CEP"
+                          title="Buscar outro endereço pelo CEP"
+                        >
+                          <Search className="h-4 w-4" />
+                          {isDeliveryCepLoading ? 'Buscando...' : 'Buscar CEP'}
+                        </Button>
+                      </div>
+                    </div>
                     <FormField
                       control={form.control}
                       name="deliveryAddress"

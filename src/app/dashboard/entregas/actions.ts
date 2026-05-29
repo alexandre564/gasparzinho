@@ -53,6 +53,8 @@ export async function getPaginatedDeliveries(
         { order: { customer: { neighborhood: { contains: query } } } },
         { order: { customer: { city: { contains: query } } } },
         { order: { customer: { reference: { contains: query } } } },
+        { order: { deliveryAddress: { contains: query } } },
+        { order: { deliveryReference: { contains: query } } },
         { order: { paymentMethod: { contains: query.toUpperCase() } } },
         { status: { contains: query.toUpperCase() } },
         { orderId: { contains: query } },

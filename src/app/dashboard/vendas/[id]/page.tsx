@@ -20,6 +20,8 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
+  MapPinned,
+  Navigation,
   User,
   ShoppingCart,
   Truck,
@@ -29,6 +31,7 @@ import {
 import CancelOrderButton from './CancelOrderButton';
 import { OrderStatus } from "@/types/enums";
 import { deliveryStatusLabels, labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
+import { buildGoogleMapsUrl, buildWazeUrl } from '@/lib/maps';
 
 
 export const dynamic = 'force-dynamic';
@@ -74,6 +77,8 @@ export default async function OrderDetailsPage({
     .join(' - ');
   const deliveryAddress = order.deliveryAddress || customerAddress;
   const deliveryReference = order.deliveryReference || order.customer.reference;
+  const googleMapsUrl = buildGoogleMapsUrl(deliveryAddress);
+  const wazeUrl = buildWazeUrl(deliveryAddress);
 
   return (
     <div className="space-y-6">
@@ -226,6 +231,20 @@ export default async function OrderDetailsPage({
               {order.deliveryAddressChanged ? (
                 <Badge variant="secondary">Endereco diferente do cadastro</Badge>
               ) : null}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button asChild size="sm" variant="outline" className="gap-2">
+                  <a href={googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Abrir entrega no Google Maps">
+                    <MapPinned className="h-4 w-4" />
+                    Maps
+                  </a>
+                </Button>
+                <Button asChild size="sm" variant="outline" className="gap-2">
+                  <a href={wazeUrl} target="_blank" rel="noreferrer" aria-label="Abrir entrega no Waze">
+                    <Navigation className="h-4 w-4" />
+                    Waze
+                  </a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

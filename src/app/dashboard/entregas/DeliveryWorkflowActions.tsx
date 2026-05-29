@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle2, MessageCircle, Truck } from 'lucide-react';
+import { CheckCircle2, MapPinned, MessageCircle, Navigation, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { paymentMethodLabels, labelFrom } from '@/lib/labels';
+import { buildGoogleMapsUrl, buildWazeUrl } from '@/lib/maps';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { confirmDeliveryPayment, markDeliverySentToDriver } from './actions';
 
@@ -60,6 +61,8 @@ export default function DeliveryWorkflowActions({
   const reference = deliveryReference || customer.reference || '-';
   const orderSummary = itemsText(items);
   const paymentLabel = labelFrom(paymentMethodLabels, paymentMethod);
+  const googleMapsUrl = buildGoogleMapsUrl(address);
+  const wazeUrl = buildWazeUrl(address);
   const customerMessage = `Olá ${customer.name}, seu pedido na Gás Gasparzinho saiu para entrega. Itens: ${orderSummary}. Total: ${currency.format(total)}. Pagamento: ${paymentLabel}.`;
   const driverMessage = `Entrega Gás Gasparzinho\nPedido: ${orderId}\nCliente: ${customer.name}\nTelefone: ${customer.phone}\nEndereço: ${address}\nReferência: ${customer.reference || '-'}\nItens: ${orderSummary}\nTotal: ${currency.format(total)}\nPagamento: ${paymentLabel}${hasOpenDebt ? ' / A RECEBER' : ''}`;
   const customerMessageWithAddress = address
@@ -72,6 +75,8 @@ export default function DeliveryWorkflowActions({
     `Telefone: ${customer.phone}`,
     `Endereco: ${address}`,
     `Referencia: ${reference}`,
+    `Google Maps: ${googleMapsUrl}`,
+    `Waze: ${wazeUrl}`,
     deliveryAddressChanged ? 'Atencao: endereco diferente do cadastro.' : null,
     `Itens: ${orderSummary}`,
     `Total: ${currency.format(total)}`,
@@ -121,6 +126,18 @@ export default function DeliveryWorkflowActions({
       <Button size="sm" variant="outline" className="gap-2" onClick={sendToDriver} disabled={pending || delivered}>
         <Truck className="h-4 w-4" />
         Entregador
+      </Button>
+      <Button asChild size="sm" variant="outline" className="gap-2">
+        <a href={googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Abrir endereço no Google Maps">
+          <MapPinned className="h-4 w-4" />
+          Maps
+        </a>
+      </Button>
+      <Button asChild size="sm" variant="outline" className="gap-2">
+        <a href={wazeUrl} target="_blank" rel="noreferrer" aria-label="Abrir endereço no Waze">
+          <Navigation className="h-4 w-4" />
+          Waze
+        </a>
       </Button>
       <Button size="sm" className="gap-2" onClick={() => confirm('PAGO')} disabled={pending || delivered}>
         <CheckCircle2 className="h-4 w-4" />

@@ -7,12 +7,14 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Customer } from '@prisma/client';
+import { Search } from 'lucide-react';
 import { createCustomer, updateCustomer } from './actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { fetchAddressByCep, normalizeCep } from '@/lib/cep';
 
 const CustomerFormSchema = z.object({
   name: z.string().min(3, { message: 'O nome precisa ter pelo menos 3 caracteres.' }),
@@ -27,24 +29,6 @@ const CustomerFormSchema = z.object({
 });
 
 type CustomerFormValues = z.infer<typeof CustomerFormSchema>;
-
-async function fetchCep(cep: string, form: ReturnType<typeof useForm<CustomerFormValues>>) {
-  try {
-    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-    if (!response.ok) throw new Error('CEP não encontrado');
-    const data = await response.json();
-    if (data.erro) {
-      toast.error('CEP não encontrado. Verifique o número.');
-      return;
-    }
-    form.setValue('street', data.logradouro);
-    form.setValue('neighborhood', data.bairro);
-    form.setValue('city', data.localidade);
-    form.setFocus('number');
-  } catch {
-    toast.error('Falha ao buscar CEP. Tente novamente.');
-  }
-}
 
 export default function CustomerForm({ customer }: { customer?: Customer }) {
   const router = useRouter();
@@ -67,12 +51,35 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
     },
   });
 
-  const handleCepBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
-    const cep = event.target.value.replace(/\D/g, '');
-    if (cep.length === 8) {
+  async function handleCepSearch(rawCep = form.getValues('cep') ?? '') {
+    const cep = normalizeCep(rawCep);
+
+    if (cep.length !== 8) {
+      toast.error('Informe um CEP com 8 dígitos.');
+      return;
+    }
+
+    try {
       setCepLoading(true);
-      await fetchCep(cep, form);
+      const address = await fetchAddressByCep(cep);
+
+      form.setValue('cep', address.cep);
+      form.setValue('street', address.street);
+      form.setValue('neighborhood', address.neighborhood);
+      form.setValue('city', address.city || 'Lavras');
+      form.setFocus('number');
+      toast.success('Endereço preenchido pelo CEP.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Falha ao buscar CEP. Tente novamente.');
+    } finally {
       setCepLoading(false);
+    }
+  }
+
+  const handleCepBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
+    const cep = normalizeCep(event.target.value);
+    if (cep.length === 8) {
+      await handleCepSearch(cep);
     }
   };
 
@@ -160,9 +167,31 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
 
             <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
               <FormField control={form.control} name="cep" render={({ field }) => (
-                <FormItem>
+                <FormItem className="md:col-span-2">
                   <FormLabel>CEP</FormLabel>
-                  <FormControl><Input placeholder="37200-000" {...field} onBlur={handleCepBlur} disabled={isCepLoading} /></FormControl>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <FormControl>
+                      <Input
+                        placeholder="37200-000"
+                        inputMode="numeric"
+                        {...field}
+                        onBlur={handleCepBlur}
+                        disabled={isCepLoading}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2 sm:w-auto"
+                      onClick={() => handleCepSearch()}
+                      disabled={isCepLoading}
+                      aria-label="Buscar endereço pelo CEP"
+                      title="Buscar endereço pelo CEP"
+                    >
+                      <Search className="h-4 w-4" />
+                      {isCepLoading ? 'Buscando...' : 'Buscar CEP'}
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )} />

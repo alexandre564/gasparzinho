@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Box, Calendar, CreditCard, Home, Truck, User } from 'lucide-react';
+import { ArrowLeft, Box, Calendar, CreditCard, Home, MapPinned, Navigation, Truck, User } from 'lucide-react';
 
 import { getDriverWhatsappNumber } from '../../configuracoes/actions';
 import { deliveryStatusLabels, labelFrom, paymentMethodLabels } from '@/lib/labels';
+import { buildGoogleMapsUrl, buildWazeUrl } from '@/lib/maps';
 import { getDeliveryDetails } from '../actions';
 import DeliveryWorkflowActions from '../DeliveryWorkflowActions';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
@@ -66,6 +67,8 @@ export default async function DeliveryDetailsPage({
     .join(' - ');
   const address = order.deliveryAddress || customerAddress;
   const reference = order.deliveryReference || customer.reference;
+  const googleMapsUrl = buildGoogleMapsUrl(address);
+  const wazeUrl = buildWazeUrl(address);
 
   return (
     <div className="space-y-6">
@@ -127,6 +130,20 @@ export default async function DeliveryDetailsPage({
                       Endereco diferente do cadastro
                     </Badge>
                   ) : null}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <Button asChild size="sm" variant="outline" className="gap-2">
+                      <a href={googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Abrir entrega no Google Maps">
+                        <MapPinned className="h-4 w-4" />
+                        Maps
+                      </a>
+                    </Button>
+                    <Button asChild size="sm" variant="outline" className="gap-2">
+                      <a href={wazeUrl} target="_blank" rel="noreferrer" aria-label="Abrir entrega no Waze">
+                        <Navigation className="h-4 w-4" />
+                        Waze
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="flex items-start gap-2">
