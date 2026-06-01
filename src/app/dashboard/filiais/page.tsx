@@ -20,6 +20,11 @@ const readinessItems = [
     description: 'Os módulos foram classificados entre escopo global, por usuário e por filial.',
   },
   {
+    title: 'Modelos Prisma preparados',
+    status: 'Preparado',
+    description: 'Organization e Branch já existem no schema, ainda sem conexão com dados operacionais.',
+  },
+  {
     title: 'Migração real de dados',
     status: 'Pendente',
     description: 'A criação de Organization, Branch e branchId deve aguardar regras de negócio fechadas.',
@@ -116,7 +121,7 @@ export default async function BranchesPage() {
             O objetivo é avançar por camadas, mantendo a operação atual estável.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
+        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {readinessItems.map((item) => (
             <div key={item.title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <Badge variant={item.status === 'Pendente' ? 'secondary' : 'default'}>{item.status}</Badge>

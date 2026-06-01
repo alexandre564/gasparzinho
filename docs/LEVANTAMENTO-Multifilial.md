@@ -10,6 +10,7 @@ Este levantamento prepara a evolução do Gasparzinho para a plataforma **Gas**,
 - A filial padrão aparece no cabeçalho e no menu lateral.
 - A tela de Configurações permite alterar o nome da filial ativa sem migração de banco.
 - O menu administrativo possui a área "Filiais" para acompanhar a preparação multifilial.
+- O Prisma já possui os modelos isolados `Organization` e `Branch`, sem vínculo obrigatório com os dados atuais.
 - O seed cria a filial padrão lógica como "Gás Gasparzinho".
 - Nenhuma consulta operacional foi filtrada por filial ainda, evitando regressão nos módulos já funcionando.
 

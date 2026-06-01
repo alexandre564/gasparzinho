@@ -16,41 +16,46 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 - Permissões: o administrador geral vê todas as filiais; administradores de filial veem apenas sua unidade; vendedores e entregadores veem apenas a filial vinculada.
 - Dados operacionais: clientes, produtos, estoque, pedidos, entregas, dívidas, gastos, frota e fechamentos devem receber vínculo com filial.
 
-## Fases recomendadas
+## Fases recomendadas e status
 
 ### Fase 1 - Preparação sem risco
 
-- Criar o conceito documentado de filial padrão.
-- Adicionar configuração `defaultBranchName` em `SystemSetting` quando necessário.
-- Mapear todos os modelos que precisarão de `branchId`.
-- Não alterar consultas de produção ainda.
+- [x] Criar o conceito documentado de filial padrão.
+- [x] Adicionar configuração `defaultBranchName` em `SystemSetting`.
+- [x] Exibir filial ativa no cabeçalho e no menu lateral.
+- [x] Criar tela administrativa de acompanhamento em "Filiais".
+- [x] Mapear todos os modelos que precisarão de `branchId`.
+- [x] Criar auditoria estática com `npm run branches:audit`.
+- [x] Não alterar consultas de produção ainda.
 
 ### Fase 2 - Banco multifilial
 
-- Criar tabelas `Organization` e `Branch`.
-- Criar uma filial padrão para os dados atuais.
-- Adicionar `branchId` aos modelos operacionais em migração controlada.
-- Preencher `branchId` nos dados existentes com a filial padrão.
-- Adicionar índices por filial para consultas rápidas.
+- [x] Preparar modelos isolados `Organization` e `Branch` no Prisma sem conectar aos dados atuais.
+- [ ] Criar as tabelas no banco por migração controlada.
+- [ ] Criar uma filial padrão real para os dados atuais.
+- [ ] Adicionar `branchId` opcional aos modelos operacionais.
+- [ ] Preencher `branchId` nos dados existentes com a filial padrão.
+- [ ] Adicionar índices por filial para consultas rápidas.
 
 ### Fase 3 - Permissões e sessão
 
-- Adicionar `organizationId` e `branchId` ao usuário.
-- Incluir filial ativa na sessão.
-- Proteger consultas e ações para que cada perfil veja apenas o escopo permitido.
-- Criar seleção de filial apenas para administradores gerais.
+- [ ] Adicionar `organizationId` e `branchId` ao usuário.
+- [ ] Incluir filial ativa na sessão.
+- [ ] Proteger consultas e ações para que cada perfil veja apenas o escopo permitido.
+- [ ] Criar seleção de filial apenas para administradores gerais.
 
 ### Fase 4 - Interface administrativa
 
-- Criar módulo "Filiais" para cadastrar, editar, ativar, pausar e configurar unidades.
-- Exibir nome da filial ativa no cabeçalho.
-- Permitir relatórios consolidados para administrador geral e relatórios isolados por filial.
+- [x] Criar módulo inicial "Filiais" para acompanhamento da preparação.
+- [x] Exibir nome da filial ativa no cabeçalho.
+- [ ] Cadastrar, editar, ativar, pausar e configurar unidades reais.
+- [ ] Permitir relatórios consolidados para administrador geral e relatórios isolados por filial.
 
 ### Fase 5 - Comercialização/licenciamento
 
-- Adicionar status contratual da filial: teste, ativa, suspensa, cancelada.
-- Preparar campos para plano, vencimento, responsável, contato e observações.
-- Criar telas de acompanhamento de uso sem expor dados de uma filial a outra.
+- [ ] Adicionar status contratual da filial: teste, ativa, suspensa, cancelada.
+- [ ] Preparar campos para plano, vencimento, responsável, contato e observações.
+- [ ] Criar telas de acompanhamento de uso sem expor dados de uma filial a outra.
 
 ## Critérios de aceite
 
