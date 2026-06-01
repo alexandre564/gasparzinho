@@ -25,6 +25,11 @@ const readinessItems = [
     description: 'Organization e Branch já existem no schema, ainda sem conexão com dados operacionais.',
   },
   {
+    title: 'Criação no banco',
+    status: 'Pronto para executar',
+    description: 'Migração, db:safe-sync e seed da filial padrão já estão preparados.',
+  },
+  {
     title: 'Migração real de dados',
     status: 'Pendente',
     description: 'A criação de Organization, Branch e branchId deve aguardar regras de negócio fechadas.',

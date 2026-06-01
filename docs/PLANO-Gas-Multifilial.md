@@ -31,8 +31,9 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 ### Fase 2 - Banco multifilial
 
 - [x] Preparar modelos isolados `Organization` e `Branch` no Prisma sem conectar aos dados atuais.
-- [ ] Criar as tabelas no banco por migração controlada.
-- [ ] Criar uma filial padrão real para os dados atuais.
+- [x] Preparar migração e `db:safe-sync` para criar as tabelas no banco.
+- [x] Preparar script `npm run branches:seed-default` para criar a organização e filial padrão reais.
+- [ ] Executar a criação das tabelas e filial padrão no banco de produção.
 - [ ] Adicionar `branchId` opcional aos modelos operacionais.
 - [ ] Preencher `branchId` nos dados existentes com a filial padrão.
 - [ ] Adicionar índices por filial para consultas rápidas.

@@ -11,6 +11,8 @@ Este levantamento prepara a evolução do Gasparzinho para a plataforma **Gas**,
 - A tela de Configurações permite alterar o nome da filial ativa sem migração de banco.
 - O menu administrativo possui a área "Filiais" para acompanhar a preparação multifilial.
 - O Prisma já possui os modelos isolados `Organization` e `Branch`, sem vínculo obrigatório com os dados atuais.
+- A migração `20260601093000_add_multibranch_foundation` e o `db:safe-sync` já estão preparados para criar as tabelas.
+- O comando `npm run branches:seed-default` prepara a organização `Gas` e a filial `Gás Gasparzinho`.
 - O seed cria a filial padrão lógica como "Gás Gasparzinho".
 - Nenhuma consulta operacional foi filtrada por filial ainda, evitando regressão nos módulos já funcionando.
 
@@ -66,8 +68,8 @@ O comando `npm run branches:audit` lista os arquivos que acessam Prisma e ajuda 
 
 ## Sequência técnica recomendada
 
-1. Criar modelos `Organization` e `Branch`.
-2. Criar uma organização e uma filial padrão para os dados atuais.
+1. Criar modelos `Organization` e `Branch`. Concluído no schema.
+2. Criar uma organização e uma filial padrão para os dados atuais. Script preparado; execução no banco ainda pendente.
 3. Adicionar `organizationId` e `branchId` opcionais aos usuários.
 4. Adicionar `branchId` opcional aos modelos operacionais, ainda sem tornar obrigatório.
 5. Rodar script de preenchimento para associar dados antigos à filial padrão.
