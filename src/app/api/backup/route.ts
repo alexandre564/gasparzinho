@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -27,6 +29,7 @@ export async function GET() {
     return denied;
   }
 
+  const branchScope = await getCurrentBranchScope();
   const [
     users,
     customers,
@@ -43,23 +46,27 @@ export async function GET() {
     organizations,
     branches,
   ] = await Promise.all([
-    prisma.user.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.customer.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.product.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.inventoryMovement.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.butaneCylinder.findMany({ orderBy: { createdAt: 'asc' } }),
+    prisma.user.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.customer.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.product.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.inventoryMovement.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.butaneCylinder.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
     prisma.order.findMany({
+      where: buildBranchWhere(branchScope),
       orderBy: { createdAt: 'asc' },
       include: { items: true },
     }),
-    prisma.delivery.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.debt.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.expense.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.vehicle.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.dailyClosing.findMany({ orderBy: { createdAt: 'asc' } }),
+    prisma.delivery.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.debt.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.expense.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.vehicle.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
+    prisma.dailyClosing.findMany({ where: buildBranchWhere(branchScope), orderBy: { createdAt: 'asc' } }),
     prisma.systemSetting.findMany({ orderBy: { key: 'asc' } }),
     optionalFindMany(() => prisma.organization.findMany({ orderBy: { createdAt: 'asc' } })),
-    optionalFindMany(() => prisma.branch.findMany({ orderBy: { createdAt: 'asc' } })),
+    optionalFindMany(() => prisma.branch.findMany({
+      where: branchScope.canSeeAllBranches ? {} : { id: branchScope.branchId },
+      orderBy: { createdAt: 'asc' },
+    })),
   ]);
 
   const exportedAt = new Date();

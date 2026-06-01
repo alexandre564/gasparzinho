@@ -2,6 +2,8 @@ import { endOfDay, endOfMonth, endOfWeek, endOfYear, startOfDay, startOfMonth, s
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -12,18 +14,20 @@ function csvCell(value: unknown) {
 }
 
 async function getRevenue(from: Date, to: Date) {
+  const branchScope = await getCurrentBranchScope();
   const result = await prisma.order.aggregate({
     _sum: { grossValue: true },
-    where: { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } },
+    where: buildBranchWhere(branchScope, { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } }),
   });
 
   return result._sum.grossValue ?? 0;
 }
 
 async function getExpenses(from: Date, to: Date) {
+  const branchScope = await getCurrentBranchScope();
   const result = await prisma.expense.aggregate({
     _sum: { value: true },
-    where: { date: { gte: from, lte: to } },
+    where: buildBranchWhere(branchScope, { date: { gte: from, lte: to } }),
   });
 
   return result._sum.value ?? 0;

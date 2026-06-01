@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -73,8 +75,10 @@ export async function GET(request: NextRequest) {
   const stockFilter = getStockFilter(stock);
   const sort = normalizeSortKey(request.nextUrl.searchParams.get('sort')?.trim() ?? '');
   const direction = normalizeSortDirection(request.nextUrl.searchParams.get('direction')?.trim() ?? '');
+  const branchScope = await getCurrentBranchScope();
   const products = await prisma.product.findMany({
     where: {
+      ...buildBranchWhere(branchScope),
       ...(query && {
         OR: [
           { name: { contains: query } },

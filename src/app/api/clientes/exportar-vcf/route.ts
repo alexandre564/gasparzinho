@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
 import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -60,7 +62,9 @@ export async function GET(request: NextRequest) {
   }
 
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
+  const branchScope = await getCurrentBranchScope();
   const customers = await prisma.customer.findMany({
+    where: buildBranchWhere(branchScope),
     orderBy: { name: 'asc' },
     select: {
       name: true,

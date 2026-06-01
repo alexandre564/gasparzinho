@@ -47,7 +47,7 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 - [x] Adicionar `organizationId` e `branchId` ao usuário.
 - [x] Incluir filial ativa na sessão.
 - [x] Proteger consultas e ações operacionais para que cada perfil use o escopo permitido.
-- [ ] Criar seleção de filial apenas para administradores gerais.
+- [x] Criar seleção de filial apenas para administradores gerais.
 
 ### Fase 4 - Interface administrativa
 
@@ -59,9 +59,9 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 
 ### Fase 5 - Comercialização/licenciamento
 
-- [ ] Adicionar status contratual da filial: teste, ativa, suspensa, cancelada.
-- [ ] Preparar campos para plano, vencimento, responsável, contato e observações.
-- [ ] Criar telas de acompanhamento de uso sem expor dados de uma filial a outra.
+- [x] Adicionar status contratual da filial: teste, ativa, suspensa, cancelada.
+- [x] Preparar campos para plano, vencimento, responsável, contato e observações.
+- [x] Criar telas de acompanhamento de uso sem expor dados de uma filial a outra.
 
 ## Critérios de aceite
 
@@ -73,7 +73,7 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 
 ## Próximo passo seguro
 
-Antes de qualquer migração, criar um levantamento técnico com todos os pontos de acesso ao banco e classificar cada consulta como global, por usuário ou por filial. Só depois disso iniciar a migração real.
+Validar a operação em produção com usuários reais por perfil, confirmar que as variáveis do banco estão disponíveis no build/deploy e, depois de alguns dias de uso sem regressão, avaliar se `branchId` deve se tornar obrigatório nos modelos operacionais.
 
 ## Andamento iniciado
 
@@ -85,5 +85,5 @@ Antes de qualquer migração, criar um levantamento técnico com todos os pontos
 - A auditoria estática de pontos Prisma pode ser executada com `npm run branches:audit`.
 - A auditoria de schema pode ser executada com `npm run branches:schema-audit`.
 - O checklist de execução está em `docs/CHECKLIST-Multifilial.md`.
-- O helper `src/lib/branch-scope.ts` já prepara o padrão de filtro futuro, mas ainda não é aplicado nas consultas operacionais para evitar erro de coluna inexistente.
-- A migração real para `Organization`, `Branch` e `branchId` segue pendente de decisão de regra de negócio, para não quebrar os dados atuais.
+- O helper `src/lib/branch-scope.ts` já padroniza o filtro por filial nas consultas operacionais principais.
+- A migração real para `Organization`, `Branch` e `branchId` foi aplicada de forma opcional e segura, mantendo o Gasparzinho como filial padrão.

@@ -1,6 +1,8 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -88,6 +90,7 @@ function getPointName(period: ReportPeriod, date: Date) {
 }
 
 async function getPeriodTotals(start: Date, end: Date) {
+  const branchScope = await getCurrentBranchScope();
   const orderWhere = {
     createdAt: { gte: start, lte: end },
     status: { not: 'CANCELADO' },
@@ -95,12 +98,12 @@ async function getPeriodTotals(start: Date, end: Date) {
   const [ordersTotal, ordersCount, expensesTotal] = await prisma.$transaction([
     prisma.order.aggregate({
       _sum: { grossValue: true },
-      where: orderWhere,
+      where: buildBranchWhere(branchScope, orderWhere),
     }),
-    prisma.order.count({ where: orderWhere }),
+    prisma.order.count({ where: buildBranchWhere(branchScope, orderWhere) }),
     prisma.expense.aggregate({
       _sum: { value: true },
-      where: { date: { gte: start, lte: end } },
+      where: buildBranchWhere(branchScope, { date: { gte: start, lte: end } }),
     }),
   ]);
   const total = ordersTotal._sum.grossValue ?? 0;

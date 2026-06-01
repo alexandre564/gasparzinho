@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
 import { decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { getDebtPaymentBreakdown } from '@/lib/debts';
 import { prisma } from '@/lib/prisma';
 
@@ -126,10 +128,11 @@ export async function GET(request: NextRequest) {
   const status = normalizeStatusFilter(request.nextUrl.searchParams.get('status')?.trim());
   const sort = normalizeSortKey(request.nextUrl.searchParams.get('sort'));
   const direction = normalizeSortDirection(request.nextUrl.searchParams.get('direction'));
+  const branchScope = await getCurrentBranchScope();
   const debts = await prisma.debt.findMany({
-    where: {
+    where: buildBranchWhere(branchScope, {
       ...(status && { status }),
-    },
+    }),
     orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
     include: {
       customer: { select: { name: true, phone: true } },

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { getDebtPaymentBreakdown } from '@/lib/debts';
 import { labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
 import { prisma } from '@/lib/prisma';
@@ -36,24 +38,30 @@ export async function GET() {
     return denied;
   }
 
+  const branchScope = await getCurrentBranchScope();
   const [users, customers, products, orders, debts, expenses, vehicles, closings, settings, organizations, branches] = await Promise.all([
-    prisma.user.findMany({ orderBy: { name: 'asc' } }),
-    prisma.customer.findMany({ orderBy: { name: 'asc' } }),
-    prisma.product.findMany({ orderBy: { name: 'asc' } }),
+    prisma.user.findMany({ where: buildBranchWhere(branchScope), orderBy: { name: 'asc' } }),
+    prisma.customer.findMany({ where: buildBranchWhere(branchScope), orderBy: { name: 'asc' } }),
+    prisma.product.findMany({ where: buildBranchWhere(branchScope), orderBy: { name: 'asc' } }),
     prisma.order.findMany({
+      where: buildBranchWhere(branchScope),
       orderBy: { createdAt: 'desc' },
       include: { customer: true, items: { include: { product: true } }, debt: true },
     }),
     prisma.debt.findMany({
+      where: buildBranchWhere(branchScope),
       orderBy: { createdAt: 'desc' },
       include: { customer: true },
     }),
-    prisma.expense.findMany({ orderBy: { date: 'desc' } }),
-    prisma.vehicle.findMany({ orderBy: { placa: 'asc' } }),
-    prisma.dailyClosing.findMany({ orderBy: { date: 'desc' } }),
+    prisma.expense.findMany({ where: buildBranchWhere(branchScope), orderBy: { date: 'desc' } }),
+    prisma.vehicle.findMany({ where: buildBranchWhere(branchScope), orderBy: { placa: 'asc' } }),
+    prisma.dailyClosing.findMany({ where: buildBranchWhere(branchScope), orderBy: { date: 'desc' } }),
     prisma.systemSetting.findMany({ orderBy: { key: 'asc' } }),
     optionalFindMany(() => prisma.organization.findMany({ orderBy: { name: 'asc' } })),
-    optionalFindMany(() => prisma.branch.findMany({ orderBy: { name: 'asc' } })),
+    optionalFindMany(() => prisma.branch.findMany({
+      where: branchScope.canSeeAllBranches ? {} : { id: branchScope.branchId },
+      orderBy: { name: 'asc' },
+    })),
   ]);
 
   const csv = [

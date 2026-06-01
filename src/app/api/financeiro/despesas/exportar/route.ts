@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -30,12 +32,13 @@ export async function GET(request: NextRequest) {
   const category = request.nextUrl.searchParams.get('category')?.trim() ?? '';
   const fromDate = parseFilterDate(request.nextUrl.searchParams.get('from'));
   const toDate = parseFilterDate(request.nextUrl.searchParams.get('to'));
+  const branchScope = await getCurrentBranchScope();
 
   if (toDate) {
     toDate.setHours(23, 59, 59, 999);
   }
   const expenses = await prisma.expense.findMany({
-    where: {
+    where: buildBranchWhere(branchScope, {
       ...(query && {
         OR: [
           { description: { contains: query } },
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
             },
           }
         : {}),
-    },
+    }),
     orderBy: { date: 'desc' },
   });
 

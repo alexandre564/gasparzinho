@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope'
+import { getCurrentBranchScope } from '@/lib/current-branch-scope'
 import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels'
 import { prisma } from '@/lib/prisma'
 
@@ -29,7 +31,9 @@ export async function GET(request: NextRequest) {
   const query = normalizeText(request.nextUrl.searchParams.get('query'))
   const status = request.nextUrl.searchParams.get('status')?.trim() ?? ''
   const type = request.nextUrl.searchParams.get('type')?.trim() ?? ''
+  const branchScope = await getCurrentBranchScope()
   const vehicles = await prisma.vehicle.findMany({
+    where: buildBranchWhere(branchScope),
     orderBy: { placa: 'asc' },
   })
   const filteredVehicles = vehicles.filter((vehicle) => {

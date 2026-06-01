@@ -6,6 +6,8 @@ import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { OrderStatus } from '@/types/enums';
 
 const DailyClosingSchema = z.object({
@@ -50,25 +52,27 @@ export type StockForecastItem = {
 export async function getDailyClosingData() {
   const todayStart = startOfDay(new Date());
   const todayEnd = endOfDay(new Date());
+  const branchScope = await getCurrentBranchScope();
 
   const [sales, expenses, currentStock, todayClosing] = await Promise.all([
     prisma.order.findMany({
-      where: {
+      where: buildBranchWhere(branchScope, {
         createdAt: { gte: todayStart, lte: todayEnd },
         status: { in: [OrderStatus.CONFIRMADO, OrderStatus.CONCLUIDO, OrderStatus.ENTREGUE] },
-      },
+      }),
       include: { customer: { select: { name: true } } },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.expense.findMany({
-      where: { date: { gte: todayStart, lte: todayEnd } },
+      where: buildBranchWhere(branchScope, { date: { gte: todayStart, lte: todayEnd } }),
     }),
     prisma.product.findMany({
+      where: buildBranchWhere(branchScope),
       select: { name: true, inventory: true },
       orderBy: { name: 'asc' },
     }),
     prisma.dailyClosing.findFirst({
-      where: { date: { gte: todayStart, lte: todayEnd } },
+      where: buildBranchWhere(branchScope, { date: { gte: todayStart, lte: todayEnd } }),
     }),
   ]);
 
@@ -120,10 +124,11 @@ export async function createDailyClosing(
   const { date, totalRevenue, totalExpenses, netBalance, ordersCount, stockForecast } =
     validatedFields.data;
   const dayStart = startOfDay(date);
+  const branchScope = await getCurrentBranchScope();
 
   try {
     const existingClosing = await prisma.dailyClosing.findFirst({
-      where: { date: { gte: dayStart, lte: endOfDay(date) } },
+      where: buildBranchWhere(branchScope, { date: { gte: dayStart, lte: endOfDay(date) } }),
     });
 
     if (existingClosing) {
@@ -139,6 +144,7 @@ export async function createDailyClosing(
         netBalance,
         ordersCount,
         notes: stockForecast ? `Estoque no fechamento: ${stockForecast}` : null,
+        branchId: branchScope.branchId,
       },
     });
 
@@ -157,8 +163,9 @@ export async function getClosingHistory(from?: string, to?: string) {
   const fromDate = parseFilterDate(from);
   const toDate = parseFilterDate(to);
   const endDate = toDate ? endOfDay(toDate) : null;
+  const branchScope = await getCurrentBranchScope();
   const history = await prisma.dailyClosing.findMany({
-    where: {
+    where: buildBranchWhere(branchScope, {
       ...(fromDate || endDate
         ? {
             date: {
@@ -167,7 +174,7 @@ export async function getClosingHistory(from?: string, to?: string) {
             },
           }
         : {}),
-    },
+    }),
     take: 30,
     orderBy: { date: 'desc' },
   });

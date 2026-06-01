@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -26,8 +28,9 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
   const role = request.nextUrl.searchParams.get('role')?.trim() ?? '';
   const active = request.nextUrl.searchParams.get('active')?.trim() ?? '';
+  const branchScope = await getCurrentBranchScope();
   const users = await prisma.user.findMany({
-    where: {
+    where: buildBranchWhere(branchScope, {
       ...(query && {
         OR: [
           { name: { contains: query } },
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest) {
       }),
       ...(role && role !== 'TODOS' ? { role } : {}),
       ...(active === 'true' || active === 'false' ? { isActive: active === 'true' } : {}),
-    },
+    }),
     orderBy: { name: 'asc' },
   });
 

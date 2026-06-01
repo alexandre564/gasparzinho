@@ -3,10 +3,12 @@ import { Download, FileSpreadsheet } from 'lucide-react';
 import { auth } from '@/auth';
 import { BrandLogo } from '@/components/BrandLogo';
 import { getDefaultBranchName } from '@/lib/branch-settings';
+import { getCurrentBranchDisplayName } from '@/lib/current-branch-scope';
 import { mainNavLinks, roleLabels, settingsNavLink } from '@/lib/navigation';
 
 export default async function Sidebar() {
-  const [session, branchName] = await Promise.all([auth(), getDefaultBranchName()]);
+  const [session, defaultBranchName] = await Promise.all([auth(), getDefaultBranchName()]);
+  const branchName = await getCurrentBranchDisplayName(defaultBranchName);
   const userRole = session?.user?.role?.toUpperCase() || '';
   const userName = session?.user?.name || session?.user?.email || 'Usuário';
   const roleLabel = roleLabels[userRole] ?? (userRole || 'Sem autorização');

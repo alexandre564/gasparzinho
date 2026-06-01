@@ -21,7 +21,7 @@ Este checklist controla a transição do Gasparzinho para a plataforma **Gas** s
 - [x] A migração segura preenche dados atuais com a filial padrão.
 - [x] Os scripts de inicialização rodam sincronização segura antes de abrir o sistema local.
 
-## Antes de adicionar `branchId` nos dados operacionais
+## Confirmações de produção
 
 - [ ] Confirmar que `Organization` e `Branch` existem no banco de produção, pela tela de Filiais ou pelo seed.
 - [ ] Executar `npm run branches:seed-default` com acesso ao banco correto, caso a filial padrão ainda não apareça.
@@ -41,6 +41,8 @@ Este checklist controla a transição do Gasparzinho para a plataforma **Gas** s
 - [x] Atualizar sessão para carregar filial ativa.
 - [x] Aplicar helpers de escopo por filial nos módulos operacionais.
 - [x] Bloquear acesso direto por URL quando o usuário não pertencer à filial nos fluxos já escopados.
+- [x] Aplicar escopo por filial em exportações, backup, relatórios e fechamento.
+- [x] Criar seleção de filial ativa para administrador geral.
 - [ ] Só depois tornar `branchId` obrigatório onde fizer sentido.
 
 ## Validação obrigatória após migração
@@ -51,5 +53,5 @@ Este checklist controla a transição do Gasparzinho para a plataforma **Gas** s
 - [ ] Login de entregador.
 - [x] Clientes isolados por filial.
 - [x] Venda gerando entrega, financeiro e cobrança na filial correta.
-- [ ] Backup/exportações respeitando filial ativa.
-- [ ] Relatórios consolidados apenas para administrador geral.
+- [x] Backup/exportações respeitando filial ativa.
+- [x] Relatórios consolidados apenas para administrador geral.

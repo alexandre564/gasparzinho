@@ -18,7 +18,7 @@ Este levantamento prepara a evolução do Gasparzinho para a plataforma **Gas**,
 - O seed cria a filial padrão lógica como "Gás Gasparzinho".
 - Os modelos operacionais já possuem `branchId` opcional e a migração segura preenche os dados existentes com `branch_gasparzinho_default`.
 - A sessão de login já carrega `organizationId` e `branchId` quando esses campos existem no usuário.
-- Nenhuma consulta operacional foi filtrada por filial ainda, evitando regressão nos módulos já funcionando.
+- As consultas operacionais principais, exportações, backup, relatórios e fechamento já aplicam escopo por filial, com administrador geral podendo alternar entre visão consolidada e filial ativa.
 
 ## Classificação de escopo atual
 
@@ -73,13 +73,13 @@ O comando `npm run branches:audit` lista os arquivos que acessam Prisma e ajuda 
 ## Sequência técnica recomendada
 
 1. Criar modelos `Organization` e `Branch`. Concluído no schema.
-2. Criar uma organização e uma filial padrão para os dados atuais. Script preparado; execução no banco ainda pendente.
+2. Criar uma organização e uma filial padrão para os dados atuais. Script preparado e executado de forma segura quando o banco está acessível.
 3. Adicionar `organizationId` e `branchId` opcionais aos usuários. Concluído no schema e na sessão.
 4. Adicionar `branchId` opcional aos modelos operacionais, ainda sem tornar obrigatório. Concluído.
 5. Rodar script de preenchimento para associar dados antigos à filial padrão. Preparado em migração segura.
 6. Atualizar sessão para carregar filial ativa. Concluído.
-7. Criar helpers de consulta, por exemplo `getCurrentBranchScope()` e `withBranchWhere()`. Preparado inicialmente em `src/lib/branch-scope.ts`.
-8. Atualizar módulo por módulo, começando por clientes e vendas.
+7. Criar helpers de consulta, por exemplo `getCurrentBranchScope()` e `withBranchWhere()`. Concluído com escopo por sessão/cookie de filial ativa.
+8. Atualizar módulo por módulo, começando por clientes e vendas. Concluído nos módulos operacionais principais e nas exportações.
 9. Tornar `branchId` obrigatório apenas depois de todos os módulos validarem isolamento.
 
 ## Riscos controlados

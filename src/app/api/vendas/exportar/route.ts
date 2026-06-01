@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope'
 import { deliveryStatusLabels, labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels'
 import { prisma } from '@/lib/prisma'
 import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text'
+import { getCurrentBranchScope } from '@/lib/current-branch-scope'
 
 export const dynamic = 'force-dynamic'
 
@@ -125,12 +127,14 @@ export async function GET(request: NextRequest) {
   const normalizedQuery = query.toUpperCase()
   const selectedDate = parseFilterDate(date)
   const dayEnd = selectedDate ? new Date(selectedDate) : null
+  const branchScope = await getCurrentBranchScope()
 
   if (dayEnd) {
     dayEnd.setHours(23, 59, 59, 999)
   }
 
   const baseWhere: Prisma.OrderWhereInput = {
+    ...buildBranchWhere(branchScope),
     ...(status && status !== 'ALL' && { status }),
     ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
     ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),

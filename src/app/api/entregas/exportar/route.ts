@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope'
 import { deliveryStatusLabels, labelFrom, paymentMethodLabels } from '@/lib/labels'
 import { prisma } from '@/lib/prisma'
 import { cleanCustomerTextFields, decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text'
+import { getCurrentBranchScope } from '@/lib/current-branch-scope'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,12 +107,14 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get('status')?.trim() ?? ''
   const fromDate = parseFilterDate(request.nextUrl.searchParams.get('from'))
   const toDate = parseFilterDate(request.nextUrl.searchParams.get('to'))
+  const branchScope = await getCurrentBranchScope()
 
   if (toDate) {
     toDate.setHours(23, 59, 59, 999)
   }
 
   const baseWhere: Prisma.DeliveryWhereInput = {
+    ...buildBranchWhere(branchScope),
     ...(status && status !== 'TODOS' && { status }),
     ...(fromDate || toDate
       ? {

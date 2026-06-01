@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireApiAccess } from '@/lib/api-auth';
 import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -63,7 +65,9 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
   const sort = request.nextUrl.searchParams.get('sort') ?? 'lastPurchase';
   const direction = request.nextUrl.searchParams.get('direction') === 'asc' ? 'asc' : 'desc';
+  const branchScope = await getCurrentBranchScope();
   const customers = await prisma.customer.findMany({
+    where: buildBranchWhere(branchScope),
     orderBy: { name: 'asc' },
     include: {
       orders: {

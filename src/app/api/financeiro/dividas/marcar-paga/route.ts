@@ -1,6 +1,8 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export const runtime = 'nodejs';
 
@@ -22,8 +24,21 @@ export async function PATCH(request: Request) {
       );
     }
 
+    const branchScope = await getCurrentBranchScope();
+    const debt = await prisma.debt.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
+      select: { id: true },
+    });
+
+    if (!debt) {
+      return Response.json(
+        { success: false, message: 'Dívida não encontrada para esta filial.' },
+        { status: 404 },
+      );
+    }
+
     await prisma.debt.update({
-      where: { id },
+      where: { id: debt.id },
       data: {
         status: 'PAGO',
         paidAt: new Date(),

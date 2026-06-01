@@ -9,9 +9,11 @@ import {
 import { auth } from "@/auth";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { BrandLogo } from "@/components/BrandLogo";
+import { BranchScopeSelector } from "@/components/BranchScopeSelector";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { Button } from "@/components/ui/button";
 import { getDefaultBranchName } from "@/lib/branch-settings";
+import { getCurrentBranchDisplayName } from "@/lib/current-branch-scope";
 import { appNavLinks, roleLabels, settingsNavLink } from "@/lib/navigation";
 import {
   DropdownMenu,
@@ -24,7 +26,8 @@ import {
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export default async function Header() {
-  const [session, branchName] = await Promise.all([auth(), getDefaultBranchName()]);
+  const [session, defaultBranchName] = await Promise.all([auth(), getDefaultBranchName()]);
+  const branchName = await getCurrentBranchDisplayName(defaultBranchName);
   const userRole = session?.user?.role?.toUpperCase() || "";
   const userName = session?.user?.name || session?.user?.email || "Usuário";
   const roleLabel = roleLabels[userRole] ?? (userRole || "Sem autorização");
@@ -113,6 +116,8 @@ export default async function Header() {
       <div className="ml-auto hidden w-full max-w-md items-center md:flex">
         <HeaderSearch />
       </div>
+
+      <BranchScopeSelector />
 
       <Button size="icon" variant="outline" className="hidden border-slate-300 bg-white md:inline-flex">
         <Bell className="h-4 w-4" />

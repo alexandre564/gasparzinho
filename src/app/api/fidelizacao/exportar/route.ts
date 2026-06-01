@@ -2,7 +2,9 @@ import { addDays, differenceInCalendarDays } from 'date-fns';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
 import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -44,11 +46,13 @@ export async function GET(request: NextRequest) {
   const daysParam = Number(request.nextUrl.searchParams.get('days') ?? '15');
   const days = Number.isFinite(daysParam) && daysParam > 0 ? Math.min(daysParam, 90) : 15;
   const query = request.nextUrl.searchParams.get('query')?.trim() ?? '';
+  const branchScope = await getCurrentBranchScope();
 
   const customers = await prisma.customer.findMany({
+    where: buildBranchWhere(branchScope),
     include: {
       orders: {
-        where: { status: { in: [...LOYALTY_ORDER_STATUSES] } },
+        where: buildBranchWhere(branchScope, { status: { in: [...LOYALTY_ORDER_STATUSES] } }),
         orderBy: { createdAt: 'asc' },
         include: {
           items: {

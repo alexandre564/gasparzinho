@@ -2,6 +2,8 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -30,8 +32,9 @@ export async function GET(request: NextRequest) {
   const fromDate = parseFilterDate(request.nextUrl.searchParams.get('from'));
   const toDate = parseFilterDate(request.nextUrl.searchParams.get('to'));
   const endDate = toDate ? endOfDay(toDate) : null;
+  const branchScope = await getCurrentBranchScope();
   const closings = await prisma.dailyClosing.findMany({
-    where: {
+    where: buildBranchWhere(branchScope, {
       ...(fromDate || endDate
         ? {
             date: {
@@ -40,7 +43,7 @@ export async function GET(request: NextRequest) {
             },
           }
         : {}),
-    },
+    }),
     orderBy: { date: 'desc' },
     take: 365,
   });
