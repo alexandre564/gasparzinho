@@ -35,8 +35,12 @@ export async function authenticate(
     if (error instanceof AuthError) {
       console.error('Login AuthError:', error.type, error.cause);
 
-      if (error.type === 'CredentialsSignin' || error.type === 'CallbackRouteError') {
+      if (error.type === 'CredentialsSignin') {
         return 'E-mail ou senha inválidos.';
+      }
+
+      if (error.type === 'CallbackRouteError') {
+        return 'Não foi possível validar o login agora. Confira a conexão com o banco e tente novamente.';
       }
 
       return 'Não foi possível entrar agora. Tente novamente.';

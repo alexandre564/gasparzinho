@@ -6,6 +6,20 @@ import bcrypt from 'bcryptjs';
 
 import authConfig from './auth.config';
 
+const LOGIN_DATABASE_TIMEOUT_MS = 20_000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs = LOGIN_DATABASE_TIMEOUT_MS): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error('Tempo limite excedido ao consultar o banco no login.'));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   trustHost: true,
@@ -31,9 +45,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = parsedCredentials.data.email.trim().toLowerCase();
         const { password } = parsedCredentials.data;
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
+        const user = await withTimeout(
+          prisma.user.findUnique({
+            where: { email },
+          }),
+        );
 
         if (!user || !user.isActive) {
           return null;
