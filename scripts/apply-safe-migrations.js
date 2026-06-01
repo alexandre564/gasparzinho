@@ -1,6 +1,13 @@
 const { quoteIdentifier, withDatabase } = require('./database');
 
 async function main() {
+  if (!process.env.DIRECT_URL && !process.env.DATABASE_URL) {
+    console.warn(
+      'DATABASE_URL ou DIRECT_URL nao foi encontrada. Pulando db:safe-sync; o build continuara sem alterar o banco.',
+    );
+    return;
+  }
+
   await withDatabase(async (client, schema) => {
     const schemaName = quoteIdentifier(schema);
 
