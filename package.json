@@ -12,6 +12,7 @@
     "customers:clean-encoding": "node scripts/clean-customer-encoding.js",
     "data:audit": "node scripts/audit-operational-data.js",
     "data:repair": "node scripts/repair-operational-data.js",
+    "branches:audit": "node scripts/audit-branch-readiness.js",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

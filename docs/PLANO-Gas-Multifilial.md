@@ -69,5 +69,7 @@ Antes de qualquer migração, criar um levantamento técnico com todos os pontos
 - A filial padrão lógica foi iniciada por configuração em `SystemSetting.defaultBranchName`.
 - O nome da filial ativa pode ser alterado em Configurações.
 - Cabeçalho e menu lateral exibem a filial ativa com fallback seguro para "Gás Gasparzinho".
+- O menu administrativo possui a área "Filiais" para acompanhar o preparo sem iniciar migração arriscada.
 - O levantamento técnico inicial está registrado em `docs/LEVANTAMENTO-Multifilial.md`.
+- A auditoria estática de pontos Prisma pode ser executada com `npm run branches:audit`.
 - A migração real para `Organization`, `Branch` e `branchId` segue pendente de decisão de regra de negócio, para não quebrar os dados atuais.

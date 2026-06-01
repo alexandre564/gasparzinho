@@ -3,6 +3,7 @@ export const dashboardRoutePermissions = [
   { prefix: '/dashboard/financeiro', roles: ['ADMIN'] },
   { prefix: '/dashboard/relatorios', roles: ['ADMIN'] },
   { prefix: '/dashboard/equipe', roles: ['ADMIN'] },
+  { prefix: '/dashboard/filiais', roles: ['ADMIN'] },
   { prefix: '/dashboard/frota', roles: ['ADMIN'] },
   { prefix: '/dashboard/fechamento', roles: ['ADMIN'] },
   { prefix: '/dashboard/gastos', roles: ['ADMIN'] },

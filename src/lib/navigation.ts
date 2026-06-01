@@ -31,6 +31,7 @@ export const appNavLinks = [
   { href: '/dashboard/gastos', icon: Receipt, label: 'Gastos', roles: ['ADMIN'] },
   { href: '/dashboard/relatorios', icon: FileText, label: 'Relatórios', roles: ['ADMIN'] },
   { href: '/dashboard/equipe', icon: Users2, label: 'Equipe', roles: ['ADMIN'] },
+  { href: '/dashboard/filiais', icon: Building2, label: 'Filiais', roles: ['ADMIN'] },
   { href: '/dashboard/frota', icon: Truck, label: 'Frota', roles: ['ADMIN'] },
   { href: '/dashboard/fechamento', icon: ClipboardPen, label: 'Fechamento', roles: ['ADMIN'] },
   {

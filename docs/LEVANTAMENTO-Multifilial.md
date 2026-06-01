@@ -9,6 +9,7 @@ Este levantamento prepara a evolução do Gasparzinho para a plataforma **Gas**,
 - Existe uma filial padrão configurável por `SystemSetting.defaultBranchName`.
 - A filial padrão aparece no cabeçalho e no menu lateral.
 - A tela de Configurações permite alterar o nome da filial ativa sem migração de banco.
+- O menu administrativo possui a área "Filiais" para acompanhar a preparação multifilial.
 - O seed cria a filial padrão lógica como "Gás Gasparzinho".
 - Nenhuma consulta operacional foi filtrada por filial ainda, evitando regressão nos módulos já funcionando.
 
@@ -29,6 +30,8 @@ Este levantamento prepara a evolução do Gasparzinho para a plataforma **Gas**,
 | Backup/exportações | Global | Filial ou consolidado | Administrador geral exporta tudo; filial exporta apenas seus dados. |
 
 ## Pontos de acesso ao banco que precisarão de revisão
+
+O comando `npm run branches:audit` lista os arquivos que acessam Prisma e ajuda a manter este levantamento atualizado antes da migração real.
 
 ### Consultas por filial obrigatória
 
