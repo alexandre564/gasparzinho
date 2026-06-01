@@ -35,7 +35,7 @@ export function getBranchScopeFromSession(session: SessionLike): BranchScope {
   };
 }
 
-export function buildBranchWhere<T extends Record<string, unknown>>(
+export function buildBranchWhere<T extends object>(
   scope: BranchScope,
   where?: T,
 ): T & { branchId?: string } {

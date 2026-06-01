@@ -2,10 +2,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { VehicleForm } from '@/app/dashboard/frota/VehicleForm'
 import { prisma } from '@/lib/prisma'
+import { buildBranchWhere } from '@/lib/branch-scope'
+import { getCurrentBranchScope } from '@/lib/current-branch-scope'
 
 async function getVehicle(id: string) {
-  const vehicle = await prisma.vehicle.findUnique({
-    where: { id },
+  const branchScope = await getCurrentBranchScope()
+  const vehicle = await prisma.vehicle.findFirst({
+    where: buildBranchWhere(branchScope, { id }),
   })
   return vehicle
 }

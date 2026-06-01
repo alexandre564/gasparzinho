@@ -4,16 +4,21 @@ import type { Order } from '@prisma/client';
 import { addDays, differenceInCalendarDays } from 'date-fns';
 import { prisma } from '@/lib/prisma';
 import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import type { LoyaltyPrediction } from '@/services/fidelizacao';
 
 const GLOBAL_AVG_INTERVAL_DAYS = 15;
 const LOYALTY_ORDER_STATUSES = ['CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CONCLUIDO'] as const;
 
 async function getCustomersWithOrderHistory() {
+  const branchScope = await getCurrentBranchScope();
   return prisma.customer.findMany({
+    where: buildBranchWhere(branchScope),
     include: {
       orders: {
         where: {
+          ...buildBranchWhere(branchScope),
           status: {
             in: [...LOYALTY_ORDER_STATUSES],
           },

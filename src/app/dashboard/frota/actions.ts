@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { requireActionAccess } from '@/lib/api-auth'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { getCurrentBranchScope } from '@/lib/current-branch-scope'
+import { buildBranchWhere } from '@/lib/branch-scope'
 
 const vehicleSchema = z.object({
   placa: z.string().length(7),
@@ -110,7 +112,8 @@ export async function createVehicle(data: unknown) {
   if (!result.success) {
     return { success: false as const, message: 'Erro de validação' }
   }
-  await prisma.vehicle.create({ data: result.data })
+  const branchScope = await getCurrentBranchScope()
+  await prisma.vehicle.create({ data: { ...result.data, branchId: branchScope.branchId } })
   revalidatePath('/dashboard/frota')
   return { success: true as const, message: 'Veículo criado com sucesso!' }
 }
@@ -123,7 +126,14 @@ export async function updateVehicle(id: string, data: unknown) {
   if (!result.success) {
     return { success: false as const, message: 'Erro de validação' }
   }
-  await prisma.vehicle.update({ where: { id }, data: result.data })
+  const branchScope = await getCurrentBranchScope()
+  const updated = await prisma.vehicle.updateMany({
+    where: buildBranchWhere(branchScope, { id }),
+    data: result.data,
+  })
+  if (updated.count === 0) {
+    return { success: false as const, message: 'Veículo não encontrado para esta filial.' }
+  }
   revalidatePath('/dashboard/frota')
   return { success: true as const, message: 'Veículo atualizado com sucesso!' }
 }
@@ -132,7 +142,11 @@ export async function deleteVehicle(id: string) {
   const denied = await requireActionAccess(['ADMIN'])
   if (denied) return denied
 
-  await prisma.vehicle.delete({ where: { id } })
+  const branchScope = await getCurrentBranchScope()
+  const deleted = await prisma.vehicle.deleteMany({ where: buildBranchWhere(branchScope, { id }) })
+  if (deleted.count === 0) {
+    return { success: false as const, message: 'Veículo não encontrado para esta filial.' }
+  }
   revalidatePath('/dashboard/frota')
   return { success: true as const, message: 'Veículo excluído com sucesso!' }
 }
@@ -174,6 +188,7 @@ export async function importVehicles(
   let created = 0
   let updated = 0
   let ignored = 0
+  const branchScope = await getCurrentBranchScope()
 
   for (const line of dataLines.slice(1)) {
     const cells = parseCsvLine(line, delimiter)
@@ -209,7 +224,7 @@ export async function importVehicles(
       updated += 1
     } else {
       await prisma.vehicle.create({
-        data: { placa, modelo, tipo, status, custoMedioKm, observacoes },
+        data: { placa, modelo, tipo, status, custoMedioKm, observacoes, branchId: branchScope.branchId },
       })
       created += 1
     }

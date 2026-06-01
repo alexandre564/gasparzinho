@@ -39,8 +39,8 @@ Este checklist controla a transição do Gasparzinho para a plataforma **Gas** s
 - [x] Preencher dados existentes com `branch_gasparzinho_default`.
 - [x] Criar índices por `branchId`.
 - [x] Atualizar sessão para carregar filial ativa.
-- [ ] Aplicar helpers de escopo por filial nos módulos operacionais.
-- [ ] Bloquear acesso direto por URL quando o usuário não pertencer à filial.
+- [x] Aplicar helpers de escopo por filial nos módulos operacionais.
+- [x] Bloquear acesso direto por URL quando o usuário não pertencer à filial nos fluxos já escopados.
 - [ ] Só depois tornar `branchId` obrigatório onde fizer sentido.
 
 ## Validação obrigatória após migração
@@ -49,7 +49,7 @@ Este checklist controla a transição do Gasparzinho para a plataforma **Gas** s
 - [ ] Login de administrador da filial.
 - [ ] Login de vendedor.
 - [ ] Login de entregador.
-- [ ] Clientes isolados por filial.
-- [ ] Venda gerando entrega, financeiro e cobrança na filial correta.
+- [x] Clientes isolados por filial.
+- [x] Venda gerando entrega, financeiro e cobrança na filial correta.
 - [ ] Backup/exportações respeitando filial ativa.
 - [ ] Relatórios consolidados apenas para administrador geral.

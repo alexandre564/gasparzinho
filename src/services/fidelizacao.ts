@@ -4,6 +4,8 @@ import { Customer, Order } from '@prisma/client';
 import { addDays, differenceInCalendarDays } from 'date-fns';
 
 import { prisma } from '@/lib/prisma';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 const GLOBAL_AVG_INTERVAL_DAYS = 15;
 
@@ -43,11 +45,12 @@ function calculateAverageInterval(orders: Order[]): number {
 export async function calculateLoyaltyPredictionForCustomer(
   customerId: string,
 ): Promise<Omit<LoyaltyPrediction, 'customer'> | null> {
+  const branchScope = await getCurrentBranchScope();
   const orders = await prisma.order.findMany({
-    where: {
+    where: buildBranchWhere(branchScope, {
       customerId,
       status: { in: ['ENTREGUE', 'CONFIRMADO', 'ENVIADO'] },
-    },
+    }),
     orderBy: { createdAt: 'asc' },
     include: {
       items: {

@@ -3,13 +3,16 @@ import { notFound } from 'next/navigation';
 import { EditForm } from './EditForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { prisma } from '@/lib/prisma';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import type { User } from '@/types';
 
 
 export const dynamic = 'force-dynamic';
 export default async function EditUserPage({ params }: { params: { id: string } }) {
-  const user = await prisma.user.findUnique({
-    where: { id: params.id },
+  const branchScope = await getCurrentBranchScope();
+  const user = await prisma.user.findFirst({
+    where: buildBranchWhere(branchScope, { id: params.id }),
   });
 
   if (!user) {

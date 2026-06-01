@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { getDefaultBranchName } from '@/lib/branch-settings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,26 +33,28 @@ const currency = new Intl.NumberFormat('pt-BR', {
 });
 
 async function getSettingsData() {
+  const branchScope = await getCurrentBranchScope();
+  const monthRange = {
+    gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    lte: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999),
+  };
   const [products, recentExpenses, productCount, expenseMonth, stockValue, collectionMessage, driverWhatsapp, defaultBranchName] = await Promise.all([
     prisma.product.findMany({
+      where: buildBranchWhere(branchScope),
       orderBy: { name: 'asc' },
       take: 8,
     }),
     prisma.expense.findMany({
+      where: buildBranchWhere(branchScope),
       orderBy: { date: 'desc' },
       take: 6,
     }),
-    prisma.product.count(),
+    prisma.product.count({ where: buildBranchWhere(branchScope) }),
     prisma.expense.aggregate({
       _sum: { value: true },
-      where: {
-        date: {
-          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-          lte: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999),
-        },
-      },
+      where: buildBranchWhere(branchScope, { date: monthRange }),
     }),
-    prisma.product.findMany({ select: { inventory: true, cost: true } }),
+    prisma.product.findMany({ where: buildBranchWhere(branchScope), select: { inventory: true, cost: true } }),
     getCollectionMessageTemplate(),
     getDriverWhatsappNumber(),
     getDefaultBranchName(),

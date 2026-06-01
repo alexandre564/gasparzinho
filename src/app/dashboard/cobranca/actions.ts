@@ -5,6 +5,8 @@ import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export type DebtSortKey =
   | 'customer'
@@ -177,8 +179,10 @@ export async function getPaginatedDebts(
   const sortDirection = normalizeSortDirection(direction);
   const statusFilter = normalizeStatusFilter(status);
   const normalizedQuery = query.trim();
+  const branchScope = await getCurrentBranchScope();
 
   const debts = await prisma.debt.findMany({
+    where: buildBranchWhere(branchScope),
     include: {
       customer: { select: { name: true, phone: true } },
       order: { select: { id: true, createdAt: true } },
@@ -228,7 +232,8 @@ export async function updateDebt(id: string, data: unknown) {
   }
 
   try {
-    const existingDebt = await prisma.debt.findUnique({ where: { id } });
+    const branchScope = await getCurrentBranchScope();
+    const existingDebt = await prisma.debt.findFirst({ where: buildBranchWhere(branchScope, { id }) });
 
     if (!existingDebt) {
       return { success: false as const, message: 'Dívida não encontrada.' };
@@ -252,7 +257,7 @@ export async function updateDebt(id: string, data: unknown) {
     const fullNotes = [existingDebt.notes, paymentInfo].filter(Boolean).join('\n\n');
 
     await prisma.debt.update({
-      where: { id },
+      where: { id: existingDebt.id },
       data: {
         value: nextDebtValue,
         dueDate: newDueDate,
@@ -286,8 +291,15 @@ export async function markAsPaid(id: string) {
   if (denied) return denied;
 
   try {
+    const branchScope = await getCurrentBranchScope();
+    const existingDebt = await prisma.debt.findFirst({ where: buildBranchWhere(branchScope, { id }) });
+
+    if (!existingDebt) {
+      return { success: false as const, message: 'Dívida não encontrada para esta filial.' };
+    }
+
     await prisma.debt.update({
-      where: { id },
+      where: { id: existingDebt.id },
       data: {
         status: 'PAGO',
         paidAt: new Date(),
@@ -490,6 +502,7 @@ export async function importDebts(
 
     let created = 0;
     let updated = 0;
+    const branchScope = await getCurrentBranchScope();
 
     for (const row of rows) {
       const paidAmount = row.paidAmount ?? 0;
@@ -524,10 +537,13 @@ export async function importDebts(
           number: 'S/N',
           neighborhood: '',
           city: 'Lavras',
+          branchId: branchScope.branchId,
         },
       });
 
-      const existingDebt = row.id ? await prisma.debt.findUnique({ where: { id: row.id } }) : null;
+      const existingDebt = row.id
+        ? await prisma.debt.findFirst({ where: buildBranchWhere(branchScope, { id: row.id }) })
+        : null;
 
       if (existingDebt) {
         await prisma.debt.update({
@@ -560,6 +576,7 @@ export async function importDebts(
       const order = await prisma.order.create({
         data: {
           customerId: customer.id,
+          branchId: branchScope.branchId,
           status: importedStatus === 'PAGO' ? 'CONCLUIDO' : 'PENDENTE',
           paymentMethod: 'FIADO',
           paymentDueDate: row.dueDate,
@@ -574,6 +591,7 @@ export async function importDebts(
           id: row.id || undefined,
           customerId: customer.id,
           orderId: order.id,
+          branchId: branchScope.branchId,
           value: valueToReceive,
           dueDate: row.dueDate,
           paidAt: row.paidAt,

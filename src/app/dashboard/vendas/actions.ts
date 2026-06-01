@@ -6,6 +6,8 @@ import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { cleanCustomerTextFields, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 const OrderStatus = {
   PENDENTE: 'PENDENTE',
@@ -222,9 +224,11 @@ export async function createOrder(
   } = validatedFields.data;
 
   try {
+    const branchScope = await getCurrentBranchScope();
+    const branchId = branchScope.branchId;
     const createdOrder = await prisma.$transaction(async (tx) => {
-      const customer = await tx.customer.findUnique({
-        where: { id: customerId },
+      const customer = await tx.customer.findFirst({
+        where: buildBranchWhere(branchScope, { id: customerId }),
         select: {
           street: true,
           number: true,
@@ -246,7 +250,7 @@ export async function createOrder(
       }, {});
 
       const products = await tx.product.findMany({
-        where: { id: { in: Object.keys(requestedByProduct) } },
+        where: buildBranchWhere(branchScope, { id: { in: Object.keys(requestedByProduct) } }),
         select: { id: true, name: true, inventory: true },
       });
 
@@ -299,6 +303,7 @@ export async function createOrder(
           totalCost,
           grossValue,
           netValue,
+          branchId,
           items: {
             create: items.map((item) => ({
               productId: item.productId,
@@ -335,6 +340,7 @@ export async function createOrder(
           data: {
             orderId: order.id,
             status: DeliveryStatus.PENDENTE,
+            branchId,
           },
         });
       }
@@ -353,6 +359,7 @@ export async function createOrder(
             dueDate,
             originalDueDate: dueDate,
             status: DebtStatus.PENDENTE,
+            branchId,
           },
         });
       }
@@ -372,6 +379,7 @@ export async function createOrder(
             productId: item.productId,
             quantity: -item.quantity,
             type: InventoryMovementType.VENDA,
+            branchId,
           },
         });
       }
@@ -460,6 +468,7 @@ export async function getPaginatedOrders(
     }
 
     const baseWhere: Prisma.OrderWhereInput = {
+      ...buildBranchWhere(await getCurrentBranchScope()),
       ...(status && status !== 'ALL' && { status }),
       ...(paymentMethod && paymentMethod !== 'ALL' && { paymentMethod }),
       ...(selectedDate && dayEnd && { createdAt: { gte: selectedDate, lte: dayEnd } }),
@@ -516,8 +525,9 @@ export async function getPaginatedOrders(
 
 export async function getOrderById(id: string) {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id },
+    const branchScope = await getCurrentBranchScope();
+    const order = await prisma.order.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
       include: {
         customer: true,
         items: {
@@ -544,9 +554,10 @@ export async function deleteOrder(
   if (denied) return denied;
 
   try {
-    const createdOrder = await prisma.$transaction(async (tx) => {
-      const order = await tx.order.findUnique({
-        where: { id: orderId },
+    const branchScope = await getCurrentBranchScope();
+    await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: buildBranchWhere(branchScope, { id: orderId }),
         include: { items: true },
       });
 
@@ -578,6 +589,7 @@ export async function deleteOrder(
             productId: item.productId,
             quantity: item.quantity,
             type: InventoryMovementType.CANCELAMENTO,
+            branchId: order.branchId ?? branchScope.branchId,
           },
         });
       }
@@ -623,7 +635,9 @@ export async function deleteOrder(
 }
 
 export async function getCustomersForSelect() {
+  const branchScope = await getCurrentBranchScope();
   const customers = await prisma.customer.findMany({
+    where: buildBranchWhere(branchScope),
     select: {
       id: true,
       name: true,
@@ -692,7 +706,9 @@ function orderMatchesSearch<T extends { id: string; status: string; paymentMetho
 }
 
 export async function getProductsForSelect() {
+  const branchScope = await getCurrentBranchScope();
   const products = await prisma.product.findMany({
+    where: buildBranchWhere(branchScope),
     select: {
       id: true,
       name: true,

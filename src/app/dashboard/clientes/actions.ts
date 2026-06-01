@@ -11,6 +11,8 @@ import {
   normalizeSearchText,
   onlyDigits as getContactDigits,
 } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
 
@@ -111,16 +113,21 @@ export async function deleteCustomer(id: string) {
     // Para evitar erros de deleção por restrições de chave estrangeira, 
     // é mais seguro desassociar ou deletar registros relacionados primeiro.
     // Neste caso, vamos apenas deletar o cliente se ele não tiver ordens ou dívidas.
-    const related = await prisma.customer.findUnique({
-      where: { id },
+    const branchScope = await getCurrentBranchScope();
+    const related = await prisma.customer.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
       include: { _count: { select: { orders: true, debts: true } } }
     });
+
+    if (!related) {
+      return { success: false, message: "Cliente não encontrado para esta filial." };
+    }
 
     if (related?._count.orders || related?._count.debts) {
       return { success: false, message: "Este cliente possui pedidos ou dívidas e não pode ser excluído." };
     }
 
-    await prisma.customer.delete({ where: { id } });
+    await prisma.customer.delete({ where: { id: related.id } });
     revalidatePath('/dashboard/clientes');
     return { success: true, message: "Cliente excluído com sucesso." };
   } catch (error) {
@@ -264,6 +271,7 @@ export async function getPaginatedCustomers(
     const sortDirection = normalizeSortDirection(direction);
 
     try {
+        const branchScope = await getCurrentBranchScope();
         const include = {
             orders: {
                 orderBy: { createdAt: 'desc' as const },
@@ -278,6 +286,7 @@ export async function getPaginatedCustomers(
         };
 
         const allCustomers = await prisma.customer.findMany({
+            where: buildBranchWhere(branchScope),
             include,
             orderBy: { name: 'asc' },
         });
@@ -309,7 +318,8 @@ export async function getPaginatedCustomers(
 }
 export async function getCustomerById(id: string) {
   try {
-    const customer = await prisma.customer.findUnique({ where: { id } });
+    const branchScope = await getCurrentBranchScope();
+    const customer = await prisma.customer.findFirst({ where: buildBranchWhere(branchScope, { id }) });
     return customer ? cleanCustomerTextFields(customer) : customer;
   } catch (err) {
     console.error('Database Error:', err);

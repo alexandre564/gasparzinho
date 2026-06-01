@@ -9,6 +9,8 @@ import { prisma } from '@/lib/prisma';
 import { labelFrom, orderStatusLabels } from '@/lib/labels';
 import { getLoyaltyPredictions } from './fidelizacao/actions';
 import { decodeContactText } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +22,7 @@ const currency = new Intl.NumberFormat('pt-BR', {
 });
 
 async function getDashboardData() {
+  const branchScope = await getCurrentBranchScope();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const monthStart = new Date(today);
@@ -42,35 +45,36 @@ async function getDashboardData() {
     prisma.order.aggregate({
       _sum: { grossValue: true },
       _count: { id: true },
-      where: { createdAt: { gte: today }, status: { not: 'CANCELADO' } },
+      where: buildBranchWhere(branchScope, { createdAt: { gte: today }, status: { not: 'CANCELADO' } }),
     }),
     prisma.order.aggregate({
       _sum: { grossValue: true, netValue: true },
       _count: { id: true },
-      where: { createdAt: { gte: monthStart }, status: { not: 'CANCELADO' } },
+      where: buildBranchWhere(branchScope, { createdAt: { gte: monthStart }, status: { not: 'CANCELADO' } }),
     }),
     prisma.expense.aggregate({
       _sum: { value: true },
-      where: { date: { gte: monthStart } },
+      where: buildBranchWhere(branchScope, { date: { gte: monthStart } }),
     }),
     prisma.debt.findMany({
       select: { value: true, renegotiatedValue: true },
-      where: { status: { in: [...OPEN_DEBT_STATUSES] } },
+      where: buildBranchWhere(branchScope, { status: { in: [...OPEN_DEBT_STATUSES] } }),
     }),
     prisma.debt.count({
-      where: { status: { in: [...OPEN_DEBT_STATUSES] }, dueDate: { lt: today } },
+      where: buildBranchWhere(branchScope, { status: { in: [...OPEN_DEBT_STATUSES] }, dueDate: { lt: today } }),
     }),
-    prisma.customer.count(),
-    prisma.debt.count({ where: { status: { in: [...OPEN_DEBT_STATUSES] } } }),
-    prisma.product.count({ where: { inventory: { lt: 10 } } }),
+    prisma.customer.count({ where: buildBranchWhere(branchScope) }),
+    prisma.debt.count({ where: buildBranchWhere(branchScope, { status: { in: [...OPEN_DEBT_STATUSES] } }) }),
+    prisma.product.count({ where: buildBranchWhere(branchScope, { inventory: { lt: 10 } }) }),
     prisma.delivery.count({
-      where: {
+      where: buildBranchWhere(branchScope, {
         status: { in: ['PENDENTE', 'EM_ROTA'] },
         order: { deliveryAddressChanged: true },
-      },
+      }),
     }),
-    prisma.delivery.count({ where: { status: { in: ['PENDENTE', 'EM_ROTA'] } } }),
+    prisma.delivery.count({ where: buildBranchWhere(branchScope, { status: { in: ['PENDENTE', 'EM_ROTA'] } }) }),
     prisma.order.findMany({
+      where: buildBranchWhere(branchScope),
       take: 5,
       orderBy: { createdAt: 'desc' },
       include: { customer: true },
@@ -89,10 +93,10 @@ async function getDashboardData() {
 
       const dailySales = await prisma.order.aggregate({
         _sum: { grossValue: true },
-        where: {
+        where: buildBranchWhere(branchScope, {
           createdAt: { gte: start, lte: end },
           status: { not: 'CANCELADO' },
-        },
+        }),
       });
 
       return {

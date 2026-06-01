@@ -6,10 +6,13 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import DebtRenegotiationForm from './DebtRenegotiationForm';
 import { getDebtPaymentBreakdown } from '@/lib/debts';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 async function getDebt(id: string) {
-  const debt = await prisma.debt.findUnique({
-    where: { id },
+  const branchScope = await getCurrentBranchScope();
+  const debt = await prisma.debt.findFirst({
+    where: buildBranchWhere(branchScope, { id }),
     include: {
       customer: true,
       order: true,

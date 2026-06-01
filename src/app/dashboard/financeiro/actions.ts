@@ -5,6 +5,8 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import type { DebtStatus } from './dividas/types';
 import { decodeContactText, normalizeSearchText, onlyDigits as getContactDigits } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 const DEBT_ITEMS_PER_PAGE = 10;
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
@@ -62,7 +64,9 @@ export async function getPaginatedDebts(
 
   const trimmedQuery = query.trim();
   const queryDigits = onlyDigits(trimmedQuery);
+  const branchScope = await getCurrentBranchScope();
   const baseWhere: Prisma.DebtWhereInput = {
+    ...buildBranchWhere(branchScope),
     ...(status ? { status } : {}),
   };
   const where: Prisma.DebtWhereInput = {
@@ -128,9 +132,10 @@ export async function getPaginatedDebts(
 
 export async function getTotalOpenDebt() {
   try {
+    const branchScope = await getCurrentBranchScope();
     const debts = await prisma.debt.findMany({
       select: { value: true, renegotiatedValue: true },
-      where: { status: { in: [...OPEN_DEBT_STATUSES] } },
+      where: buildBranchWhere(branchScope, { status: { in: [...OPEN_DEBT_STATUSES] } }),
     });
     const totalOpen = debts.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0);
 

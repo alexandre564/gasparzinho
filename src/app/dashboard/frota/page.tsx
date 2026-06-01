@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Download, FileSpreadsheet, Pencil, PlusCircle } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import ImportVehiclesButton from './ImportVehiclesButton';
 import VehicleFilters from './VehicleFilters';
 import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels';
@@ -32,7 +34,9 @@ const currency = new Intl.NumberFormat('pt-BR', {
 });
 
 async function getVehicles(query = '', status?: string, type?: string) {
+  const branchScope = await getCurrentBranchScope();
   const vehicles = await prisma.vehicle.findMany({
+    where: buildBranchWhere(branchScope),
     orderBy: { placa: 'asc' },
   });
 

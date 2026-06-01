@@ -6,6 +6,8 @@ import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { DeliveryStatus } from '@/types/enums';
 import { cleanCustomerTextFields, decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -106,7 +108,9 @@ export async function getPaginatedDeliveries(
   }
 
   const trimmedQuery = query.trim();
+  const branchScope = await getCurrentBranchScope();
   const baseWhere: Prisma.DeliveryWhereInput = {
+    ...buildBranchWhere(branchScope),
     ...(status && { status }),
     ...(fromDate || toDate
       ? {
@@ -201,10 +205,15 @@ export async function updateDeliveryStatus(
   }
 
   try {
-    await prisma.delivery.update({
-      where: { id: deliveryId },
+    const branchScope = await getCurrentBranchScope();
+    const updated = await prisma.delivery.updateMany({
+      where: buildBranchWhere(branchScope, { id: deliveryId }),
       data: { status },
     });
+
+    if (updated.count === 0) {
+      return { success: false, message: 'Entrega não encontrada para esta filial.' };
+    }
 
     revalidatePath('/dashboard/entregas');
     revalidatePath(`/dashboard/entregas/${deliveryId}`);
@@ -218,8 +227,9 @@ export async function updateDeliveryStatus(
 
 export async function getDeliveryDetails(id: string) {
   try {
-    const delivery = await prisma.delivery.findUnique({
-      where: { id },
+    const branchScope = await getCurrentBranchScope();
+    const delivery = await prisma.delivery.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
       include: {
         order: {
           include: {
@@ -240,8 +250,9 @@ export async function getDeliveryDetails(id: string) {
 
 export async function getOrderById(id: string) {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id },
+    const branchScope = await getCurrentBranchScope();
+    const order = await prisma.order.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
       include: {
         customer: true,
         items: { include: { product: true } },
@@ -269,10 +280,15 @@ export async function updateDelivery(id: string, data: Prisma.DeliveryUpdateInpu
   if (denied) return denied;
 
   try {
-    await prisma.delivery.update({
-      where: { id },
+    const branchScope = await getCurrentBranchScope();
+    const updated = await prisma.delivery.updateMany({
+      where: buildBranchWhere(branchScope, { id }),
       data,
     });
+
+    if (updated.count === 0) {
+      throw new Error('Entrega não encontrada para esta filial.');
+    }
 
     revalidatePath('/dashboard/entregas');
     revalidatePath(`/dashboard/entregas/${id}`);
@@ -289,10 +305,19 @@ export async function markDeliverySentToDriver(
   if (denied) return denied;
 
   try {
-    const delivery = await prisma.delivery.update({
+    const branchScope = await getCurrentBranchScope();
+    const delivery = await prisma.delivery.findFirst({
+      where: buildBranchWhere(branchScope, { id: deliveryId }),
+      include: { order: true },
+    });
+
+    if (!delivery) {
+      return { success: false, message: 'Entrega não encontrada para esta filial.' };
+    }
+
+    await prisma.delivery.update({
       where: { id: deliveryId },
       data: { status: DeliveryStatus.EM_ROTA },
-      include: { order: true },
     });
 
     await prisma.order.update({
@@ -318,9 +343,10 @@ export async function confirmDeliveryPayment(
   if (denied) return denied;
 
   try {
+    const branchScope = await getCurrentBranchScope();
     await prisma.$transaction(async (tx) => {
-      const delivery = await tx.delivery.findUnique({
-        where: { id: deliveryId },
+      const delivery = await tx.delivery.findFirst({
+        where: buildBranchWhere(branchScope, { id: deliveryId }),
         include: { order: { include: { debt: true, customer: true } } },
       });
 
@@ -376,6 +402,7 @@ export async function confirmDeliveryPayment(
             dueDate,
             originalDueDate: dueDate,
             status: 'PENDENTE',
+            branchId: delivery.branchId ?? branchScope.branchId,
           },
         });
       }

@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 const ProductFormSchema = z.object({
   name: z.string().min(3, "O nome deve ter no mínimo 3 caracteres."),
@@ -126,11 +128,13 @@ export async function createProduct(values: z.infer<typeof ProductFormSchema>): 
     const { inventory, ...productData } = validatedFields.data;
 
     try {
+        const branchScope = await getCurrentBranchScope();
         await prisma.$transaction(async (tx) => {
             const product = await tx.product.create({
                 data: {
                     ...productData,
                     inventory,
+                    branchId: branchScope.branchId,
                 }
             });
 
@@ -140,6 +144,7 @@ export async function createProduct(values: z.infer<typeof ProductFormSchema>): 
                         productId: product.id,
                         quantity: inventory,
                         type: 'ENTRADA_INICIAL',
+                        branchId: branchScope.branchId,
                     }
                 });
             }
@@ -165,8 +170,9 @@ export async function updateProduct(id: string, values: z.infer<typeof ProductFo
     const { inventory: newInventory, ...productData } = validatedFields.data;
 
     try {
+        const branchScope = await getCurrentBranchScope();
         await prisma.$transaction(async (tx) => {
-            const product = await tx.product.findUnique({ where: { id } });
+            const product = await tx.product.findFirst({ where: buildBranchWhere(branchScope, { id }) });
             if (!product) throw new Error("Produto não encontrado.");
 
             const inventoryChange = newInventory - product.inventory;
@@ -179,6 +185,7 @@ export async function updateProduct(id: string, values: z.infer<typeof ProductFo
                         productId: id,
                         quantity: inventoryChange,
                         type: 'AJUSTE',
+                        branchId: product.branchId ?? branchScope.branchId,
                     }
                 });
             }
@@ -198,12 +205,18 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; mes
     if (denied) return denied;
 
     try {
+        const branchScope = await getCurrentBranchScope();
+        const product = await prisma.product.findFirst({ where: buildBranchWhere(branchScope, { id }) });
+        if (!product) {
+            return { success: false, message: 'Produto não encontrado para esta filial.' };
+        }
+
         const orderItemsCount = await prisma.orderItem.count({ where: { productId: id } });
         if (orderItemsCount > 0) {
             return { success: false, message: "Não é possível excluir o produto, pois ele já está associado a vendas."};
         }
 
-        await prisma.product.delete({ where: { id } });
+        await prisma.product.delete({ where: { id: product.id } });
         revalidatePath('/dashboard/estoque');
         return { success: true, message: 'Produto excluído com sucesso!' };
     } catch (error) {
@@ -247,6 +260,7 @@ export async function importProducts(
 
         const delimiter = detectDelimiter(lines[0]);
         const headers = parseCsvLine(lines[0], delimiter).map(normalizeHeader);
+        const branchScope = await getCurrentBranchScope();
         let created = 0;
         let updated = 0;
         let ignored = 0;
@@ -291,6 +305,7 @@ export async function importProducts(
                                 productId: existing.id,
                                 quantity: inventoryChange,
                                 type: 'IMPORTACAO',
+                                branchId: existing.branchId ?? branchScope.branchId,
                             },
                         });
                     }
@@ -300,7 +315,7 @@ export async function importProducts(
             }
 
             await prisma.$transaction(async (tx) => {
-                const product = await tx.product.create({ data });
+                const product = await tx.product.create({ data: { ...data, branchId: branchScope.branchId } });
 
                 if (inventory > 0) {
                     await tx.inventoryMovement.create({
@@ -308,6 +323,7 @@ export async function importProducts(
                             productId: product.id,
                             quantity: inventory,
                             type: 'IMPORTACAO',
+                            branchId: branchScope.branchId,
                         },
                     });
                 }
@@ -391,8 +407,10 @@ export async function getPaginatedProducts(
     const stockFilter = getStockFilter(stock);
     const sortKey = normalizeSortKey(sort);
     const sortDirection = normalizeSortDirection(direction);
+    const branchScope = await getCurrentBranchScope();
 
     const where: Prisma.ProductWhereInput = {
+        ...buildBranchWhere(branchScope),
         ...(trimmedQuery && {
             OR: [
                 { name: { contains: trimmedQuery } },
@@ -424,7 +442,7 @@ export async function getPaginatedProducts(
 
 export async function getProductById(id: string) {
     try {
-        const product = await prisma.product.findUnique({ where: { id } });
+        const product = await prisma.product.findFirst({ where: buildBranchWhere(await getCurrentBranchScope(), { id }) });
         return product;
     } catch (err) {
         console.error('Database Error:', err);
@@ -434,7 +452,7 @@ export async function getProductById(id: string) {
 
 export async function getProduct(id: string) {
     try {
-        const product = await prisma.product.findUnique({ where: { id } });
+        const product = await prisma.product.findFirst({ where: buildBranchWhere(await getCurrentBranchScope(), { id }) });
         return product;
     } catch (err) {
         console.error('Database Error:', err);

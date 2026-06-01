@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { Building2, CheckCircle2, FileText, LockKeyhole, PlayCircle, Settings } from 'lucide-react';
+import { Building2, CheckCircle2, FileText, LockKeyhole, PlayCircle, PlusCircle, Save, Settings } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getBranchOverview } from '@/lib/branch-data';
 import { getDefaultBranchName } from '@/lib/branch-settings';
+import { createBranch, pauseOrActivateBranch, updateBranch } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +23,8 @@ const readinessItems = [
   },
   {
     title: 'Modelos Prisma preparados',
-    status: 'Preparado',
-    description: 'Organization e Branch já existem no schema, ainda sem conexão com dados operacionais.',
+    status: 'Concluído',
+    description: 'Organization, Branch e branchId já estão conectados aos dados operacionais principais.',
   },
   {
     title: 'Criação no banco',
@@ -32,8 +33,8 @@ const readinessItems = [
   },
   {
     title: 'Migração real de dados',
-    status: 'Pendente',
-    description: 'A criação de Organization, Branch e branchId deve aguardar regras de negócio fechadas.',
+    status: 'Em validação',
+    description: 'A filial padrão, os vínculos operacionais e os filtros por filial já foram preparados com migração segura.',
   },
 ] as const;
 
@@ -146,11 +147,67 @@ export default async function BranchesPage() {
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {readinessItems.map((item) => (
             <div key={item.title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <Badge variant={item.status === 'Pendente' ? 'secondary' : 'default'}>{item.status}</Badge>
+              <Badge variant={item.status.includes('validação') ? 'secondary' : 'default'}>{item.status}</Badge>
               <h3 className="mt-3 font-semibold text-slate-950">{item.title}</h3>
               <p className="mt-2 text-sm text-slate-600">{item.description}</p>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PlusCircle className="h-5 w-5 text-emerald-700" />
+            Nova filial
+          </CardTitle>
+          <CardDescription>
+            Cadastro administrativo para unidades próprias, alugadas ou licenciadas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={createBranch} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Nome
+              <input name="name" required minLength={3} className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Gás Gasparzinho Zona Norte" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Cidade
+              <input name="city" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Lavras" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Contrato
+              <select name="contractStatus" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" defaultValue="PROPRIA">
+                <option value="PROPRIA">Própria</option>
+                <option value="TESTE">Teste</option>
+                <option value="ALUGADA">Alugada</option>
+                <option value="LICENCIADA">Licenciada</option>
+                <option value="SUSPENSA">Suspensa</option>
+              </select>
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Plano
+              <input name="planName" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Padrão" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Telefone
+              <input name="phone" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="(35) 99999-9999" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Vencimento
+              <input name="contractDueAt" type="date" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700 md:col-span-2">
+              Observações
+              <input name="notes" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Condições comerciais, uso e suporte" />
+            </label>
+            <div className="md:col-span-2 xl:col-span-4">
+              <Button type="submit" className="gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Cadastrar filial
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 
@@ -189,6 +246,32 @@ export default async function BranchesPage() {
                           <dd className="font-medium text-slate-900">{branch.planName || 'Padrão'}</dd>
                         </div>
                       </dl>
+                      <form action={updateBranch} className="mt-4 grid gap-2">
+                        <input type="hidden" name="id" value={branch.id} />
+                        <input type="hidden" name="status" value={branch.status} />
+                        <input type="hidden" name="contractStatus" value={branch.contractStatus} />
+                        <input name="name" defaultValue={branch.name} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Nome da filial" />
+                        <input name="city" defaultValue={branch.city ?? ''} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Cidade da filial" />
+                        <input name="planName" defaultValue={branch.planName ?? ''} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Plano da filial" />
+                        <input
+                          name="contractDueAt"
+                          type="date"
+                          defaultValue={branch.contractDueAt ? branch.contractDueAt.toISOString().slice(0, 10) : ''}
+                          className="h-9 rounded-md border border-slate-300 px-3 text-sm"
+                          aria-label="Vencimento do contrato"
+                        />
+                        <Button type="submit" variant="outline" size="sm" className="gap-2">
+                          <Save className="h-4 w-4" />
+                          Salvar filial
+                        </Button>
+                      </form>
+                      <form action={pauseOrActivateBranch} className="mt-2">
+                        <input type="hidden" name="id" value={branch.id} />
+                        <input type="hidden" name="status" value={branch.status === 'ATIVA' ? 'PAUSADA' : 'ATIVA'} />
+                        <Button type="submit" variant="secondary" size="sm" className="w-full">
+                          {branch.status === 'ATIVA' ? 'Pausar filial' : 'Ativar filial'}
+                        </Button>
+                      </form>
                     </div>
                   )),
                 )}

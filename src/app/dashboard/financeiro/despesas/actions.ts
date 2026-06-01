@@ -7,6 +7,8 @@ import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export type CreateExpenseState = {
   success: boolean;
@@ -156,6 +158,7 @@ export async function getPaginatedExpenses(
   }
 
   const where: Prisma.ExpenseWhereInput = {
+    ...buildBranchWhere(await getCurrentBranchScope()),
     ...(category && { category }),
     ...(query && {
       OR: [
@@ -219,7 +222,8 @@ export async function createExpense(
   }
 
   try {
-    await prisma.expense.create({ data: validatedFields.data });
+    const branchScope = await getCurrentBranchScope();
+    await prisma.expense.create({ data: { ...validatedFields.data, branchId: branchScope.branchId } });
     revalidatePath('/dashboard/financeiro');
     revalidatePath('/dashboard/financeiro/despesas');
     revalidatePath('/dashboard/gastos');
@@ -291,6 +295,7 @@ export async function importExpenses(
       continue;
     }
 
+    const branchScope = await getCurrentBranchScope();
     await prisma.expense.create({
       data: {
         description,
@@ -302,6 +307,7 @@ export async function importExpenses(
         responsible: responsible || 'Importacao',
         vehicleLabel: vehicleLabel || null,
         isRecurring,
+        branchId: branchScope.branchId,
       },
     });
 
@@ -330,7 +336,11 @@ export async function deleteExpense(id: string): Promise<{ success: boolean; mes
   if (denied) return denied;
 
   try {
-    await prisma.expense.delete({ where: { id } });
+    const branchScope = await getCurrentBranchScope();
+    const deleted = await prisma.expense.deleteMany({ where: buildBranchWhere(branchScope, { id }) });
+    if (deleted.count === 0) {
+      return { success: false, message: 'Despesa não encontrada para esta filial.' };
+    }
     revalidatePath('/dashboard/financeiro');
     revalidatePath('/dashboard/financeiro/despesas');
     revalidatePath('/dashboard/gastos');
@@ -342,18 +352,20 @@ export async function deleteExpense(id: string): Promise<{ success: boolean; mes
 }
 
 async function getRevenue(from: Date, to: Date) {
+  const branchScope = await getCurrentBranchScope();
   const result = await prisma.order.aggregate({
     _sum: { netValue: true },
-    where: { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } },
+    where: buildBranchWhere(branchScope, { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } }),
   });
 
   return result._sum.netValue ?? 0;
 }
 
 async function getExpenses(from: Date, to: Date) {
+  const branchScope = await getCurrentBranchScope();
   const result = await prisma.expense.aggregate({
     _sum: { value: true },
-    where: { date: { gte: from, lte: to } },
+    where: buildBranchWhere(branchScope, { date: { gte: from, lte: to } }),
   });
 
   return result._sum.value ?? 0;

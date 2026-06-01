@@ -6,6 +6,8 @@ import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
+import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import type { User } from '@/types';
 import { TEAM_ROLE_VALUES } from './roles';
 
@@ -120,7 +122,9 @@ function parseActive(value: string) {
 
 export async function getTeamMembers(): Promise<User[]> {
   try {
+    const branchScope = await getCurrentBranchScope();
     const users = await prisma.user.findMany({
+      where: buildBranchWhere(branchScope),
       orderBy: { name: 'asc' },
     });
 
@@ -142,6 +146,7 @@ export async function createUser(data: UserFormInput) {
   }
 
   try {
+    const branchScope = await getCurrentBranchScope();
     const existingUser = await prisma.user.findUnique({
       where: { email: validatedFields.data.email },
       select: { id: true },
@@ -161,6 +166,8 @@ export async function createUser(data: UserFormInput) {
         accessLevel: validatedFields.data.role,
         isActive: validatedFields.data.isActive,
         password: hashedPassword,
+        branchId: branchScope.branchId,
+        organizationId: branchScope.organizationId,
       },
     });
 
@@ -188,6 +195,7 @@ export async function updateUser(id: string, data: UserFormInput) {
   }
 
   try {
+    const branchScope = await getCurrentBranchScope();
     const existingUser = await prisma.user.findFirst({
       where: {
         email: validatedFields.data.email,
@@ -200,12 +208,21 @@ export async function updateUser(id: string, data: UserFormInput) {
       return { success: false, message: 'Este email já está em uso por outro membro.' };
     }
 
+    const targetUser = await prisma.user.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
+      select: { id: true },
+    });
+
+    if (!targetUser) {
+      return { success: false, message: 'Membro não encontrado para esta filial.' };
+    }
+
     const passwordUpdate = validatedFields.data.password
       ? { password: await bcrypt.hash(validatedFields.data.password, 10) }
       : {};
 
     await prisma.user.update({
-      where: { id },
+      where: { id: targetUser.id },
       data: {
         name: validatedFields.data.name,
         email: validatedFields.data.email,
@@ -277,6 +294,7 @@ export async function importTeamMembers(
   let created = 0;
   let updated = 0;
   let ignored = 0;
+  const branchScope = await getCurrentBranchScope();
 
   for (const line of dataLines.slice(1)) {
     const cells = parseCsvLine(line, delimiter);
@@ -324,6 +342,8 @@ export async function importTeamMembers(
           accessLevel: role,
           isActive,
           password: await bcrypt.hash(password || 'senha123', 10),
+          branchId: branchScope.branchId,
+          organizationId: branchScope.organizationId,
         },
       });
       created += 1;
@@ -357,7 +377,11 @@ export async function deleteUser(formData: FormData) {
   }
 
   try {
-    await prisma.user.delete({ where: { id } });
+    const branchScope = await getCurrentBranchScope();
+    const deleted = await prisma.user.deleteMany({ where: buildBranchWhere(branchScope, { id }) });
+    if (deleted.count === 0) {
+      return { success: false, message: 'Usuário não encontrado para esta filial.' };
+    }
     revalidatePath('/dashboard/equipe');
     return { success: true, message: 'Usuário excluído com sucesso.' };
   } catch (error) {
@@ -377,13 +401,18 @@ export async function updateUserRole(userId: string, role: string) {
   }
 
   try {
-    await prisma.user.update({
-      where: { id: userId },
+    const branchScope = await getCurrentBranchScope();
+    const updated = await prisma.user.updateMany({
+      where: buildBranchWhere(branchScope, { id: userId }),
       data: {
         role: parsedRole.data,
         accessLevel: parsedRole.data,
       },
     });
+
+    if (updated.count === 0) {
+      return { success: false, message: 'Usuário não encontrado para esta filial.' };
+    }
 
     revalidatePath('/dashboard/equipe');
     return { success: true, message: 'Nível de acesso atualizado com sucesso.' };

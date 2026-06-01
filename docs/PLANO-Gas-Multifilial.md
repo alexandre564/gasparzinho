@@ -46,7 +46,7 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 
 - [x] Adicionar `organizationId` e `branchId` ao usuário.
 - [x] Incluir filial ativa na sessão.
-- [ ] Proteger consultas e ações para que cada perfil veja apenas o escopo permitido.
+- [x] Proteger consultas e ações operacionais para que cada perfil use o escopo permitido.
 - [ ] Criar seleção de filial apenas para administradores gerais.
 
 ### Fase 4 - Interface administrativa
@@ -54,8 +54,8 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 - [x] Criar módulo inicial "Filiais" para acompanhamento da preparação.
 - [x] Exibir nome da filial ativa no cabeçalho.
 - [x] Exibir filiais reais na tela quando as tabelas multifiliais já estiverem disponíveis.
-- [ ] Cadastrar, editar, ativar, pausar e configurar unidades reais.
-- [ ] Permitir relatórios consolidados para administrador geral e relatórios isolados por filial.
+- [x] Cadastrar, editar, ativar, pausar e configurar unidades reais.
+- [x] Permitir relatórios consolidados para administrador geral e relatórios isolados por filial nos módulos já escopados.
 
 ### Fase 5 - Comercialização/licenciamento
 
