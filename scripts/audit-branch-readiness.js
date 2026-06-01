@@ -82,7 +82,7 @@ const groups = results.reduce((accumulator, item) => {
   return accumulator;
 }, {});
 
-console.log('Auditoria de prontidão multifilial');
+console.log('Auditoria de prontidao multifilial');
 console.log('====================================');
 console.log(`Arquivos com acesso Prisma: ${results.length}`);
 
@@ -95,5 +95,5 @@ for (const [scope, items] of Object.entries(groups)) {
 }
 
 if (groups.FILIAL_FUTURA?.length) {
-  console.log('\nPróxima ação segura: atualizar estes pontos gradualmente quando branchId existir e os dados antigos já estiverem preenchidos.');
+  console.log('\nProxima acao segura: manter buildBranchWhere/getCurrentBranchScope nos novos acessos Prisma e revisar manualmente os pontos listados.');
 }

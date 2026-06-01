@@ -66,7 +66,7 @@ const missingBranchScope = operational.filter((item) => item.exists && !item.has
 console.log('\nResultado:');
 if (foundation.every((item) => item.exists) && missingBranchScope.length > 0) {
   console.log('Base pronta e dados operacionais ainda preservados sem branchId obrigatório.');
-  console.log('Próximo passo seguro: executar seed da filial padrão no banco e só depois adicionar branchId opcional por migração controlada.');
+  console.log('Proximo passo seguro: manter branchId opcional ate a validacao de producao e conferir preenchimento por filial nos dados importados.');
 } else if (missingBranchScope.length === 0) {
   console.log('Todos os modelos operacionais já possuem branchId. Validar preenchimento dos dados antigos antes de tornar obrigatório.');
 } else {
