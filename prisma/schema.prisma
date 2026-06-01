@@ -18,9 +18,17 @@ model User {
   password  String
   role          String  @default("VENDEDOR")
   accessLevel   String  @default("USER")
+  organizationId String?
+  branchId       String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([branchId])
 }
 
 model Customer {
@@ -34,14 +42,17 @@ model Customer {
   reference     String?
   cep           String?
   city          String  @default("Lavras")
+  branchId      String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
   orders Order[]
   debts  Debt[]
 
   @@index([phone])
   @@index([name])
+  @@index([branchId])
 }
 
 model Product {
@@ -53,12 +64,16 @@ model Product {
   category    String
   stockKind   String
   inventory   Int       @default(0)
+  branchId    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  branch             Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
   orderItems         OrderItem[]
   inventoryMovements InventoryMovement[]
   butaneCylinders    ButaneCylinder[]
+
+  @@index([branchId])
 }
 
 model ButaneCylinder {
@@ -66,10 +81,14 @@ model ButaneCylinder {
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   status    String
+  branchId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
   @@index([productId])
+  @@index([branchId])
 }
 
 model InventoryMovement {
@@ -78,9 +97,13 @@ model InventoryMovement {
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   type      String
+  branchId  String?
   createdAt DateTime @default(now())
 
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
   @@index([productId])
+  @@index([branchId])
 }
 
 model Order {
@@ -96,12 +119,16 @@ model Order {
   grossValue    Float
   totalCost     Float
   netValue      Float
+  branchId      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
   items    OrderItem[]
   delivery Delivery?
   debt     Debt?
+
+  @@index([branchId])
 }
 
 model OrderItem {
@@ -122,8 +149,13 @@ model Delivery {
   orderId   String   @unique
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   status    String   @default("PENDENTE")
+  branchId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([branchId])
 }
 
 model Debt {
@@ -140,11 +172,15 @@ model Debt {
   renegotiatedValue Float?
   notes      String?
   status     String   @default("PENDENTE")
+  branchId   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
   @@index([customerId])
   @@index([status])
+  @@index([branchId])
 }
 
 model Expense {
@@ -158,8 +194,13 @@ model Expense {
   responsible String?
   vehicleLabel String?
   isRecurring Boolean  @default(false)
+  branchId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([branchId])
 }
 
 model Vehicle {
@@ -170,9 +211,14 @@ model Vehicle {
   status       String
   custoMedioKm Float
   observacoes  String?
+  branchId     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([branchId])
 }
 
 
@@ -187,8 +233,13 @@ model DailyClosing {
   netBalance     Decimal  @default(0)
   notes          String?
   closedBy       String?
+  branchId       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([branchId])
 }
 
 
@@ -210,6 +261,7 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   branches Branch[]
+  users    User[]
 
   @@index([status])
 }
@@ -231,6 +283,17 @@ model Branch {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users User[]
+  customers Customer[]
+  products Product[]
+  butaneCylinders ButaneCylinder[]
+  inventoryMovements InventoryMovement[]
+  orders Order[]
+  deliveries Delivery[]
+  debts Debt[]
+  expenses Expense[]
+  vehicles Vehicle[]
+  dailyClosings DailyClosing[]
 
   @@index([organizationId])
   @@index([status])

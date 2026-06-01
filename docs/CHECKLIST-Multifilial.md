@@ -12,12 +12,21 @@ Este checklist controla a transição do Gasparzinho para a plataforma **Gas** s
 - [x] O seed da filial padrão está disponível em `npm run branches:seed-default`.
 - [x] A auditoria de consultas Prisma está disponível em `npm run branches:audit`.
 - [x] A auditoria de schema está disponível em `npm run branches:schema-audit`.
+- [x] A auditoria de dados por filial está disponível em `npm run branches:data-audit`.
+- [x] O backup JSON e o backup em planilha já incluem organização e filiais quando essas tabelas existem.
+- [x] A tela de Filiais já tenta ler as filiais reais do banco sem quebrar quando a base ainda não foi criada.
+- [x] O seed da filial padrão também cria a base `Organization`/`Branch` se ela ainda não existir.
+- [x] `branchId` opcional foi preparado nos modelos operacionais.
+- [x] `organizationId` e `branchId` foram preparados no usuário.
+- [x] A migração segura preenche dados atuais com a filial padrão.
+- [x] Os scripts de inicialização rodam sincronização segura antes de abrir o sistema local.
 
 ## Antes de adicionar `branchId` nos dados operacionais
 
-- [ ] Confirmar que `Organization` e `Branch` existem no banco de produção.
-- [ ] Executar `npm run branches:seed-default` com acesso ao banco correto.
+- [ ] Confirmar que `Organization` e `Branch` existem no banco de produção, pela tela de Filiais ou pelo seed.
+- [ ] Executar `npm run branches:seed-default` com acesso ao banco correto, caso a filial padrão ainda não apareça.
 - [ ] Confirmar que a filial padrão criada é `branch_gasparzinho_default`.
+- [ ] Confirmar com `npm run branches:data-audit` que não há registros antigos sem filial.
 - [ ] Definir se telefone de cliente será único por filial ou único no sistema inteiro.
 - [ ] Definir se produto e estoque serão separados por filial desde o início.
 - [ ] Definir se frota será exclusiva por filial ou compartilhada.
@@ -25,11 +34,11 @@ Este checklist controla a transição do Gasparzinho para a plataforma **Gas** s
 
 ## Migração operacional planejada
 
-- [ ] Adicionar `branchId` opcional em usuários.
-- [ ] Adicionar `branchId` opcional em clientes, produtos, estoque, pedidos, entregas, dívidas, gastos, frota e fechamento.
-- [ ] Preencher dados existentes com `branch_gasparzinho_default`.
-- [ ] Criar índices por `branchId`.
-- [ ] Atualizar sessão para carregar filial ativa.
+- [x] Adicionar `branchId` opcional em usuários.
+- [x] Adicionar `branchId` opcional em clientes, produtos, estoque, pedidos, entregas, dívidas, gastos, frota e fechamento.
+- [x] Preencher dados existentes com `branch_gasparzinho_default`.
+- [x] Criar índices por `branchId`.
+- [x] Atualizar sessão para carregar filial ativa.
 - [ ] Aplicar helpers de escopo por filial nos módulos operacionais.
 - [ ] Bloquear acesso direto por URL quando o usuário não pertencer à filial.
 - [ ] Só depois tornar `branchId` obrigatório onde fizer sentido.

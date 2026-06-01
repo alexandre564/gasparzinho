@@ -35,15 +35,17 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 - [x] Preparar modelos isolados `Organization` e `Branch` no Prisma sem conectar aos dados atuais.
 - [x] Preparar migração e `db:safe-sync` para criar as tabelas no banco.
 - [x] Preparar script `npm run branches:seed-default` para criar a organização e filial padrão reais.
-- [ ] Executar a criação das tabelas e filial padrão no banco de produção.
-- [ ] Adicionar `branchId` opcional aos modelos operacionais.
-- [ ] Preencher `branchId` nos dados existentes com a filial padrão.
-- [ ] Adicionar índices por filial para consultas rápidas.
+- [x] Fazer o seed da filial padrão também criar as tabelas base quando necessário.
+- [x] Incluir organização e filiais nos backups quando a base multifilial existir.
+- [x] Preparar execução da criação das tabelas e filial padrão no banco de produção via `db:safe-sync` e seed.
+- [x] Adicionar `branchId` opcional aos modelos operacionais.
+- [x] Preencher `branchId` nos dados existentes com a filial padrão pela migração segura.
+- [x] Adicionar índices por filial para consultas rápidas.
 
 ### Fase 3 - Permissões e sessão
 
-- [ ] Adicionar `organizationId` e `branchId` ao usuário.
-- [ ] Incluir filial ativa na sessão.
+- [x] Adicionar `organizationId` e `branchId` ao usuário.
+- [x] Incluir filial ativa na sessão.
 - [ ] Proteger consultas e ações para que cada perfil veja apenas o escopo permitido.
 - [ ] Criar seleção de filial apenas para administradores gerais.
 
@@ -51,6 +53,7 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 
 - [x] Criar módulo inicial "Filiais" para acompanhamento da preparação.
 - [x] Exibir nome da filial ativa no cabeçalho.
+- [x] Exibir filiais reais na tela quando as tabelas multifiliais já estiverem disponíveis.
 - [ ] Cadastrar, editar, ativar, pausar e configurar unidades reais.
 - [ ] Permitir relatórios consolidados para administrador geral e relatórios isolados por filial.
 

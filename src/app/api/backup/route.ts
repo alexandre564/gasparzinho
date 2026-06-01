@@ -12,6 +12,14 @@ function backupReplacer(_key: string, value: unknown) {
   return value;
 }
 
+async function optionalFindMany<T>(callback: () => Promise<T[]>): Promise<T[]> {
+  try {
+    return await callback();
+  } catch {
+    return [];
+  }
+}
+
 export async function GET() {
   const denied = await requireApiAccess(["ADMIN"]);
 
@@ -32,6 +40,8 @@ export async function GET() {
     vehicles,
     dailyClosings,
     systemSettings,
+    organizations,
+    branches,
   ] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: 'asc' } }),
     prisma.customer.findMany({ orderBy: { createdAt: 'asc' } }),
@@ -48,6 +58,8 @@ export async function GET() {
     prisma.vehicle.findMany({ orderBy: { createdAt: 'asc' } }),
     prisma.dailyClosing.findMany({ orderBy: { createdAt: 'asc' } }),
     prisma.systemSetting.findMany({ orderBy: { key: 'asc' } }),
+    optionalFindMany(() => prisma.organization.findMany({ orderBy: { createdAt: 'asc' } })),
+    optionalFindMany(() => prisma.branch.findMany({ orderBy: { createdAt: 'asc' } })),
   ]);
 
   const exportedAt = new Date();
@@ -68,6 +80,8 @@ export async function GET() {
       vehicles: vehicles.length,
       dailyClosings: dailyClosings.length,
       systemSettings: systemSettings.length,
+      organizations: organizations.length,
+      branches: branches.length,
     },
     data: {
       users,
@@ -82,6 +96,8 @@ export async function GET() {
       vehicles,
       dailyClosings,
       systemSettings,
+      organizations,
+      branches,
     },
   };
 

@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { quoteIdentifier, withDatabase } = require('./database');
 
 async function main() {
@@ -75,6 +77,13 @@ async function main() {
         END IF;
       END $$;
     `);
+
+    const branchScopeMigration = fs.readFileSync(
+      path.join(__dirname, '..', 'prisma', 'migrations', '20260601094500_add_branch_scope_optional', 'migration.sql'),
+      'utf8',
+    );
+
+    await client.query(branchScopeMigration);
 
     console.log(`Banco atualizado no schema ${schema}.`);
   });

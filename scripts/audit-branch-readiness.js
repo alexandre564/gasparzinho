@@ -17,7 +17,7 @@ const OPERATIONAL_PATTERNS = [
   'butaneCylinder',
 ];
 
-const GLOBAL_PATTERNS = ['user', 'systemSetting'];
+const GLOBAL_PATTERNS = ['user', 'systemSetting', 'organization', 'branch'];
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];

@@ -4,6 +4,7 @@ import { Building2, CheckCircle2, FileText, LockKeyhole, PlayCircle, Settings } 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getBranchOverview } from '@/lib/branch-data';
 import { getDefaultBranchName } from '@/lib/branch-settings';
 
 export const dynamic = 'force-dynamic';
@@ -60,7 +61,8 @@ const nextDecisions = [
 ] as const;
 
 export default async function BranchesPage() {
-  const branchName = await getDefaultBranchName();
+  const [branchName, branchOverview] = await Promise.all([getDefaultBranchName(), getBranchOverview()]);
+  const branchCount = branchOverview.organizations.reduce((total, organization) => total + organization.branches.length, 0);
 
   return (
     <div className="space-y-6">
@@ -149,6 +151,58 @@ export default async function BranchesPage() {
               <p className="mt-2 text-sm text-slate-600">{item.description}</p>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Filiais registradas no banco</CardTitle>
+          <CardDescription>
+            Leitura segura da base multifilial. Se as tabelas ainda não existirem, a operação atual continua preservada.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {branchOverview.setupAvailable ? (
+            branchCount > 0 ? (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {branchOverview.organizations.flatMap((organization) =>
+                  organization.branches.map((branch) => (
+                    <div key={branch.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{organization.name}</p>
+                          <h3 className="mt-1 font-semibold text-slate-950">{branch.name}</h3>
+                        </div>
+                        <Badge className="bg-emerald-600 text-white">{branch.status}</Badge>
+                      </div>
+                      <dl className="mt-4 grid gap-2 text-sm text-slate-600">
+                        <div className="flex justify-between gap-3">
+                          <dt>Cidade</dt>
+                          <dd className="font-medium text-slate-900">{branch.city || 'Não informada'}</dd>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <dt>Contrato</dt>
+                          <dd className="font-medium text-slate-900">{branch.contractStatus}</dd>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <dt>Plano</dt>
+                          <dd className="font-medium text-slate-900">{branch.planName || 'Padrão'}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  )),
+                )}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                As tabelas multifiliais existem, mas a filial padrão ainda não foi criada. Execute o seed seguro quando o banco estiver acessível.
+              </div>
+            )
+          ) : (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              A base de filiais ainda não está disponível neste ambiente. Isso é esperado antes da sincronização segura do banco.
+            </div>
+          )}
         </CardContent>
       </Card>
 

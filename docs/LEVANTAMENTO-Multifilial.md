@@ -16,6 +16,8 @@ Este levantamento prepara a evolução do Gasparzinho para a plataforma **Gas**,
 - O comando `npm run branches:schema-audit` confere se o schema ainda está em estado seguro antes do vínculo operacional por filial.
 - O helper `src/lib/branch-scope.ts` padroniza o formato futuro do escopo de filial sem forçar filtro em tabelas que ainda não possuem `branchId`.
 - O seed cria a filial padrão lógica como "Gás Gasparzinho".
+- Os modelos operacionais já possuem `branchId` opcional e a migração segura preenche os dados existentes com `branch_gasparzinho_default`.
+- A sessão de login já carrega `organizationId` e `branchId` quando esses campos existem no usuário.
 - Nenhuma consulta operacional foi filtrada por filial ainda, evitando regressão nos módulos já funcionando.
 
 ## Classificação de escopo atual
@@ -72,10 +74,10 @@ O comando `npm run branches:audit` lista os arquivos que acessam Prisma e ajuda 
 
 1. Criar modelos `Organization` e `Branch`. Concluído no schema.
 2. Criar uma organização e uma filial padrão para os dados atuais. Script preparado; execução no banco ainda pendente.
-3. Adicionar `organizationId` e `branchId` opcionais aos usuários.
-4. Adicionar `branchId` opcional aos modelos operacionais, ainda sem tornar obrigatório.
-5. Rodar script de preenchimento para associar dados antigos à filial padrão.
-6. Atualizar sessão para carregar filial ativa.
+3. Adicionar `organizationId` e `branchId` opcionais aos usuários. Concluído no schema e na sessão.
+4. Adicionar `branchId` opcional aos modelos operacionais, ainda sem tornar obrigatório. Concluído.
+5. Rodar script de preenchimento para associar dados antigos à filial padrão. Preparado em migração segura.
+6. Atualizar sessão para carregar filial ativa. Concluído.
 7. Criar helpers de consulta, por exemplo `getCurrentBranchScope()` e `withBranchWhere()`. Preparado inicialmente em `src/lib/branch-scope.ts`.
 8. Atualizar módulo por módulo, começando por clientes e vendas.
 9. Tornar `branchId` obrigatório apenas depois de todos os módulos validarem isolamento.

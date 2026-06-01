@@ -34,6 +34,8 @@ const authConfig = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.organizationId = user.organizationId;
+        token.branchId = user.branchId;
       }
 
       return token;
@@ -42,6 +44,8 @@ const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.organizationId = token.organizationId as string | undefined;
+        session.user.branchId = token.branchId as string | undefined;
       }
 
       return session;

@@ -10,7 +10,7 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-npm run dev -- --port 3004
+npx next dev --port 3004
 echo.
 echo O servidor parou ou ocorreu um erro.
 pause

@@ -8,6 +8,8 @@ declare module "next-auth" {
    */
   interface User extends DefaultUser {
     role: string;
+    organizationId?: string | null;
+    branchId?: string | null;
   }
 
   /**
@@ -20,6 +22,8 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: string; // Add role to the session user
+      organizationId?: string | null;
+      branchId?: string | null;
     } | null;
   }
 }
@@ -30,5 +34,7 @@ declare module "next-auth/jwt" {
    */
   interface JWT {
     role?: string;
+    organizationId?: string | null;
+    branchId?: string | null;
   }
 }

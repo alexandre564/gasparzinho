@@ -22,7 +22,7 @@ if errorlevel 1 (
 )
 echo.
 echo Abrindo novamente em http://localhost:3004 ...
-npm run dev -- --port 3004
+npx next dev --port 3004
 echo.
 echo O servidor parou ou ocorreu um erro.
 pause
