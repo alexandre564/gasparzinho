@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 
 import authConfig from './auth.config';
 
-const LOGIN_DATABASE_TIMEOUT_MS = 20_000;
+const LOGIN_DATABASE_TIMEOUT_MS = 60_000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs = LOGIN_DATABASE_TIMEOUT_MS): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout>;
