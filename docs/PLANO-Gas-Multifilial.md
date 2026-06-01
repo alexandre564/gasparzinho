@@ -63,3 +63,11 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 ## Próximo passo seguro
 
 Antes de qualquer migração, criar um levantamento técnico com todos os pontos de acesso ao banco e classificar cada consulta como global, por usuário ou por filial. Só depois disso iniciar a migração real.
+
+## Andamento iniciado
+
+- A filial padrão lógica foi iniciada por configuração em `SystemSetting.defaultBranchName`.
+- O nome da filial ativa pode ser alterado em Configurações.
+- Cabeçalho e menu lateral exibem a filial ativa com fallback seguro para "Gás Gasparzinho".
+- O levantamento técnico inicial está registrado em `docs/LEVANTAMENTO-Multifilial.md`.
+- A migração real para `Organization`, `Branch` e `branchId` segue pendente de decisão de regra de negócio, para não quebrar os dados atuais.

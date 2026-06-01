@@ -11,6 +11,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { Button } from "@/components/ui/button";
+import { getDefaultBranchName } from "@/lib/branch-settings";
 import { appNavLinks, roleLabels, settingsNavLink } from "@/lib/navigation";
 import {
   DropdownMenu,
@@ -23,7 +24,7 @@ import {
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export default async function Header() {
-  const session = await auth();
+  const [session, branchName] = await Promise.all([auth(), getDefaultBranchName()]);
   const userRole = session?.user?.role?.toUpperCase() || "";
   const userName = session?.user?.name || session?.user?.email || "Usuário";
   const roleLabel = roleLabels[userRole] ?? (userRole || "Sem autorização");
@@ -51,7 +52,7 @@ export default async function Header() {
           <div className="flex items-center gap-3 border-b border-slate-800 px-4 py-4">
             <BrandLogo size={52} />
             <div className="min-w-0">
-              <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
+              <p className="text-sm font-semibold leading-none text-white">{branchName}</p>
               <p className="mt-1 text-xs text-emerald-100/75">Gestão de revenda</p>
               <p className="mt-2 truncate text-sm font-semibold text-white">{userName}</p>
               <p className="text-xs font-medium text-emerald-200">{roleLabel}</p>
@@ -96,7 +97,7 @@ export default async function Header() {
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 lg:flex-none">
         <BrandLogo size={40} />
         <div className="min-w-0 max-w-[calc(100vw-8.5rem)] border-l-4 border-emerald-500 pl-2 sm:pl-3">
-          <p className="truncate text-sm font-bold leading-none text-slate-950">Gás Gasparzinho</p>
+          <p className="truncate text-sm font-bold leading-none text-slate-950">{branchName}</p>
           <p className="mt-1 text-xs font-medium text-slate-600">Gestão de revenda</p>
         </div>
         <div className="hidden min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 sm:block">

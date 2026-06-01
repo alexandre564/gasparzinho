@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
+import { DEFAULT_BRANCH_NAME, DEFAULT_BRANCH_NAME_SETTING_KEY } from '@/lib/branch-settings';
 
 const COLLECTION_MESSAGE_KEY = 'collection_whatsapp_template';
 const DRIVER_WHATSAPP_KEY = 'delivery_driver_whatsapp';
@@ -77,5 +78,33 @@ export async function updateDriverWhatsappNumber(
   return {
     success: true,
     message: rawValue ? 'WhatsApp do entregador atualizado.' : 'WhatsApp do entregador removido.',
+  };
+}
+
+export async function updateDefaultBranchName(
+  _previousState: { success: boolean; message: string },
+  formData: FormData,
+) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
+  const value = String(formData.get('defaultBranchName') ?? '').trim();
+
+  if (value.length < 3) {
+    return { success: false, message: 'Informe um nome de filial com pelo menos 3 caracteres.' };
+  }
+
+  await prisma.systemSetting.upsert({
+    where: { key: DEFAULT_BRANCH_NAME_SETTING_KEY },
+    update: { value },
+    create: { key: DEFAULT_BRANCH_NAME_SETTING_KEY, value },
+  });
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/configuracoes');
+
+  return {
+    success: true,
+    message: value === DEFAULT_BRANCH_NAME ? 'Filial padrão restaurada.' : 'Filial padrão atualizada.',
   };
 }

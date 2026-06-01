@@ -13,11 +13,13 @@ import {
 } from 'lucide-react';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { getDefaultBranchName } from '@/lib/branch-settings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { labelFrom, productCategoryLabels, stockKindLabels } from '@/lib/labels';
+import BranchSettingsForm from './BranchSettingsForm';
 import CollectionMessageForm from './CollectionMessageForm';
 import DriverWhatsappForm from './DriverWhatsappForm';
 import { getCollectionMessageTemplate, getDriverWhatsappNumber } from './actions';
@@ -29,7 +31,7 @@ const currency = new Intl.NumberFormat('pt-BR', {
 });
 
 async function getSettingsData() {
-  const [products, recentExpenses, productCount, expenseMonth, stockValue, collectionMessage, driverWhatsapp] = await Promise.all([
+  const [products, recentExpenses, productCount, expenseMonth, stockValue, collectionMessage, driverWhatsapp, defaultBranchName] = await Promise.all([
     prisma.product.findMany({
       orderBy: { name: 'asc' },
       take: 8,
@@ -51,6 +53,7 @@ async function getSettingsData() {
     prisma.product.findMany({ select: { inventory: true, cost: true } }),
     getCollectionMessageTemplate(),
     getDriverWhatsappNumber(),
+    getDefaultBranchName(),
   ]);
 
   return {
@@ -61,6 +64,7 @@ async function getSettingsData() {
     stockCostValue: stockValue.reduce((sum, product) => sum + product.inventory * product.cost, 0),
     collectionMessage,
     driverWhatsapp,
+    defaultBranchName,
   };
 }
 
@@ -218,6 +222,18 @@ export default async function ConfiguracoesPage() {
         </Card>
 
         <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Filial ativa</CardTitle>
+              <CardDescription>
+                Nome operacional usado como filial padrão enquanto a plataforma Gas multifilial é preparada.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BranchSettingsForm defaultValue={data.defaultBranchName} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

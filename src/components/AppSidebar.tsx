@@ -2,10 +2,11 @@ import Link from 'next/link';
 import { Download, FileSpreadsheet } from 'lucide-react';
 import { auth } from '@/auth';
 import { BrandLogo } from '@/components/BrandLogo';
+import { getDefaultBranchName } from '@/lib/branch-settings';
 import { mainNavLinks, roleLabels, settingsNavLink } from '@/lib/navigation';
 
 export default async function Sidebar() {
-  const session = await auth();
+  const [session, branchName] = await Promise.all([auth(), getDefaultBranchName()]);
   const userRole = session?.user?.role?.toUpperCase() || '';
   const userName = session?.user?.name || session?.user?.email || 'Usuário';
   const roleLabel = roleLabels[userRole] ?? (userRole || 'Sem autorização');
@@ -21,7 +22,7 @@ export default async function Sidebar() {
         <div className="flex items-center gap-3">
           <BrandLogo size={56} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold leading-none text-white">Gás Gasparzinho</p>
+            <p className="text-sm font-semibold leading-none text-white">{branchName}</p>
             <p className="mt-1 text-xs text-emerald-100/75">Gestão de revenda</p>
             <div className="mt-3 rounded-md border border-white/10 bg-white/5 px-3 py-2">
               <p className="truncate text-sm font-semibold text-white">{userName}</p>

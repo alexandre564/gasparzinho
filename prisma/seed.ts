@@ -32,6 +32,12 @@ async function seedUsers() {
 }
 
 async function seedDemoData() {
+  await prisma.systemSetting.upsert({
+    where: { key: 'defaultBranchName' },
+    update: {},
+    create: { key: 'defaultBranchName', value: 'Gás Gasparzinho' },
+  });
+
   const maria = await prisma.customer.upsert({
     where: { phone: '35999990001' },
     update: {},
