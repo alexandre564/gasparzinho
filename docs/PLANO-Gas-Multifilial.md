@@ -26,6 +26,8 @@ A evolução multifilial não deve ser aplicada de uma vez no sistema atual. O c
 - [x] Criar tela administrativa de acompanhamento em "Filiais".
 - [x] Mapear todos os modelos que precisarão de `branchId`.
 - [x] Criar auditoria estática com `npm run branches:audit`.
+- [x] Criar auditoria de schema com `npm run branches:schema-audit`.
+- [x] Criar helper seguro de escopo futuro em `src/lib/branch-scope.ts`.
 - [x] Não alterar consultas de produção ainda.
 
 ### Fase 2 - Banco multifilial
@@ -78,4 +80,7 @@ Antes de qualquer migração, criar um levantamento técnico com todos os pontos
 - O menu administrativo possui a área "Filiais" para acompanhar o preparo sem iniciar migração arriscada.
 - O levantamento técnico inicial está registrado em `docs/LEVANTAMENTO-Multifilial.md`.
 - A auditoria estática de pontos Prisma pode ser executada com `npm run branches:audit`.
+- A auditoria de schema pode ser executada com `npm run branches:schema-audit`.
+- O checklist de execução está em `docs/CHECKLIST-Multifilial.md`.
+- O helper `src/lib/branch-scope.ts` já prepara o padrão de filtro futuro, mas ainda não é aplicado nas consultas operacionais para evitar erro de coluna inexistente.
 - A migração real para `Organization`, `Branch` e `branchId` segue pendente de decisão de regra de negócio, para não quebrar os dados atuais.

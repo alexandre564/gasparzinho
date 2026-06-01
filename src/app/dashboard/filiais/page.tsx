@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Building2, CheckCircle2, FileText, LockKeyhole, Settings } from 'lucide-react';
+import { Building2, CheckCircle2, FileText, LockKeyhole, PlayCircle, Settings } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,21 @@ const readinessItems = [
     title: 'Migração real de dados',
     status: 'Pendente',
     description: 'A criação de Organization, Branch e branchId deve aguardar regras de negócio fechadas.',
+  },
+] as const;
+
+const technicalChecks = [
+  {
+    command: 'npm run branches:audit',
+    description: 'Lista os pontos do sistema que usam Prisma e que precisarão de filtro por filial no futuro.',
+  },
+  {
+    command: 'npm run branches:schema-audit',
+    description: 'Confere se o schema está na etapa correta antes de adicionar branchId aos dados operacionais.',
+  },
+  {
+    command: 'npm run branches:seed-default',
+    description: 'Cria a organização Gas e a filial padrão no banco quando as variáveis de conexão estiverem ativas.',
   },
 ] as const;
 
@@ -140,6 +155,26 @@ export default async function BranchesPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <PlayCircle className="h-5 w-5 text-emerald-700" />
+            Verificações seguras
+          </CardTitle>
+          <CardDescription>
+            Etapas técnicas que podem ser conferidas sem alterar vendas, clientes, cobranças ou estoque.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-3">
+          {technicalChecks.map((item) => (
+            <div key={item.command} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <code className="rounded bg-slate-950 px-2 py-1 text-xs font-semibold text-white">{item.command}</code>
+              <p className="mt-3 text-sm text-slate-600">{item.description}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-slate-700" />
             Documentos de apoio
           </CardTitle>
@@ -156,6 +191,11 @@ export default async function BranchesPage() {
           <Button asChild variant="outline" className="justify-start">
             <Link href="https://github.com/alexandre564/gasparzinho/blob/main/docs/LEVANTAMENTO-Multifilial.md">
               Levantamento técnico
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="justify-start">
+            <Link href="https://github.com/alexandre564/gasparzinho/blob/main/docs/CHECKLIST-Multifilial.md">
+              Checklist de execução
             </Link>
           </Button>
         </CardContent>

@@ -14,6 +14,7 @@
     "data:audit": "node scripts/audit-operational-data.js",
     "data:repair": "node scripts/repair-operational-data.js",
     "branches:audit": "node scripts/audit-branch-readiness.js",
+    "branches:schema-audit": "node scripts/audit-branch-schema-readiness.js",
     "branches:seed-default": "node scripts/seed-default-branch.js",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
