@@ -610,7 +610,9 @@ export async function importCustomers(
 
     let created = 0;
     let updated = 0;
+    const branchScope = await getCurrentBranchScope();
     const existingCustomers = await prisma.customer.findMany({
+      where: buildBranchWhere(branchScope),
       select: { id: true, phone: true },
     });
     const existingByPhoneDigits = new Map(
@@ -634,7 +636,9 @@ export async function importCustomers(
         await prisma.customer.update({ where: { id: existingId }, data: customer });
         updated += 1;
       } else {
-        const createdCustomer = await prisma.customer.create({ data: customer });
+        const createdCustomer = await prisma.customer.create({
+          data: { ...customer, branchId: branchScope.branchId },
+        });
         existingByPhoneDigits.set(phoneDigits, createdCustomer.id);
         created += 1;
       }

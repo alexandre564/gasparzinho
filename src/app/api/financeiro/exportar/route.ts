@@ -2,7 +2,7 @@ import { endOfDay, endOfMonth, endOfWeek, endOfYear, startOfDay, startOfMonth, s
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
-import { buildBranchWhere } from '@/lib/branch-scope';
+import { buildBranchWhere, type BranchScope } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
@@ -13,8 +13,7 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-async function getRevenue(from: Date, to: Date) {
-  const branchScope = await getCurrentBranchScope();
+async function getRevenue(from: Date, to: Date, branchScope: BranchScope) {
   const result = await prisma.order.aggregate({
     _sum: { grossValue: true },
     where: buildBranchWhere(branchScope, { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } }),
@@ -23,8 +22,7 @@ async function getRevenue(from: Date, to: Date) {
   return result._sum.grossValue ?? 0;
 }
 
-async function getExpenses(from: Date, to: Date) {
-  const branchScope = await getCurrentBranchScope();
+async function getExpenses(from: Date, to: Date, branchScope: BranchScope) {
   const result = await prisma.expense.aggregate({
     _sum: { value: true },
     where: buildBranchWhere(branchScope, { date: { gte: from, lte: to } }),
@@ -67,12 +65,13 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
   const periods = getSelectedPeriod(request.nextUrl.searchParams.get('period'), now);
+  const branchScope = await getCurrentBranchScope();
 
   const rows = await Promise.all(
     periods.map(async (period) => {
       const [revenue, expenses] = await Promise.all([
-        getRevenue(period.from, period.to),
-        getExpenses(period.from, period.to),
+        getRevenue(period.from, period.to, branchScope),
+        getExpenses(period.from, period.to, branchScope),
       ]);
 
       return [

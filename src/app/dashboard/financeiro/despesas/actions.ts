@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
-import { buildBranchWhere } from '@/lib/branch-scope';
+import { buildBranchWhere, type BranchScope } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export type CreateExpenseState = {
@@ -351,8 +351,7 @@ export async function deleteExpense(id: string): Promise<{ success: boolean; mes
   }
 }
 
-async function getRevenue(from: Date, to: Date) {
-  const branchScope = await getCurrentBranchScope();
+async function getRevenue(from: Date, to: Date, branchScope: BranchScope) {
   const result = await prisma.order.aggregate({
     _sum: { netValue: true },
     where: buildBranchWhere(branchScope, { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } }),
@@ -361,8 +360,7 @@ async function getRevenue(from: Date, to: Date) {
   return result._sum.netValue ?? 0;
 }
 
-async function getExpenses(from: Date, to: Date) {
-  const branchScope = await getCurrentBranchScope();
+async function getExpenses(from: Date, to: Date, branchScope: BranchScope) {
   const result = await prisma.expense.aggregate({
     _sum: { value: true },
     where: buildBranchWhere(branchScope, { date: { gte: from, lte: to } }),
@@ -429,18 +427,19 @@ function getChartPointName(period: FinancialPeriod, date: Date) {
 export async function getFinancialSummary(period: FinancialPeriod = 'monthly') {
   const now = new Date();
   const selectedRange = getPeriodRange(period, now);
+  const branchScope = await getCurrentBranchScope();
   const [revenueToday, expensesToday, revenueWeek, expensesWeek, revenueMonth, expensesMonth] =
     await Promise.all([
-      getRevenue(startOfDay(now), endOfDay(now)),
-      getExpenses(startOfDay(now), endOfDay(now)),
-      getRevenue(startOfWeek(now, { weekStartsOn: 1 }), endOfWeek(now, { weekStartsOn: 1 })),
-      getExpenses(startOfWeek(now, { weekStartsOn: 1 }), endOfWeek(now, { weekStartsOn: 1 })),
-      getRevenue(startOfMonth(now), endOfMonth(now)),
-      getExpenses(startOfMonth(now), endOfMonth(now)),
+      getRevenue(startOfDay(now), endOfDay(now), branchScope),
+      getExpenses(startOfDay(now), endOfDay(now), branchScope),
+      getRevenue(startOfWeek(now, { weekStartsOn: 1 }), endOfWeek(now, { weekStartsOn: 1 }), branchScope),
+      getExpenses(startOfWeek(now, { weekStartsOn: 1 }), endOfWeek(now, { weekStartsOn: 1 }), branchScope),
+      getRevenue(startOfMonth(now), endOfMonth(now), branchScope),
+      getExpenses(startOfMonth(now), endOfMonth(now), branchScope),
     ]);
   const [periodRevenue, periodExpenses] = await Promise.all([
-    getRevenue(selectedRange.from, selectedRange.to),
-    getExpenses(selectedRange.from, selectedRange.to),
+    getRevenue(selectedRange.from, selectedRange.to, branchScope),
+    getExpenses(selectedRange.from, selectedRange.to, branchScope),
   ]);
 
   return {
@@ -460,14 +459,15 @@ export async function getWeeklyChartData(period: FinancialPeriod = 'daily') {
   const today = new Date();
   const data = [];
   const length = period === 'yearly' ? 5 : period === 'monthly' ? 6 : period === 'weekly' ? 8 : 7;
+  const branchScope = await getCurrentBranchScope();
 
   for (let index = length - 1; index >= 0; index -= 1) {
     const date = getChartPointDate(period, index, today);
     const range = getChartPointRange(period, date);
     const name = getChartPointName(period, date);
     const [revenue, expenses] = await Promise.all([
-      getRevenue(range.from, range.to),
-      getExpenses(range.from, range.to),
+      getRevenue(range.from, range.to, branchScope),
+      getExpenses(range.from, range.to, branchScope),
     ]);
 
     data.push({ name, Entradas: revenue, Saidas: expenses });

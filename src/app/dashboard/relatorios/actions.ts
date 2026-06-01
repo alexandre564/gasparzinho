@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { buildBranchWhere } from '@/lib/branch-scope';
+import { buildBranchWhere, type BranchScope } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -89,8 +89,7 @@ function getPointName(period: ReportPeriod, date: Date) {
   return date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
 }
 
-async function getPeriodTotals(start: Date, end: Date) {
-  const branchScope = await getCurrentBranchScope();
+async function getPeriodTotals(start: Date, end: Date, branchScope: BranchScope) {
   const orderWhere = {
     createdAt: { gte: start, lte: end },
     status: { not: 'CANCELADO' },
@@ -120,13 +119,14 @@ async function getPeriodTotals(start: Date, end: Date) {
 
 export async function getSalesReportData(period: ReportPeriod): Promise<SalesReportPoint[]> {
   const now = new Date();
+  const branchScope = await getCurrentBranchScope();
 
   const length = period === 'yearly' ? 5 : period === 'monthly' ? 6 : period === 'weekly' ? 8 : 7;
   const points = await Promise.all(
     Array.from({ length }).map(async (_, index) => {
       const pointDate = getPointDate(period, index, now);
       const range = getPointRange(period, pointDate);
-      const totals = await getPeriodTotals(range.start, range.end);
+      const totals = await getPeriodTotals(range.start, range.end, branchScope);
 
       return {
         name: getPointName(period, pointDate),
