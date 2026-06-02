@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getBranchOverview } from '@/lib/branch-data';
+import { DEFAULT_BRANCH_ID } from '@/lib/branch-scope';
 import { getDefaultBranchName } from '@/lib/branch-settings';
 import { createBranch, pauseOrActivateBranch, updateBranch } from './actions';
 
@@ -47,6 +48,9 @@ const technicalChecks = [
     description: 'Confere, no banco real, se existem registros antigos sem filial.',
   },
 ] as const;
+
+const branchStatusOptions = ['ATIVA', 'PAUSADA', 'SUSPENSA', 'CANCELADA'] as const;
+const contractStatusOptions = ['PROPRIA', 'TESTE', 'ALUGADA', 'LICENCIADA', 'SUSPENSA', 'CANCELADA'] as const;
 
 const nextDecisions = [
   'Validar isolamento com uma segunda filial real de teste.',
@@ -164,8 +168,22 @@ export default async function BranchesPage() {
               <input name="name" required minLength={3} className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Gas Gasparzinho Zona Norte" />
             </label>
             <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Nome fantasia
+              <input name="tradingName" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Gasparzinho Norte" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
               Cidade
               <input name="city" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Lavras" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Status
+              <select name="status" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" defaultValue="ATIVA">
+                {branchStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="space-y-1 text-sm font-semibold text-slate-700">
               Contrato
@@ -175,6 +193,7 @@ export default async function BranchesPage() {
                 <option value="ALUGADA">Alugada</option>
                 <option value="LICENCIADA">Licenciada</option>
                 <option value="SUSPENSA">Suspensa</option>
+                <option value="CANCELADA">Cancelada</option>
               </select>
             </label>
             <label className="space-y-1 text-sm font-semibold text-slate-700">
@@ -184,6 +203,10 @@ export default async function BranchesPage() {
             <label className="space-y-1 text-sm font-semibold text-slate-700">
               Telefone
               <input name="phone" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="(35) 99999-9999" />
+            </label>
+            <label className="space-y-1 text-sm font-semibold text-slate-700">
+              Documento
+              <input name="document" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="CNPJ ou CPF" />
             </label>
             <label className="space-y-1 text-sm font-semibold text-slate-700">
               Vencimento
@@ -238,10 +261,34 @@ export default async function BranchesPage() {
                       </dl>
                       <form action={updateBranch} className="mt-4 grid gap-2">
                         <input type="hidden" name="id" value={branch.id} />
-                        <input type="hidden" name="status" value={branch.status} />
-                        <input type="hidden" name="contractStatus" value={branch.contractStatus} />
-                        <input name="name" defaultValue={branch.name} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Nome da filial" />
+                        <input name="name" required minLength={3} defaultValue={branch.name} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Nome da filial" />
+                        <input name="tradingName" defaultValue={branch.tradingName ?? ''} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Nome fantasia da filial" />
                         <input name="city" defaultValue={branch.city ?? ''} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Cidade da filial" />
+                        <input name="phone" defaultValue={branch.phone ?? ''} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Telefone da filial" />
+                        <input name="document" defaultValue={branch.document ?? ''} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Documento da filial" />
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <select
+                            name="status"
+                            defaultValue={branch.status}
+                            disabled={branch.id === DEFAULT_BRANCH_ID}
+                            className="h-9 rounded-md border border-slate-300 px-3 text-sm disabled:bg-slate-100"
+                            aria-label="Status da filial"
+                          >
+                            {branchStatusOptions.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                          {branch.id === DEFAULT_BRANCH_ID ? <input type="hidden" name="status" value="ATIVA" /> : null}
+                          <select name="contractStatus" defaultValue={branch.contractStatus} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Status contratual da filial">
+                            {contractStatusOptions.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <input name="planName" defaultValue={branch.planName ?? ''} className="h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="Plano da filial" />
                         <input
                           name="contractDueAt"
@@ -250,18 +297,27 @@ export default async function BranchesPage() {
                           className="h-9 rounded-md border border-slate-300 px-3 text-sm"
                           aria-label="Vencimento do contrato"
                         />
+                        <textarea
+                          name="notes"
+                          defaultValue={branch.notes ?? ''}
+                          className="min-h-20 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                          aria-label="Observacoes da filial"
+                          placeholder="Observacoes comerciais e operacionais"
+                        />
                         <Button type="submit" variant="outline" size="sm" className="gap-2">
                           <Save className="h-4 w-4" />
                           Salvar filial
                         </Button>
                       </form>
-                      <form action={pauseOrActivateBranch} className="mt-2">
-                        <input type="hidden" name="id" value={branch.id} />
-                        <input type="hidden" name="status" value={branch.status === 'ATIVA' ? 'PAUSADA' : 'ATIVA'} />
-                        <Button type="submit" variant="secondary" size="sm" className="w-full">
-                          {branch.status === 'ATIVA' ? 'Pausar filial' : 'Ativar filial'}
-                        </Button>
-                      </form>
+                      {branch.id !== DEFAULT_BRANCH_ID ? (
+                        <form action={pauseOrActivateBranch} className="mt-2">
+                          <input type="hidden" name="id" value={branch.id} />
+                          <input type="hidden" name="status" value={branch.status === 'ATIVA' ? 'PAUSADA' : 'ATIVA'} />
+                          <Button type="submit" variant="secondary" size="sm" className="w-full">
+                            {branch.status === 'ATIVA' ? 'Pausar filial' : 'Ativar filial'}
+                          </Button>
+                        </form>
+                      ) : null}
                     </div>
                   )),
                 )}

@@ -17,6 +17,8 @@
     "branches:schema-audit": "node scripts/audit-branch-schema-readiness.js",
     "branches:data-audit": "node scripts/audit-branch-data.js",
     "branches:seed-default": "node scripts/seed-default-branch.js",
+    "flows:audit": "node scripts/audit-critical-flows.js",
+    "e2e:smoke": "node scripts/e2e-smoke.js",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

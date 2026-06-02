@@ -45,6 +45,8 @@
 - [x] `npm run vercel-build`.
 - [x] `npm run branches:audit`.
 - [x] `npm run branches:schema-audit`.
+- [x] `npm run flows:audit`.
+- [x] Base inicial `npm run e2e:smoke` criada para servidor local ou Vercel.
 
 ## Validação pendente em produção
 

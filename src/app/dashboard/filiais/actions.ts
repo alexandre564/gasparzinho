@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
-import { DEFAULT_ORGANIZATION_ID } from '@/lib/branch-scope';
+import { DEFAULT_BRANCH_ID, DEFAULT_ORGANIZATION_ID } from '@/lib/branch-scope';
 
 const statusValues = ['ATIVA', 'PAUSADA', 'SUSPENSA', 'CANCELADA'] as const;
 const contractStatusValues = ['PROPRIA', 'TESTE', 'ALUGADA', 'LICENCIADA', 'SUSPENSA', 'CANCELADA'] as const;
@@ -50,6 +50,11 @@ function normalizeOptionalDigits(value?: string) {
   return digits || undefined;
 }
 
+function normalizeText(value?: string) {
+  const normalized = value?.trim().replace(/\s+/g, ' ');
+  return normalized || undefined;
+}
+
 function parseContractDueAt(value?: string) {
   if (!value) return null;
 
@@ -76,7 +81,7 @@ function normalizeBranchData(formData: FormData) {
     return { success: false as const, message: parsed.error.issues[0]?.message || 'Revise os dados da filial.' };
   }
 
-  const { id, contractDueAt, document, phone, ...data } = parsed.data;
+  const { id, contractDueAt, document, phone, name, tradingName, city, planName, notes, ...data } = parsed.data;
   const dueAt = parseContractDueAt(contractDueAt);
 
   if (dueAt === undefined) {
@@ -88,6 +93,11 @@ function normalizeBranchData(formData: FormData) {
     id,
     data: {
       ...data,
+      name: normalizeText(name) || name,
+      tradingName: normalizeText(tradingName),
+      city: normalizeText(city),
+      planName: normalizeText(planName),
+      notes: normalizeText(notes),
       document: normalizeOptionalDigits(document),
       phone: normalizeOptionalDigits(phone),
       contractDueAt: dueAt,
@@ -99,7 +109,7 @@ async function branchNameExists(name: string, idToIgnore?: string) {
   const existing = await prisma.branch.findFirst({
     where: {
       organizationId: DEFAULT_ORGANIZATION_ID,
-      name,
+      name: { equals: name, mode: 'insensitive' },
       ...(idToIgnore ? { id: { not: idToIgnore } } : {}),
     },
     select: { id: true },
@@ -152,6 +162,10 @@ export async function updateBranch(formData: FormData) {
     return { success: false, message: 'Filial não encontrada nesta organização.' };
   }
 
+  if (normalized.id === DEFAULT_BRANCH_ID && normalized.data.status !== 'ATIVA') {
+    return { success: false, message: 'A filial padrao deve permanecer ativa.' };
+  }
+
   if (await branchNameExists(normalized.data.name, normalized.id)) {
     return { success: false, message: 'Já existe outra filial com este nome.' };
   }
@@ -174,6 +188,10 @@ export async function pauseOrActivateBranch(formData: FormData) {
 
   if (!id) {
     return { success: false, message: 'Filial não encontrada.' };
+  }
+
+  if (id === DEFAULT_BRANCH_ID && status !== 'ATIVA') {
+    return { success: false, message: 'A filial padrao deve permanecer ativa.' };
   }
 
   const branch = await prisma.branch.findFirst({

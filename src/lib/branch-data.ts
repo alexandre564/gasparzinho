@@ -9,11 +9,15 @@ export type BranchOverview = {
     branches: Array<{
       id: string;
       name: string;
+      tradingName: string | null;
+      document: string | null;
+      phone: string | null;
       city: string | null;
       status: string;
       contractStatus: string;
       planName: string | null;
       contractDueAt: Date | null;
+      notes: string | null;
     }>;
   }>;
   error?: string;
@@ -29,11 +33,15 @@ export async function getBranchOverview(): Promise<BranchOverview> {
           select: {
             id: true,
             name: true,
+            tradingName: true,
+            document: true,
+            phone: true,
             city: true,
             status: true,
             contractStatus: true,
             planName: true,
             contractDueAt: true,
+            notes: true,
           },
         },
       },

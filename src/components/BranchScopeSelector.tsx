@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/branch-scope';
 import { Button } from '@/components/ui/button';
 
 const ACTIVE_BRANCH_COOKIE = 'gas_active_branch_id';
@@ -16,6 +17,7 @@ async function setActiveBranch(formData: FormData) {
   }
 
   const branchId = String(formData.get('branchId') ?? 'ALL');
+  const organizationId = session.user.organizationId || DEFAULT_ORGANIZATION_ID;
 
   if (branchId === 'ALL') {
     cookies().delete(ACTIVE_BRANCH_COOKIE);
@@ -23,7 +25,7 @@ async function setActiveBranch(formData: FormData) {
     const branch = await prisma.branch.findFirst({
       where: {
         id: branchId,
-        organizationId: session.user.organizationId || undefined,
+        organizationId,
         status: { not: 'CANCELADA' },
       },
       select: { id: true },
@@ -48,11 +50,12 @@ export async function BranchScopeSelector() {
   if (!isAdmin) return null;
 
   let branches: Array<{ id: string; name: string }> = [];
+  const organizationId = session?.user?.organizationId || DEFAULT_ORGANIZATION_ID;
 
   try {
     branches = await prisma.branch.findMany({
       where: {
-        organizationId: session?.user?.organizationId || undefined,
+        organizationId,
         status: { not: 'CANCELADA' },
       },
       select: { id: true, name: true },
