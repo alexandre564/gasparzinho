@@ -418,10 +418,17 @@ export async function updateOrderStatus(
   if (denied) return denied;
 
   try {
-    await prisma.order.update({
-      where: { id: orderId },
+    const branchScope = await getCurrentBranchScope();
+    const updated = await prisma.order.updateMany({
+      where: buildBranchWhere(branchScope, { id: orderId }),
       data: { status },
     });
+    if (updated.count === 0) {
+      return {
+        success: false,
+        message: 'Pedido não encontrado para esta filial.',
+      };
+    }
 
     revalidatePath('/dashboard/vendas');
     revalidatePath(`/dashboard/vendas/${orderId}`);

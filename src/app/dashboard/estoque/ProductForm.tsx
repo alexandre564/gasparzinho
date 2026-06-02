@@ -1,6 +1,6 @@
 'use client';
 
-import { type Resolver, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -39,14 +39,15 @@ import { createProduct, ProductFormState, updateProduct } from './actions';
 const ProductFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter no mínimo 3 caracteres.'),
   description: z.string().optional(),
-  price: z.coerce.number().positive('O preço de venda deve ser positivo.'),
-  cost: z.coerce.number().nonnegative('O custo não pode ser negativo.'),
+  price: z.coerce.number<string | number>().positive('O preço de venda deve ser positivo.'),
+  cost: z.coerce.number<string | number>().nonnegative('O custo não pode ser negativo.'),
   category: z.nativeEnum(ProductCategory),
   stockKind: z.nativeEnum(StockKind),
-  inventory: z.coerce.number().int().nonnegative('O estoque não pode ser negativo.').default(0),
+  inventory: z.coerce.number<string | number>().int().nonnegative('O estoque não pode ser negativo.').default(0),
 });
 
-type ProductFormValues = z.infer<typeof ProductFormSchema>;
+type ProductFormInput = z.input<typeof ProductFormSchema>;
+type ProductFormValues = z.output<typeof ProductFormSchema>;
 
 interface ProductFormProps {
   product?: Product | null;
@@ -56,8 +57,8 @@ export default function ProductForm({ product }: ProductFormProps) {
   const router = useRouter();
   const isEditMode = Boolean(product);
 
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(ProductFormSchema) as unknown as Resolver<ProductFormValues>,
+  const form = useForm<ProductFormInput, unknown, ProductFormValues>({
+    resolver: zodResolver(ProductFormSchema),
     defaultValues: {
       name: product?.name || '',
       description: product?.description || '',

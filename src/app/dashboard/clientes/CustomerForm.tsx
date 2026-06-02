@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { type Resolver, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -28,7 +28,8 @@ const CustomerFormSchema = z.object({
   reference: z.string().optional(),
 });
 
-type CustomerFormValues = z.infer<typeof CustomerFormSchema>;
+type CustomerFormInput = z.input<typeof CustomerFormSchema>;
+type CustomerFormValues = z.output<typeof CustomerFormSchema>;
 
 export default function CustomerForm({ customer }: { customer?: Customer }) {
   const router = useRouter();
@@ -36,8 +37,8 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
   const [isCepLoading, setCepLoading] = useState(false);
   const [createdCustomerId, setCreatedCustomerId] = useState<string | null>(null);
 
-  const form = useForm<CustomerFormValues>({
-    resolver: zodResolver(CustomerFormSchema) as unknown as Resolver<CustomerFormValues>,
+  const form = useForm<CustomerFormInput, unknown, CustomerFormValues>({
+    resolver: zodResolver(CustomerFormSchema),
     defaultValues: {
       name: customer?.name || '',
       phone: customer?.phone || '',

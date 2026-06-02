@@ -292,7 +292,9 @@ export async function importProducts(
                 inventory,
             };
 
-            const existing = await prisma.product.findUnique({ where: { name } });
+            const existing = await prisma.product.findFirst({
+                where: buildBranchWhere(branchScope, { name }),
+            });
 
             if (existing) {
                 const inventoryChange = inventory - existing.inventory;

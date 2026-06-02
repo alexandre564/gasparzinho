@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { type Resolver, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -21,14 +21,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 const renegotiationSchema = z.object({
-  paidAmount: z.coerce.number().min(0, 'O valor pago não pode ser negativo.'),
-  remainingValue: z.coerce.number().min(0, 'O restante a receber não pode ser negativo.'),
+  paidAmount: z.coerce.number<string | number>().min(0, 'O valor pago não pode ser negativo.'),
+  remainingValue: z.coerce.number<string | number>().min(0, 'O restante a receber não pode ser negativo.'),
   newDueDate: z.string().min(1, 'Informe a nova data prevista.'),
   paymentDate: z.string().optional(),
   notes: z.string().max(500, 'Use no máximo 500 caracteres.').optional(),
 });
 
-type RenegotiationFormValues = z.infer<typeof renegotiationSchema>;
+type RenegotiationFormInput = z.input<typeof renegotiationSchema>;
+type RenegotiationFormValues = z.output<typeof renegotiationSchema>;
 
 type DebtRenegotiationFormProps = {
   debt: {
@@ -52,8 +53,8 @@ const currency = new Intl.NumberFormat('pt-BR', {
 export default function DebtRenegotiationForm({ debt }: DebtRenegotiationFormProps) {
   const router = useRouter();
 
-  const form = useForm<RenegotiationFormValues>({
-    resolver: zodResolver(renegotiationSchema) as unknown as Resolver<RenegotiationFormValues>,
+  const form = useForm<RenegotiationFormInput, unknown, RenegotiationFormValues>({
+    resolver: zodResolver(renegotiationSchema),
     defaultValues: {
       paidAmount: 0,
       remainingValue: debt.value,

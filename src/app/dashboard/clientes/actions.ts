@@ -50,6 +50,7 @@ export async function createCustomer(values: z.infer<typeof CustomerFormSchema>)
     }
 
     try {
+        const branchScope = await getCurrentBranchScope();
         const { street, complement, neighborhood, reference, cep, ...rest } = validatedFields.data;
         const customer = await prisma.customer.create({ 
             data: { 
@@ -59,6 +60,7 @@ export async function createCustomer(values: z.infer<typeof CustomerFormSchema>)
                 neighborhood: neighborhood ?? '', 
                 reference: reference ?? '', 
                 cep: cep ?? '', 
+                branchId: branchScope.branchId,
             }
         });
         revalidatePath('/dashboard/clientes');
@@ -84,9 +86,10 @@ export async function updateCustomer(id: string, values: z.infer<typeof Customer
     }
 
     try {
+        const branchScope = await getCurrentBranchScope();
         const { street, complement, neighborhood, reference, cep, ...rest } = validatedFields.data;
-        await prisma.customer.update({ 
-            where: { id }, 
+        const updated = await prisma.customer.updateMany({
+            where: buildBranchWhere(branchScope, { id }),
             data: { 
                 ...rest, 
                 street: street ?? '', 
@@ -96,6 +99,9 @@ export async function updateCustomer(id: string, values: z.infer<typeof Customer
                 cep: cep ?? '', 
             }
         });
+        if (updated.count === 0) {
+            return { success: false, message: 'Cliente não encontrado para esta filial.' };
+        }
         revalidatePath('/dashboard/clientes');
         revalidatePath(`/dashboard/clientes/${id}/editar`);
         return { success: true, message: 'Cliente atualizado com sucesso.' };

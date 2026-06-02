@@ -211,8 +211,8 @@ export async function importVehicles(
       continue
     }
 
-    const existing = await prisma.vehicle.findUnique({
-      where: { placa },
+    const existing = await prisma.vehicle.findFirst({
+      where: buildBranchWhere(branchScope, { placa }),
       select: { id: true },
     })
 

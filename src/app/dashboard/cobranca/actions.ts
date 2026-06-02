@@ -527,10 +527,17 @@ export async function importDebts(
         .join('\n');
 
       const phone = row.phone || `sem-telefone-${row.customerName}`;
-      const customer = await prisma.customer.upsert({
-        where: { phone },
-        update: { name: row.customerName || phone },
-        create: {
+      const existingCustomer = await prisma.customer.findFirst({
+        where: buildBranchWhere(branchScope, { phone }),
+        select: { id: true },
+      });
+      const customer = existingCustomer
+        ? await prisma.customer.update({
+          where: { id: existingCustomer.id },
+          data: { name: row.customerName || phone },
+        })
+        : await prisma.customer.create({
+          data: {
           name: row.customerName || phone,
           phone,
           street: '',
@@ -538,8 +545,8 @@ export async function importDebts(
           neighborhood: '',
           city: 'Lavras',
           branchId: branchScope.branchId,
-        },
-      });
+          },
+        });
 
       const existingDebt = row.id
         ? await prisma.debt.findFirst({ where: buildBranchWhere(branchScope, { id: row.id }) })

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Vehicle } from '@prisma/client'
 import { useRouter } from 'next/navigation'
-import { type Resolver, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -18,18 +18,19 @@ const vehicleFormSchema = z.object({
   modelo: z.string().min(1, 'O modelo é obrigatório.'),
   tipo: z.string().min(1, 'Selecione o tipo.'),
   status: z.string().min(1, 'Selecione o status.'),
-  custoMedioKm: z.coerce.number().positive('O custo deve ser positivo.'),
+  custoMedioKm: z.coerce.number<string | number>().positive('O custo deve ser positivo.'),
   observacoes: z.string().optional(),
 })
 
-type VehicleFormValues = z.infer<typeof vehicleFormSchema>
+type VehicleFormInput = z.input<typeof vehicleFormSchema>
+type VehicleFormValues = z.output<typeof vehicleFormSchema>
 
 export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
   const router = useRouter()
   const isUpdate = !!vehicle?.id
 
-  const form = useForm<VehicleFormValues>({
-    resolver: zodResolver(vehicleFormSchema) as unknown as Resolver<VehicleFormValues>,
+  const form = useForm<VehicleFormInput, unknown, VehicleFormValues>({
+    resolver: zodResolver(vehicleFormSchema),
     defaultValues: {
       placa: vehicle?.placa ?? '',
       modelo: vehicle?.modelo ?? '',

@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { AlertTriangle, Banknote, CreditCard, Package, Repeat, TrendingUp, Truck, Users } from 'lucide-react';
 import type { ComponentType } from 'react';
+import { redirect } from 'next/navigation';
 
+import { auth } from '@/auth';
 import SalesChart from '@/components/SalesChart';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -218,6 +220,12 @@ type OperationalAlertItem = {
 };
 
 export default async function DashboardPage() {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
   const data = await getDashboardData();
   const operationalAlerts: OperationalAlertItem[] = [];
 
