@@ -105,6 +105,16 @@ function hasDeliveryAddressNumber(value: string | null | undefined) {
   );
 }
 
+function hasUsableDeliveryAddress(value: string | null | undefined) {
+  const address = (value ?? '').replace(/\s+/g, ' ').trim();
+
+  if (address.length < 8 || !/[A-Za-zÀ-ÿ]/.test(address)) {
+    return false;
+  }
+
+  return hasDeliveryAddressNumber(address);
+}
+
 const OrderFormSchema = z.object({
   customerId: z.string().min(1, 'Selecione um cliente.'),
   paymentMethod: z.string().min(1, 'Selecione a forma de pagamento.'),
@@ -116,7 +126,7 @@ const OrderFormSchema = z.object({
   saveDeliveryAddressToCustomer: z.boolean(),
   items: z.array(OrderItemSchema).min(1, 'Adicione pelo menos um item ao pedido.'),
 }).superRefine((values, context) => {
-  if (values.deliveryAddressChanged && !hasDeliveryAddressNumber(values.deliveryAddress)) {
+  if (values.deliveryAddressChanged && !hasUsableDeliveryAddress(values.deliveryAddress)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['deliveryAddress'],
@@ -215,9 +225,11 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   }, [watchedItems]);
 
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
+  const selectedCustomerStreetAndNumber =
+    selectedCustomer?.street && selectedCustomer?.number ? `${selectedCustomer.street}, ${selectedCustomer.number}` : null;
   const defaultDeliveryAddress = selectedCustomer
     ? [
-        `${selectedCustomer.street}, ${selectedCustomer.number}`,
+        selectedCustomerStreetAndNumber,
         selectedCustomer.complement,
         selectedCustomer.neighborhood,
         selectedCustomer.city,
@@ -229,6 +241,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
   const effectiveDeliveryAddress = deliveryAddressChanged
     ? form.watch('deliveryAddress') || defaultDeliveryAddress
     : defaultDeliveryAddress;
+  const deliveryAddressIncomplete = selectedCustomer ? !hasUsableDeliveryAddress(effectiveDeliveryAddress) : false;
 
   useEffect(() => {
     form.setValue('deliveryAddress', defaultDeliveryAddress);
@@ -560,6 +573,11 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                         Entrega em endereço diferente do cadastro.
                       </p>
                     ) : null}
+                    {deliveryAddressIncomplete ? (
+                      <p className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-800">
+                        Complete rua, numero, bairro e cidade antes de finalizar uma venda com entrega.
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -777,7 +795,7 @@ export default function OrderForm({ initialCustomerId = '' }: { initialCustomerI
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={form.formState.isSubmitting}
+                  disabled={form.formState.isSubmitting || deliveryAddressIncomplete}
                 >
                   {form.formState.isSubmitting ? (
                     <>

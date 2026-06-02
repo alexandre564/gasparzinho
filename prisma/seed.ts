@@ -177,11 +177,15 @@ async function seedDemoData() {
 
   const existingOrders = await prisma.order.count({ where: { branchId: DEFAULT_BRANCH_ID } });
   if (existingOrders === 0) {
+    const mariaAddress = `${maria.street}, ${maria.number} - ${maria.neighborhood} - ${maria.city} - CEP ${maria.cep}`;
+    const joaoAddress = `${joao.street}, ${joao.number} - ${joao.complement} - ${joao.neighborhood} - ${joao.city}`;
     const paidOrder = await prisma.order.create({
       data: {
         customerId: maria.id,
         status: 'ENTREGUE',
         paymentMethod: 'PIX',
+        deliveryAddress: mariaAddress,
+        deliveryReference: maria.reference,
         grossValue: 133,
         totalCost: 91,
         netValue: 42,
@@ -203,6 +207,8 @@ async function seedDemoData() {
         customerId: joao.id,
         status: 'PENDENTE',
         paymentMethod: 'FIADO',
+        deliveryAddress: joaoAddress,
+        deliveryReference: joao.reference,
         grossValue: 115,
         totalCost: 82,
         netValue: 33,

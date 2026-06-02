@@ -109,6 +109,16 @@ function hasDeliveryAddressNumber(value: string | null | undefined) {
   );
 }
 
+function hasUsableDeliveryAddress(value: string | null | undefined) {
+  const address = (value ?? '').replace(/\s+/g, ' ').trim();
+
+  if (address.length < 8 || !/[A-Za-zÀ-ÿ]/.test(address)) {
+    return false;
+  }
+
+  return hasDeliveryAddressNumber(address);
+}
+
 const OrderFormSchema = z.object({
   customerId: z.string().min(1, 'Cliente é obrigatório.'),
   paymentMethod: z.string().min(1, 'Forma de pagamento é obrigatória.'),
@@ -122,7 +132,7 @@ const OrderFormSchema = z.object({
     .array(OrderItemSchema)
     .min(1, 'O pedido deve ter pelo menos um item.'),
 }).superRefine((values, context) => {
-  if (values.deliveryAddressChanged && !hasDeliveryAddressNumber(values.deliveryAddress)) {
+  if (values.deliveryAddressChanged && !hasUsableDeliveryAddress(values.deliveryAddress)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['deliveryAddress'],
@@ -279,8 +289,9 @@ export async function createOrder(
       );
 
       const netValue = grossValue - totalCost;
+      const streetAndNumber = customer.street && customer.number ? `${customer.street}, ${customer.number}` : null;
       const defaultDeliveryAddress = [
-        `${customer.street}, ${customer.number}`,
+        streetAndNumber,
         customer.complement,
         customer.neighborhood,
         customer.city,
@@ -290,6 +301,10 @@ export async function createOrder(
         .join(' - ');
       const selectedDeliveryAddress = deliveryAddress?.trim() || defaultDeliveryAddress;
       const selectedDeliveryReference = deliveryReference?.trim() || customer.reference || null;
+
+      if (!hasUsableDeliveryAddress(selectedDeliveryAddress)) {
+        throw new Error('Complete o endereco de entrega com rua, numero, bairro e cidade antes de finalizar a venda.');
+      }
 
       const order = await tx.order.create({
         data: {

@@ -57,6 +57,8 @@ const checks = [
       [/buildBranchWhere\(branchScope/, 'consultas usam filtro de filial'],
       [/branchId: branchScope\.branchId/, 'novos clientes recebem filial'],
       [/cleanCustomerTextFields/, 'dados importados/legados sao saneados'],
+      [/street: z\.string\(\)\.trim\(\)\.min/, 'cadastro manual exige rua'],
+      [/neighborhood: z\.string\(\)\.trim\(\)\.min/, 'cadastro manual exige bairro'],
     ],
   },
   {
@@ -66,6 +68,7 @@ const checks = [
       [/tx\.order\.create/, 'pedido criado em transacao'],
       [/deliveryAddress/, 'endereco efetivo registrado no pedido'],
       [/saveDeliveryAddressToCustomer/, 'opcao de salvar novo endereco existe'],
+      [/hasUsableDeliveryAddress/, 'pedido exige endereco utilizavel para entrega'],
       [/tx\.delivery\.create/, 'venda gera entrega'],
       [/paymentMethod === PaymentMethod\.FIADO/, 'venda fiado possui regra propria'],
       [/tx\.debt\.create/, 'venda fiado gera cobranca'],

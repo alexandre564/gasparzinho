@@ -30,6 +30,20 @@ import { buildGoogleMapsRouteUrl } from '@/lib/maps';
 
 
 export const dynamic = 'force-dynamic';
+
+function hasDeliveryAddressNumber(value: string | null | undefined) {
+  const address = value ?? '';
+  return (
+    /,\s*(\d+[A-Za-z]?|s\/n|sn)\b/i.test(address) ||
+    /\b(n|no|numero)\s*[:.]?\s*(\d+[A-Za-z]?|s\/n|sn)\b/i.test(address)
+  );
+}
+
+function hasUsableDeliveryAddress(value: string | null | undefined) {
+  const address = (value ?? '').replace(/\s+/g, ' ').trim();
+  return address.length >= 8 && /[A-Za-zÀ-ÿ]/.test(address) && hasDeliveryAddressNumber(address);
+}
+
 function ItemsSummary({
   items,
 }: {
@@ -82,15 +96,17 @@ export default async function DeliveriesPage({
       .join(' - ');
     const deliveryAddress = delivery.order.deliveryAddress || customerAddress;
     const deliveryReference = delivery.order.deliveryReference || delivery.order.customer.reference;
+    const missingAddress = !hasUsableDeliveryAddress(deliveryAddress);
 
     return {
       delivery,
       deliveryAddress,
       deliveryReference,
+      missingAddress,
     };
   });
   const routeAddresses = deliveryRows
-    .filter(({ delivery }) => delivery.status !== 'ENTREGUE' && delivery.status !== 'CANCELADA')
+    .filter(({ delivery, missingAddress }) => !missingAddress && delivery.status !== 'ENTREGUE' && delivery.status !== 'CANCELADA')
     .map(({ deliveryAddress }) => deliveryAddress);
   const routeHref = buildGoogleMapsRouteUrl(routeAddresses);
 
@@ -155,9 +171,9 @@ export default async function DeliveriesPage({
               </TableHeader>
               <TableBody>
                 {deliveryRows.length > 0 ? (
-                  deliveryRows.map(({ delivery, deliveryAddress, deliveryReference }) => {
+                  deliveryRows.map(({ delivery, deliveryAddress, deliveryReference, missingAddress }) => {
                     return (
-                    <TableRow key={delivery.id}>
+                    <TableRow key={delivery.id} className={missingAddress ? 'bg-red-50/60' : undefined}>
                       <TableCell className="font-medium">
                         {new Date(delivery.order.createdAt).toLocaleDateString('pt-BR')}
                       </TableCell>
@@ -166,9 +182,16 @@ export default async function DeliveriesPage({
                         <div className="text-sm text-muted-foreground">{delivery.order.customer.phone}</div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <span title={deliveryAddress} className="line-clamp-2">
-                          {deliveryAddress}
-                        </span>
+                        {missingAddress ? (
+                          <div className="space-y-1">
+                            <Badge variant="destructive">Endereco pendente</Badge>
+                            <p className="text-xs text-red-700">Complete o cadastro ou informe outro endereco no pedido.</p>
+                          </div>
+                        ) : (
+                          <span title={deliveryAddress} className="line-clamp-2">
+                            {deliveryAddress}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell max-w-xs">
                         <ItemsSummary items={delivery.order.items} />

@@ -12,6 +12,8 @@ const CUSTOMER_TEXT_FIELDS = [
   'reference',
 ];
 
+const applyChanges = process.argv.includes('--apply') || process.env.REPAIR_APPLY === '1';
+
 async function cleanCustomerEncoding(client) {
   const fields = CUSTOMER_TEXT_FIELDS.map(quoteIdentifier).join(', ');
   const result = await client.query(`SELECT "id", ${fields} FROM "Customer"`);
@@ -114,16 +116,19 @@ async function main() {
       `);
 
       const missingDeliveries = await client.query(`
-        INSERT INTO "Delivery" ("id", "orderId", "status", "createdAt", "updatedAt")
+        INSERT INTO "Delivery" ("id", "orderId", "status", "branchId", "createdAt", "updatedAt")
         SELECT
           'repair_delivery_' || o."id",
           o."id",
           'PENDENTE',
+          COALESCE(o."branchId", c."branchId"),
           NOW(),
           NOW()
         FROM "Order" o
+        JOIN "Customer" c ON c."id" = o."customerId"
         WHERE o."status" IN ('PENDENTE', 'CONFIRMADO', 'ENVIADO', 'EM_PREPARO', 'PRONTO')
           AND NOT EXISTS (SELECT 1 FROM "Delivery" d WHERE d."orderId" = o."id")
+          AND COALESCE(o."branchId", c."branchId") IS NOT NULL
       `);
 
       const missingDebts = await client.query(`
@@ -135,6 +140,7 @@ async function main() {
           "dueDate",
           "originalDueDate",
           "status",
+          "branchId",
           "createdAt",
           "updatedAt"
         )
@@ -149,11 +155,14 @@ async function main() {
             WHEN COALESCE(o."paymentDueDate", o."createdAt" + INTERVAL '30 days') < CURRENT_DATE THEN 'VENCIDO'
             ELSE 'PENDENTE'
           END,
+          COALESCE(o."branchId", c."branchId"),
           NOW(),
           NOW()
         FROM "Order" o
+        JOIN "Customer" c ON c."id" = o."customerId"
         WHERE o."paymentMethod" = 'FIADO'
           AND NOT EXISTS (SELECT 1 FROM "Debt" d WHERE d."orderId" = o."id")
+          AND COALESCE(o."branchId", c."branchId") IS NOT NULL
       `);
 
       const missingDeliveryAddresses = await client.query(`
@@ -173,19 +182,30 @@ async function main() {
         WHERE o."customerId" = c."id"
           AND o."status" <> 'CANCELADO'
           AND COALESCE(o."deliveryAddress", '') = ''
+          AND COALESCE(c."street", '') <> ''
+          AND COALESCE(c."number", '') <> ''
+          AND COALESCE(c."neighborhood", '') <> ''
+          AND COALESCE(c."city", '') <> ''
       `);
       const cleanedCustomers = await cleanCustomerEncoding(client);
       const mergedCustomers = await mergeDuplicateCustomers(client);
 
-      await client.query('COMMIT');
+      if (applyChanges) {
+        await client.query('COMMIT');
+      } else {
+        await client.query('ROLLBACK');
+      }
 
-      console.log(`Reparo operacional aplicado no schema ${schema}.`);
+      console.log(`${applyChanges ? 'Reparo operacional aplicado' : 'Simulacao de reparo operacional'} no schema ${schema}.`);
       console.log(`Cobranças vencidas atualizadas: ${overdue.rowCount}`);
       console.log(`Entregas ausentes criadas: ${missingDeliveries.rowCount}`);
       console.log(`Cobranças ausentes criadas: ${missingDebts.rowCount}`);
       console.log(`Pedidos com endereco de entrega reparado: ${missingDeliveryAddresses.rowCount}`);
       console.log(`Clientes com codificacao corrigida: ${cleanedCustomers}`);
       console.log(`Clientes duplicados mesclados por telefone: ${mergedCustomers}`);
+      if (!applyChanges) {
+        console.log('Nenhuma alteracao foi gravada. Para aplicar, rode: npm run data:repair:apply');
+      }
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

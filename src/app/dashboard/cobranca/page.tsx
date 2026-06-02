@@ -259,6 +259,7 @@ export default async function CobrancaPage({
     getPaginatedDebts(query, currentPage, requestedSort ? sort : undefined, direction, status),
     getCollectionMessageTemplate(),
   ]);
+  const overdueOnPage = debts.filter((debt) => debt.effectiveStatus !== 'PAGO' && debt.daysLate > 0).length;
 
   return (
     <Card>
@@ -300,6 +301,11 @@ export default async function CobrancaPage({
           </div>
         </div>
         <ColumnControls searchParams={searchParams ?? {}} visibleColumns={visibleColumns} />
+        {overdueOnPage > 0 ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">
+            {overdueOnPage} cobranca(s) vencida(s) nesta pagina. Priorize WhatsApp, renegociacao ou registro de pagamento.
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto rounded-md border border-slate-300 bg-white">

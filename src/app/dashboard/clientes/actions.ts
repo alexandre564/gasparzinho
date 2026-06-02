@@ -20,11 +20,11 @@ const CustomerFormSchema = z.object({
   name: z.string().min(3, { message: "O nome precisa ter pelo menos 3 caracteres." }),
   phone: z.string().min(10, { message: "O telefone precisa ser válido." }),
   cep: z.string().optional(),
-  street: z.string().optional(),
-  number: z.string().min(1, { message: "O número é obrigatório." }),
+  street: z.string().trim().min(2, { message: "Informe a rua para evitar pedidos sem endereco." }),
+  number: z.string().trim().min(1, { message: "O número é obrigatório." }),
   complement: z.string().optional(),
-  neighborhood: z.string().optional(),
-  city: z.string().default('Lavras'),
+  neighborhood: z.string().trim().min(2, { message: "Informe o bairro." }),
+  city: z.string().trim().min(2, { message: "Informe a cidade." }).default('Lavras'),
   reference: z.string().optional(),
 });
 

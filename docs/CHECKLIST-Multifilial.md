@@ -47,10 +47,16 @@
 - [x] `npm run branches:schema-audit`.
 - [x] `npm run flows:audit`.
 - [x] Base inicial `npm run e2e:smoke` criada para servidor local ou Vercel.
+- [x] Base complementar `npm run e2e:critical` criada para fluxos de maior risco.
+- [x] Auditorias de dados listam amostras acionaveis dos problemas encontrados.
+- [x] `npm run data:repair` simula por padrao; aplicacao real exige `npm run data:repair:apply`.
+- [x] `npm run data:diagnose` criado para conferir URL, host e schema antes de auditoria/reparo.
+- [x] `npm run branches:seed-test` simula segunda filial; aplicacao real exige `npm run branches:seed-test:apply`.
 
 ## Validação pendente em produção
 
-- [ ] Rodar `npm run branches:data-audit` em ambiente com acesso ao banco.
+- [ ] Rodar `npm run data:audit` e `npm run branches:data-audit` em ambiente com acesso ao banco.
+- [ ] Rodar `npm run e2e:smoke` e `npm run e2e:critical` com servidor local ativo.
 - [ ] Testar login ADMIN, VENDEDOR e ENTREGADOR com dados reais.
 - [ ] Criar segunda filial real e testar isolamento.
 - [ ] Confirmar por URL direta que perfis não veem dados de outra filial.
