@@ -120,7 +120,7 @@ export function HeaderSearch() {
       <Input
         type="search"
         placeholder="Buscar cliente por nome ou celular..."
-        className="h-11 rounded-lg border-slate-300 bg-white pl-10 pr-10 text-slate-950 shadow-sm placeholder:text-slate-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-600"
+        className="h-11 rounded-lg border-slate-300 bg-white pl-10 pr-10 text-slate-950 shadow-sm transition duration-150 placeholder:text-slate-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-600"
         value={value}
         onChange={(event) => handleChange(event.target.value)}
         onFocus={() => {
@@ -145,7 +145,7 @@ export function HeaderSearch() {
       ) : null}
 
       {open && value.trim() ? (
-        <div className="absolute right-0 top-12 z-50 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/60">
+        <div className="absolute right-0 top-12 z-50 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/60 motion-safe:animate-soft-slide-up">
           <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-slate-500">
             Clientes encontrados
           </div>

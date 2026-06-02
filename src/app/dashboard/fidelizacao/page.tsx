@@ -17,6 +17,7 @@ import { LoyaltyPrediction } from '@/services/fidelizacao';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { EmptyState, PageHeader } from '@/components/PageShell';
 import { Search } from '@/components/Search';
 import { requirePageAccess } from '@/lib/page-auth';
 import {
@@ -155,14 +156,13 @@ export default async function FidelizacaoPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-950">Fidelização</h1>
-          <p className="text-sm text-slate-600">
-            Clientes com maior chance de comprar novamente, calculados pelo histórico e frequência de pedidos.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        eyebrow="Relacionamento"
+        title="Fidelização"
+        description="Clientes com maior chance de comprar novamente, calculados pelo histórico e frequência de pedidos."
+        icon={Repeat}
+        actions={
+          <>
           <Button asChild variant="outline" size="sm">
             <a href={`/api/fidelizacao/exportar?${exportParams.toString()}`} download>
               <Download className="mr-2 h-4 w-4" />
@@ -172,8 +172,9 @@ export default async function FidelizacaoPage({
           {periodOptions.map((option) => (
             <FilterButton key={option} days={option} currentDays={days} query={query} />
           ))}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="rounded-lg border bg-white p-4 shadow-sm">
         <Suspense fallback={<div className="h-11 w-full max-w-xl rounded-md border bg-white" />}>
@@ -190,11 +191,12 @@ export default async function FidelizacaoPage({
       ) : (
         <div className="rounded-lg border-2 border-dashed bg-white py-12 text-center">
           <Hourglass className="mx-auto h-12 w-12 text-slate-400" />
-          <h3 className="mt-3 text-sm font-semibold text-slate-950">Nenhuma oportunidade prevista</h3>
-          <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
-            Nenhum cliente entrou nos critérios de fidelização dos últimos ou próximos {days} dias.
-            Conforme novas vendas forem registradas, esta lista fica mais precisa.
-          </p>
+          <div className="mt-3">
+            <EmptyState
+              title="Nenhuma oportunidade prevista"
+              description={`Nenhum cliente entrou nos critérios de fidelização dos últimos ou próximos ${days} dias. Conforme novas vendas forem registradas, esta lista fica mais precisa.`}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Download,
   DollarSign,
+  Landmark,
   Loader2,
   TrendingDown,
   TrendingUp,
@@ -31,6 +32,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import SalesChart from '@/components/SalesChart';
+import { MetricTile, PageHeader, SectionCard } from '@/components/PageShell';
 import { PeriodToggle } from '../relatorios/PeriodToggle';
 import { requirePageAccess } from '@/lib/page-auth';
 
@@ -65,17 +67,16 @@ function StatCard({
   icon: React.ReactNode;
   subtext?: string;
 }) {
+  const tone = title.includes('Gastos') || title.includes('Dívidas') ? 'rose' : title.includes('Saldo') ? 'blue' : 'emerald';
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {subtext && <p className="text-xs text-muted-foreground">{subtext}</p>}
-      </CardContent>
-    </Card>
+    <MetricTile
+      title={title}
+      value={value}
+      description={subtext}
+      icon={() => <span className="contents">{icon}</span>}
+      tone={tone}
+    />
   );
 }
 
@@ -119,12 +120,7 @@ async function RecentExpenses() {
   const { expenses } = await getPaginatedExpenses('', 1);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Despesas recentes</CardTitle>
-        <CardDescription>Últimas despesas adicionadas.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <SectionCard title="Despesas recentes" description="Últimas despesas adicionadas ao fluxo financeiro.">
         <Table>
           <TableHeader>
             <TableRow>
@@ -150,8 +146,7 @@ async function RecentExpenses() {
             ))}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 }
 
@@ -159,15 +154,9 @@ async function WeeklyChart({ period }: { period: FinancialPeriod }) {
   const chartData = await getWeeklyChartData(period);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Fluxo financeiro</CardTitle>
-        <CardDescription>Receitas e gastos no período selecionado.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <SectionCard title="Fluxo financeiro" description="Receitas e gastos no período selecionado.">
         <SalesChart data={chartData} />
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 }
 
@@ -177,10 +166,14 @@ export default async function FinancialPage({ searchParams }: { searchParams?: {
   const period = getPeriod(searchParams?.period);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Painel financeiro</h1>
-        <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Financeiro"
+        title="Painel financeiro"
+        description="Acompanhe entradas, gastos, saldo e dívidas por período com a mesma leitura operacional do dashboard."
+        icon={Landmark}
+        actions={
+          <>
           <Button asChild variant="outline">
             <a href={`/api/financeiro/exportar?period=${period}`} download>
               <Download className="mr-2 h-4 w-4" />
@@ -200,8 +193,9 @@ export default async function FinancialPage({ searchParams }: { searchParams?: {
             </Link>
           </Button>
           <PeriodToggle period={period} basePath="/dashboard/financeiro" />
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
         <FinancialSummary period={period} />

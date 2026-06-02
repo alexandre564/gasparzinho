@@ -1,6 +1,6 @@
 import { DollarSign, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState, MetricTile, SectionCard } from '@/components/PageShell';
 import {
   Table,
   TableBody,
@@ -33,54 +33,42 @@ export default function ClosingSummary({ data }: Props) {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Entradas do dia</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesas do dia</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {formatCurrency(totalExpenses)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo liquido</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${netBalance >= 0 ? 'text-primary' : 'text-destructive'}`}>
-              {formatCurrency(netBalance)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de vendas</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{ordersCount}</div>
-          </CardContent>
-        </Card>
+        <MetricTile
+          title="Entradas do dia"
+          value={formatCurrency(totalRevenue)}
+          description="Total bruto recebido ou vendido no caixa de hoje."
+          icon={TrendingUp}
+          tone="emerald"
+        />
+        <MetricTile
+          title="Despesas do dia"
+          value={formatCurrency(totalExpenses)}
+          description="Saídas lançadas no fechamento."
+          icon={TrendingDown}
+          tone="rose"
+        />
+        <MetricTile
+          title="Saldo líquido"
+          value={formatCurrency(netBalance)}
+          description="Entradas menos despesas do dia."
+          icon={DollarSign}
+          tone={netBalance >= 0 ? 'blue' : 'rose'}
+        />
+        <MetricTile
+          title="Total de vendas"
+          value={ordersCount}
+          description="Pedidos considerados no fechamento."
+          icon={Receipt}
+          tone="slate"
+        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Vendas do dia</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <SectionCard
+          title="Vendas do dia"
+          description="Entradas e lucro líquido dos pedidos usados no fechamento."
+          className="lg:col-span-2"
+        >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -101,37 +89,27 @@ export default function ClosingSummary({ data }: Props) {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      Nenhuma venda registrada hoje.
+                      <EmptyState title="Nenhuma venda registrada hoje" description="As vendas confirmadas aparecem aqui antes do fechamento." />
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+        </SectionCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Estoque no fechamento</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <SectionCard title="Estoque no fechamento" description="Saldo previsto para apoiar a conferência operacional.">
             <div className="space-y-2">
               {stockForecast.map((item) => (
-                <div key={item.name} className="flex justify-between rounded-md border px-3 py-2 text-sm">
-                  <span>{item.name}</span>
-                  <strong>{item.units}</strong>
+                <div key={item.name} className="interactive-lift flex justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span className="font-semibold text-slate-800">{item.name}</span>
+                  <strong className="text-slate-950">{item.units}</strong>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+        </SectionCard>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Despesas do dia</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <SectionCard title="Despesas do dia" description="Gastos considerados como saída no fechamento.">
           <Table>
             <TableHeader>
               <TableRow>
@@ -154,14 +132,13 @@ export default function ClosingSummary({ data }: Props) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center">
-                    Nenhuma despesa registrada hoje.
+                    <EmptyState title="Nenhuma despesa registrada hoje" description="Gastos lançados no financeiro entram automaticamente no fechamento." />
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+      </SectionCard>
     </div>
   );
 }

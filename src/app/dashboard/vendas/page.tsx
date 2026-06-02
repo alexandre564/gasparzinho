@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, ArrowUpDown, Download, Eye, PlusCircle } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, Eye, PlusCircle, ShoppingCart } from 'lucide-react';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import Pagination from '@/components/Pagination';
+import { EmptyState, PageHeader } from '@/components/PageShell';
 import { Search } from '@/components/Search';
 import { getPaginatedOrders } from './actions';
 import type { OrderSortKey, SortDirection } from './actions';
@@ -176,14 +177,13 @@ export default async function OrdersPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Vendas</h2>
-          <p className="text-sm text-muted-foreground">
-            Consulte pedidos, pagamentos e detalhes das vendas registradas.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+      <PageHeader
+        eyebrow="Pedidos"
+        title="Vendas"
+        description="Consulte pedidos, pagamentos e detalhes das vendas registradas."
+        icon={ShoppingCart}
+        actions={
+          <>
           <Button asChild variant="outline" size="sm" className="gap-2">
             <a href={exportHref} download>
               <Download className="h-4 w-4" />
@@ -196,8 +196,9 @@ export default async function OrdersPage({
               Nova venda
             </Link>
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader className="gap-4">
@@ -292,12 +293,7 @@ export default async function OrdersPage({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-32 text-center">
-                      <div className="mx-auto max-w-sm space-y-2">
-                        <p className="font-medium">Nenhum pedido encontrado</p>
-                        <p className="text-sm text-muted-foreground">
-                          Crie uma nova venda para iniciar o fluxo de entrega e cobrança.
-                        </p>
-                      </div>
+                      <EmptyState title="Nenhum pedido encontrado" description="Crie uma nova venda para iniciar o fluxo de entrega e cobrança." />
                     </TableCell>
                   </TableRow>
                 )}

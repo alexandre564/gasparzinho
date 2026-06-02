@@ -7,13 +7,6 @@ import { getCollectionMessageTemplate } from '@/app/dashboard/configuracoes/acti
 import type { DebtStatus } from './types';
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Table,
   TableBody,
   TableCell,
@@ -23,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState, MetricTile, PageHeader, SectionCard } from '@/components/PageShell';
 import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import StatusFilter from './StatusFilter';
@@ -101,17 +95,13 @@ async function TotalOpenDebtCard() {
   const { totalOpen } = await getTotalOpenDebt();
 
   return (
-    <Card className="border-red-200 bg-red-600 text-white">
-      <CardHeader>
-        <CardTitle>Total em aberto</CardTitle>
-        <CardDescription className="text-red-50">
-          Soma de todas as dívidas pendentes, atrasadas e renegociadas.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-bold">{currency.format(totalOpen)}</p>
-      </CardContent>
-    </Card>
+    <MetricTile
+      title="Total em aberto"
+      value={currency.format(totalOpen)}
+      description="Soma de todas as dívidas pendentes, atrasadas e renegociadas."
+      icon={CalendarClock}
+      tone="rose"
+    />
   );
 }
 
@@ -142,15 +132,14 @@ export default async function Page({ searchParams }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Gestão de dívidas</h1>
-          <p className="text-sm text-slate-600">
-            Acompanhe valores em aberto, pagos, renegociações, vencimentos e pagamentos.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Financeiro"
+        title="Gestão de dívidas"
+        description="Acompanhe valores em aberto, pagos, renegociações, vencimentos e pagamentos."
+        icon={CalendarClock}
+        actions={
+          <>
           <Button asChild variant="outline" size="sm">
             <a href={exportHref} download>
               <Download className="mr-2 h-4 w-4" />
@@ -163,15 +152,15 @@ export default async function Page({ searchParams }: PageProps) {
             </a>
           </Button>
           <ImportDebtsButton />
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
         <TotalOpenDebtCard />
       </Suspense>
 
-      <Card>
-        <CardHeader>
+      <SectionCard title="Dívidas e histórico" description="Busque, cobre, quite ou edite registros de contas a receber.">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <Suspense fallback={<div className="h-11 w-full max-w-xl rounded-md border bg-white" />}>
               <Search placeholder="Buscar por cliente, telefone ou status..." />
@@ -180,9 +169,7 @@ export default async function Page({ searchParams }: PageProps) {
               <StatusFilter />
             </Suspense>
           </div>
-        </CardHeader>
-
-        <CardContent>
+        <div className="mt-5">
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
@@ -260,15 +247,15 @@ export default async function Page({ searchParams }: PageProps) {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
-                      Nenhuma dívida encontrada.
+                      <EmptyState title="Nenhuma dívida encontrada" description="Ajuste os filtros ou registre uma venda fiada para iniciar a cobrança." />
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       <div className="flex justify-center">
         {totalPages > 1 ? (

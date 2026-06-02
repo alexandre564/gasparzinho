@@ -1,11 +1,12 @@
 import { Suspense } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { CalendarCheck, Download, Loader2 } from 'lucide-react';
 
 import { getClosingHistory, getDailyClosingData } from './actions';
 import ClosingActions from './ClosingActions';
 import ClosingHistory from './ClosingHistory';
 import ClosingSummary from './ClosingSummary';
 import DateRangeFilter from './DateRangeFilter';
+import { PageHeader, SectionCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { requirePageAccess } from '@/lib/page-auth';
 
@@ -36,20 +37,23 @@ export default async function FechamentoPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-950">Fechamento do dia</h1>
-          <p className="text-sm text-slate-600">
-            Confira vendas, despesas, saldo e estoque antes de fechar o caixa.
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <a href={exportHref} download>
-            <Download className="mr-2 h-4 w-4" />
-            Exportar histórico
-          </a>
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Caixa e operação"
+        title="Fechamento do dia"
+        description="Confira entradas, despesas, saldo, estoque e histórico antes de salvar o caixa do dia."
+        icon={CalendarCheck}
+        actions={
+          <>
+            <ClosingActions data={clientData} isAlreadyClosed={isAlreadyClosed} />
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <a href={exportHref} download>
+                <Download className="h-4 w-4" />
+                Exportar histórico
+              </a>
+            </Button>
+          </>
+        }
+      />
 
       <div id="closing-content" className="space-y-6">
         <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
@@ -57,13 +61,17 @@ export default async function FechamentoPage({
         </Suspense>
       </div>
 
-      <ClosingActions data={clientData} isAlreadyClosed={isAlreadyClosed} />
-
-      <DateRangeFilter />
-
-      <Suspense fallback={<p>Carregando histórico...</p>}>
-        <ClosingHistory history={history} />
-      </Suspense>
+      <SectionCard
+        title="Histórico de fechamentos"
+        description="Filtre o período e acompanhe fechamentos anteriores com a mesma leitura do painel financeiro."
+      >
+        <DateRangeFilter />
+        <div className="mt-5">
+          <Suspense fallback={<p className="text-sm text-slate-600">Carregando histórico...</p>}>
+            <ClosingHistory history={history} />
+          </Suspense>
+        </div>
+      </SectionCard>
     </div>
   );
 }

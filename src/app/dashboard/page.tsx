@@ -188,7 +188,7 @@ function MetricCard({
   const isStrong = emphasis === 'strong';
   const card = (
     <Card
-      className={`group relative h-full overflow-hidden border shadow-lg transition duration-200 hover:-translate-y-0.5 hover:shadow-xl ${
+      className={`interactive-lift group relative h-full overflow-hidden border shadow-lg ${
         isStrong ? toneClass.strong : 'border-slate-300 bg-white shadow-slate-200/80 hover:border-emerald-300'
       }`}
     >
@@ -211,7 +211,7 @@ function MetricCard({
         <div
           className={`text-3xl font-black tracking-tight ${
             isStrong && (tone === 'emerald' || tone === 'blue' || tone === 'slate') ? 'text-white' : 'text-slate-950'
-          }`}
+          } metric-value`}
         >
           {value}
         </div>
@@ -263,7 +263,7 @@ function OperationalAlert({
   return (
     <Link
       href={href}
-      className={`group flex items-start gap-3 rounded-lg border px-4 py-4 text-sm shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${toneClass}`}
+      className={`interactive-lift group flex items-start gap-3 rounded-lg border px-4 py-4 text-sm shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${toneClass}`}
     >
       <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${iconClass}`}>
         <AlertTriangle className="h-4 w-4" />
@@ -326,7 +326,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-white shadow-xl shadow-slate-300/60">
+      <section className="motion-safe:animate-soft-slide-up overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-white shadow-xl shadow-slate-300/60">
         <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.35fr_0.65fr] lg:p-8">
           <div className="flex min-w-0 flex-col justify-between">
             <div>
@@ -339,26 +339,26 @@ export default async function DashboardPage() {
               </p>
             </div>
             <div className="mt-6 grid gap-3 text-sm sm:grid-cols-3">
-              <div className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
+              <div className="interactive-lift rounded-lg border border-white/10 bg-white/[0.06] p-3">
                 <p className="text-xs font-bold uppercase text-slate-300">Pedidos hoje</p>
                 <p className="mt-1 text-lg font-black text-white">{data.salesTodayCount}</p>
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
+              <div className="interactive-lift rounded-lg border border-white/10 bg-white/[0.06] p-3">
                 <p className="text-xs font-bold uppercase text-slate-300">Ticket médio</p>
                 <p className="mt-1 text-lg font-black text-white">{currency.format(data.averageTicketToday)}</p>
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
+              <div className="interactive-lift rounded-lg border border-white/10 bg-white/[0.06] p-3">
                 <p className="text-xs font-bold uppercase text-slate-300">Vendas no mês</p>
                 <p className="mt-1 text-lg font-black text-white">{currency.format(data.monthRevenue)}</p>
               </div>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 text-sm">
-            <Link href="/dashboard/vendas" className="rounded-lg border border-white/10 bg-white/10 p-4 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
+            <Link href="/dashboard/vendas" className="interactive-lift rounded-lg border border-white/10 bg-white/10 p-4 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
               <p className="font-bold uppercase text-slate-100">Vendas hoje</p>
               <p className="mt-2 text-2xl font-black text-white">{currency.format(data.totalSalesToday)}</p>
             </Link>
-            <Link href="/dashboard/entregas" className="rounded-lg border border-emerald-300/20 bg-emerald-500 p-4 text-white transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200">
+            <Link href="/dashboard/entregas" className="interactive-lift rounded-lg border border-emerald-300/20 bg-emerald-500 p-4 text-white hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200">
               <p className="font-bold uppercase text-emerald-50">Entregas em andamento</p>
               <p className="mt-2 text-2xl font-black">{data.deliveriesInProgress}</p>
             </Link>
@@ -485,7 +485,7 @@ export default async function DashboardPage() {
                 <Link
                   href={`/dashboard/vendas/${order.id}`}
                   key={order.id}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-slate-300 bg-slate-50 px-3 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="interactive-lift flex items-start justify-between gap-3 rounded-lg border border-slate-300 bg-slate-50 px-3 py-3 shadow-sm hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-extrabold text-slate-950">{decodeContactText(order.customer.name)}</p>

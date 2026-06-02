@@ -5,7 +5,7 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full max-w-full overflow-x-auto overflow-y-hidden rounded-lg border border-slate-400 bg-white shadow-lg shadow-slate-200/80 ring-1 ring-slate-950/5">
+  <div className="relative w-full max-w-full overflow-x-auto overflow-y-hidden rounded-lg border border-slate-300 bg-white shadow-md shadow-slate-200/80 ring-1 ring-slate-950/5">
     <table
       ref={ref}
       className={cn('w-full min-w-[42rem] caption-bottom text-sm text-slate-950 sm:min-w-full', className)}
@@ -21,7 +21,7 @@ const TableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn('border-b-2 border-emerald-500 bg-slate-950 text-white', className)}
+    className={cn('border-b-2 border-emerald-500 bg-slate-900 text-white', className)}
     {...props}
   />
 ));
@@ -73,7 +73,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-12 bg-slate-950 px-3 text-left align-middle text-xs font-extrabold uppercase tracking-wide text-white first:pl-3 last:pr-3 sm:px-4 sm:first:pl-5 sm:last:pr-5 [&:has([role=checkbox])]:pr-0',
+      'h-12 bg-slate-900 px-3 text-left align-middle text-xs font-extrabold uppercase tracking-wide text-white first:pl-3 last:pr-3 sm:px-4 sm:first:pl-5 sm:last:pr-5 [&:has([role=checkbox])]:pr-0',
       className
     )}
     {...props}

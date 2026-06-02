@@ -5,13 +5,14 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  CreditCard,
   Download,
   MessageCircle,
   Pencil,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState, PageHeader, SectionCard } from '@/components/PageShell';
 import {
   Table,
   TableBody,
@@ -265,16 +266,14 @@ export default async function CobrancaPage({
   const overdueOnPage = debts.filter((debt) => debt.effectiveStatus !== 'PAGO' && debt.daysLate > 0).length;
 
   return (
-    <Card>
-      <CardHeader className="gap-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <CardTitle>Cobrança</CardTitle>
-            <CardDescription>
-              Controle todas as compras fiadas, incluindo pagas, renegociadas e em atraso.
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Contas a receber"
+        title="Cobrança"
+        description="Controle compras fiadas, pagas, renegociadas e em atraso com leitura rápida de prioridade."
+        icon={CreditCard}
+        actions={
+          <>
             <Button asChild size="sm" variant="outline" className="gap-2">
               <a href={exportHref} download>
                 <Download className="h-4 w-4" />
@@ -288,8 +287,13 @@ export default async function CobrancaPage({
               </a>
             </Button>
             <ImportDebtsButton />
-          </div>
-        </div>
+          </>
+        }
+      />
+      <SectionCard
+        title="Lista de cobranças"
+        description="Use busca, filtros, ordenação e colunas visíveis para administrar o recebimento."
+      >
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <Suspense fallback={<div className="h-11 w-full max-w-xl rounded-md border bg-white" />}>
             <Search placeholder="Buscar por cliente, telefone, status ou observação..." />
@@ -305,16 +309,15 @@ export default async function CobrancaPage({
         </div>
         <ColumnControls searchParams={searchParams ?? {}} visibleColumns={visibleColumns} />
         {overdueOnPage > 0 ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">
-            {overdueOnPage} cobranca(s) vencida(s) nesta pagina. Priorize WhatsApp, renegociacao ou registro de pagamento.
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">
+            {overdueOnPage} cobrança(s) vencida(s) nesta página. Priorize WhatsApp, renegociação ou registro de pagamento.
           </div>
         ) : null}
-      </CardHeader>
-      <CardContent>
+        <div className="mt-5">
         <div className="overflow-x-auto rounded-md border border-slate-300 bg-white">
           <Table className="min-w-[1120px]">
             <TableHeader>
-              <TableRow className="bg-slate-950 hover:bg-slate-950">
+              <TableRow className="bg-slate-900 hover:bg-slate-900">
                 <SortableHeader
                   field="customer"
                   activeSort={sort}
@@ -492,12 +495,7 @@ export default async function CobrancaPage({
               ) : (
                 <TableRow>
                   <TableCell colSpan={9} className="h-32 text-center">
-                    <div className="mx-auto max-w-sm space-y-2">
-                      <p className="font-medium">Nenhuma cobrança encontrada</p>
-                      <p className="text-sm text-muted-foreground">
-                        Importe uma planilha ou ajuste os termos da busca.
-                      </p>
-                    </div>
+                    <EmptyState title="Nenhuma cobrança encontrada" description="Importe uma planilha ou ajuste os termos da busca." />
                   </TableCell>
                 </TableRow>
               )}
@@ -507,7 +505,8 @@ export default async function CobrancaPage({
         <Suspense fallback={null}>
           <Pagination totalPages={totalPages} />
         </Suspense>
-      </CardContent>
-    </Card>
+        </div>
+      </SectionCard>
+    </div>
   );
 }

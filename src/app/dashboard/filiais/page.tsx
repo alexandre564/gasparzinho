@@ -3,6 +3,7 @@ import { Building2, CheckCircle2, FileText, LockKeyhole, PlayCircle, PlusCircle,
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getBranchOverview } from '@/lib/branch-data';
 import { DEFAULT_BRANCH_ID } from '@/lib/branch-scope';
@@ -75,27 +76,23 @@ export default async function BranchesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
-            <Building2 className="h-4 w-4" />
-            Plataforma Gas
-          </div>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Filiais</h2>
-          <p className="text-sm text-slate-600">
-            Administre o Gasparzinho e futuras revendas sem misturar clientes, vendas, estoque ou cobrança.
-          </p>
-        </div>
-        <Button asChild variant="outline" className="gap-2">
-          <Link href="/dashboard/configuracoes">
-            <Settings className="h-4 w-4" />
-            Configurações
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Plataforma Gas"
+        title="Filiais"
+        description="Administre o Gasparzinho e futuras revendas sem misturar clientes, vendas, estoque ou cobrança."
+        icon={Building2}
+        actions={
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/dashboard/configuracoes">
+              <Settings className="h-4 w-4" />
+              Configurações
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-emerald-200 bg-emerald-50/70">
+        <Card className="interactive-lift border-emerald-200 bg-emerald-50/70">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-emerald-700" />
@@ -120,7 +117,7 @@ export default async function BranchesPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="interactive-lift">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <LockKeyhole className="h-5 w-5 text-slate-700" />
@@ -140,14 +137,14 @@ export default async function BranchesPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>Andamento da preparação</CardTitle>
           <CardDescription>Resumo do que já está pronto e do que ainda precisa de homologação.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {readinessItems.map((item) => (
-            <div key={item.title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={item.title} className="interactive-lift rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <Badge variant={item.status === 'Pendente' ? 'secondary' : 'default'}>{item.status}</Badge>
               <h3 className="mt-3 font-semibold text-slate-950">{item.title}</h3>
               <p className="mt-2 text-sm text-slate-600">{item.description}</p>
@@ -156,7 +153,7 @@ export default async function BranchesPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PlusCircle className="h-5 w-5 text-emerald-700" />
@@ -229,7 +226,7 @@ export default async function BranchesPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>Filiais registradas</CardTitle>
           <CardDescription>Unidades reais disponíveis para acompanhamento e seleção pelo administrador.</CardDescription>
@@ -240,7 +237,7 @@ export default async function BranchesPage() {
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {branchOverview.organizations.flatMap((organization) =>
                   organization.branches.map((branch) => (
-                    <div key={branch.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                    <div key={branch.id} className="interactive-lift rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{organization.name}</p>

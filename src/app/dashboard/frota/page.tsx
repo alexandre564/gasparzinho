@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Download, FileSpreadsheet, Pencil, PlusCircle } from 'lucide-react';
+import { Download, FileSpreadsheet, Pencil, PlusCircle, Truck } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
 import { buildBranchWhere } from '@/lib/branch-scope';
@@ -8,16 +8,10 @@ import { requirePageAccess } from '@/lib/page-auth';
 import ImportVehiclesButton from './ImportVehiclesButton';
 import VehicleFilters from './VehicleFilters';
 import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels';
+import { EmptyState, PageHeader, SectionCard } from '@/components/PageShell';
 import { Search } from '@/components/Search';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -91,14 +85,14 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
   const exportHref = `/api/frota/exportar${exportParams.toString() ? `?${exportParams.toString()}` : ''}`;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle>Frota de veículos</CardTitle>
-            <CardDescription>Gerencie veículos, status e custo médio por quilômetro.</CardDescription>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Logística"
+        title="Frota de veículos"
+        description="Gerencie veículos, status e custo médio por quilômetro."
+        icon={Truck}
+        actions={
+          <>
             <Button asChild variant="outline" size="sm">
               <a href={exportHref} download>
                 <Download className="mr-2 h-4 w-4" />
@@ -118,10 +112,10 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
                 Adicionar veículo
               </Link>
             </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
+          </>
+        }
+      />
+      <SectionCard title="Veículos cadastrados" description="Filtre por placa, modelo, tipo ou status para manter a frota em dia.">
         <div className="mb-4 space-y-3">
           <Search placeholder="Buscar por placa, modelo ou status..." />
           <VehicleFilters />
@@ -165,15 +159,15 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  Nenhum veículo encontrado.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            <TableRow>
+              <TableCell colSpan={6} className="h-24 text-center">
+                  <EmptyState title="Nenhum veículo encontrado" description="Cadastre veículos para organizar entregas, custos e manutenção." />
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      </SectionCard>
+    </div>
   );
 }

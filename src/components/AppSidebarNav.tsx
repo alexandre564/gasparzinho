@@ -64,14 +64,14 @@ export function AppSidebarNav({ userRole, canAccessSettings, canDownloadBackup }
                     key={link.href}
                     href={link.href}
                     aria-current={active ? 'page' : undefined}
-                    className={`group flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition ${
+                    className={`group flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition duration-150 ease-out motion-safe:hover:translate-x-0.5 ${
                       active
                         ? 'bg-white/10 text-white shadow-inner shadow-white/5 ring-1 ring-white/10'
                         : 'text-slate-300 hover:bg-white/[0.07] hover:text-white'
                     }`}
                   >
                     <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+                      className={`flex h-8 w-8 items-center justify-center rounded-md transition duration-150 ease-out group-hover:scale-105 ${
                         active
                           ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-950/30'
                           : 'bg-slate-900 text-slate-400 group-hover:bg-slate-800 group-hover:text-emerald-200'
@@ -92,13 +92,13 @@ export function AppSidebarNav({ userRole, canAccessSettings, canDownloadBackup }
         {canAccessSettings ? (
           <Link
             href={settingsNavLink.href}
-            className={`group flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition ${
+            className={`group flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition duration-150 ease-out motion-safe:hover:translate-x-0.5 ${
               isActive(pathname, settingsNavLink.href)
                 ? 'bg-white/10 text-white ring-1 ring-white/10'
                 : 'text-slate-300 hover:bg-white/[0.07] hover:text-white'
             }`}
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-900 text-slate-400 group-hover:bg-slate-800 group-hover:text-emerald-200">
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-900 text-slate-400 transition duration-150 ease-out group-hover:scale-105 group-hover:bg-slate-800 group-hover:text-emerald-200">
               <settingsNavLink.icon className="h-4 w-4" />
             </span>
             {settingsNavLink.label}
@@ -112,7 +112,7 @@ export function AppSidebarNav({ userRole, canAccessSettings, canDownloadBackup }
             <a
               href="/api/backup"
               download
-              className="flex min-h-10 items-center gap-3 rounded-lg bg-emerald-500 px-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+              className="interactive-lift flex min-h-10 items-center gap-3 rounded-lg bg-emerald-500 px-3 text-sm font-extrabold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
             >
               <Download className="h-4 w-4" />
               Backup completo
@@ -120,7 +120,7 @@ export function AppSidebarNav({ userRole, canAccessSettings, canDownloadBackup }
             <a
               href="/api/backup/planilha"
               download
-              className="mt-2 flex min-h-10 items-center gap-3 rounded-lg border border-emerald-400/30 px-3 text-sm font-semibold text-emerald-100 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+              className="interactive-lift mt-2 flex min-h-10 items-center gap-3 rounded-lg border border-emerald-400/30 px-3 text-sm font-semibold text-emerald-100 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
             >
               <FileSpreadsheet className="h-4 w-4" />
               Backup planilha

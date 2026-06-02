@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, ArrowUpDown, Download, MessageCircle, Pencil, PlusCircle, ShoppingCart } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, MessageCircle, Pencil, PlusCircle, ShoppingCart, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import Pagination from '@/components/Pagination';
+import { EmptyState, PageHeader } from '@/components/PageShell';
 import { Search } from '@/components/Search';
 import DeleteCustomerButton from './DeleteCustomerButton';
 import ImportCustomersButton from './ImportCustomersButton';
@@ -136,14 +137,13 @@ export default async function CustomersPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Clientes</h2>
-          <p className="text-sm text-muted-foreground">
-            Cadastre, pesquise e acompanhe o histórico de compras dos clientes.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        eyebrow="Base comercial"
+        title="Clientes"
+        description="Cadastre, pesquise e acompanhe o histórico de compras dos clientes."
+        icon={Users}
+        actions={
+          <>
           <Button asChild size="sm" variant="outline" className="gap-2">
             <a href={exportHref} download>
               <Download className="h-4 w-4" />
@@ -169,8 +169,9 @@ export default async function CustomersPage({
               Novo cliente
             </Link>
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader className="gap-4">
@@ -188,7 +189,7 @@ export default async function CustomersPage({
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-950 hover:bg-slate-950">
+                <TableRow className="bg-slate-900 hover:bg-slate-900">
                   <SortableHeader
                     field="name"
                     activeSort={sort}
@@ -286,12 +287,7 @@ export default async function CustomersPage({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
-                      <div className="mx-auto max-w-sm space-y-2">
-                        <p className="font-medium">Nenhum cliente encontrado</p>
-                        <p className="text-sm text-muted-foreground">
-                          Cadastre um novo cliente ou ajuste os termos da busca.
-                        </p>
-                      </div>
+                      <EmptyState title="Nenhum cliente encontrado" description="Cadastre um novo cliente ou ajuste os termos da busca." />
                     </TableCell>
                   </TableRow>
                 )}

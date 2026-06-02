@@ -79,7 +79,7 @@ export async function BranchScopeSelector() {
           id="active-branch-id"
           name="branchId"
           defaultValue={activeBranchId}
-          className="h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="h-11 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm transition duration-150 focus-visible:border-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
           <option value="ALL">Todas as filiais</option>
           {branches.map((branch) => (
@@ -89,7 +89,7 @@ export async function BranchScopeSelector() {
           ))}
         </select>
       </div>
-      <Button type="submit" variant="outline" size="sm" className="h-11 shrink-0 rounded-lg border-slate-300 bg-white font-bold">
+      <Button type="submit" variant="outline" size="sm" className="interactive-lift h-11 shrink-0 rounded-lg border-slate-300 bg-white font-bold">
         Aplicar
       </Button>
     </form>

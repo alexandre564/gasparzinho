@@ -126,8 +126,54 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  @keyframes keyframes-soft-slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes keyframes-metric-pop {
+    0% { opacity: 0.72; transform: translateY(4px) scale(0.985); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
   .animate-fade-in {
     animation: keyframes-fade-in 0.5s ease-out forwards;
+  }
+
+  .animate-soft-slide-up {
+    animation: keyframes-soft-slide-up 0.42s ease-out both;
+  }
+
+  .metric-value {
+    animation: keyframes-metric-pop 0.38s ease-out both;
+  }
+
+  .interactive-lift {
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .interactive-lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .interactive-lift:hover {
+    transform: none;
   }
 }
 

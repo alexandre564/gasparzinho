@@ -18,6 +18,7 @@ import { getDefaultBranchName } from '@/lib/branch-settings';
 import { requirePageAccess } from '@/lib/page-auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MetricTile, PageHeader } from '@/components/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { labelFrom, productCategoryLabels, stockKindLabels } from '@/lib/labels';
@@ -84,16 +85,7 @@ function SummaryCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-slate-600">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-slate-500" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-semibold tracking-tight">{value}</div>
-        <p className="mt-1 text-xs text-slate-600">{description}</p>
-      </CardContent>
-    </Card>
+    <MetricTile title={title} value={value} description={description} icon={Icon} tone={title.includes('Gastos') ? 'rose' : 'emerald'} />
   );
 }
 
@@ -104,34 +96,30 @@ export default async function ConfiguracoesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-sm font-medium text-emerald-700">
-            <Settings className="h-4 w-4" />
-            Central do sistema
-          </div>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Configurações</h2>
-          <p className="text-sm text-slate-600">
-            Ajuste produtos, preços, custos, gastos, mensagens e baixe uma cópia dos dados.
-          </p>
-        </div>
-        {canDownloadBackup ? (
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button asChild variant="outline" className="gap-2">
-              <a href="/api/backup/planilha" download>
-                <Download className="h-4 w-4" />
-                Backup planilha
-              </a>
-            </Button>
-            <Button asChild className="gap-2">
-              <a href="/api/backup" download>
-                <Download className="h-4 w-4" />
-                Backup completo
-              </a>
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      <PageHeader
+        eyebrow="Central do sistema"
+        title="Configurações"
+        description="Ajuste produtos, preços, custos, gastos, mensagens e baixe uma cópia dos dados."
+        icon={Settings}
+        actions={
+          canDownloadBackup ? (
+            <>
+              <Button asChild variant="outline" className="gap-2">
+                <a href="/api/backup/planilha" download>
+                  <Download className="h-4 w-4" />
+                  Backup planilha
+                </a>
+              </Button>
+              <Button asChild className="gap-2">
+                <a href="/api/backup" download>
+                  <Download className="h-4 w-4" />
+                  Backup completo
+                </a>
+              </Button>
+            </>
+          ) : null
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryCard

@@ -1,14 +1,8 @@
 import Link from 'next/link';
-import { Download, MapPinned } from 'lucide-react';
+import { Download, MapPinned, Truck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { EmptyState, PageHeader, SectionCard } from '@/components/PageShell';
 import {
   Table,
   TableBody,
@@ -115,14 +109,13 @@ export default async function DeliveriesPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Entregas</h2>
-          <p className="text-sm text-muted-foreground">
-            Acompanhe endereços, itens e andamento das entregas.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        eyebrow="Operação"
+        title="Entregas"
+        description="Acompanhe endereços, itens, rotas e andamento das entregas em uma leitura operacional."
+        icon={Truck}
+        actions={
+          <>
           {routeHref !== '#' ? (
             <Button asChild variant="outline" size="sm" className="gap-2">
               <a href={routeHref} target="_blank" rel="noreferrer">
@@ -142,24 +135,20 @@ export default async function DeliveriesPage({
               Exportar CSV
             </a>
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <Card>
-        <CardHeader className="gap-4">
-          <div>
-            <CardTitle>Controle de entregas</CardTitle>
-            <CardDescription>
-              Atualize status de entrega e acesse o pedido relacionado.
-            </CardDescription>
-          </div>
+      <SectionCard
+        title="Controle de entregas"
+        description="Atualize status de entrega e acesse o pedido relacionado."
+      >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <Search placeholder="Buscar por cliente, telefone, endereço ou status..." />
             <StatusFilter />
           </div>
           <DeliveryDateRangeFilter />
-        </CardHeader>
-        <CardContent>
+        <div className="mt-5">
           <div className="overflow-x-auto rounded-md border">
             <Table className="min-w-[980px]">
               <TableHeader>
@@ -234,12 +223,7 @@ export default async function DeliveriesPage({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
-                      <div className="mx-auto max-w-sm space-y-2">
-                        <p className="font-medium">Nenhuma entrega encontrada</p>
-                        <p className="text-sm text-muted-foreground">
-                          Entregas aparecem aqui após vendas confirmadas.
-                        </p>
-                      </div>
+                      <EmptyState title="Nenhuma entrega encontrada" description="Entregas aparecem aqui após vendas confirmadas." />
                     </TableCell>
                   </TableRow>
                 )}
@@ -247,8 +231,8 @@ export default async function DeliveriesPage({
             </Table>
           </div>
           <Pagination totalPages={totalPages} />
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
     </div>
   );
 }

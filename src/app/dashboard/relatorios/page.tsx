@@ -1,8 +1,8 @@
 import { BarChart3, DollarSign, Download, Receipt, TrendingDown } from 'lucide-react';
 
 import SalesChart from '@/components/SalesChart';
+import { MetricTile, PageHeader, SectionCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -56,16 +56,13 @@ function SummaryCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-slate-600">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-slate-500" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-semibold tracking-tight text-slate-950">{value}</div>
-        <p className="mt-1 text-xs text-slate-600">{description}</p>
-      </CardContent>
-    </Card>
+    <MetricTile
+      title={title}
+      value={value}
+      description={description}
+      icon={Icon}
+      tone={title === 'Despesas' ? 'rose' : title === 'Saldo' ? 'blue' : 'emerald'}
+    />
   );
 }
 
@@ -95,14 +92,13 @@ export default async function RelatoriosPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Relatórios</h2>
-          <p className="text-sm text-slate-600">
-            Analise vendas, gastos, saldo e ticket médio por dia, semana, mês ou ano.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        eyebrow="Análise"
+        title="Relatórios"
+        description="Analise vendas, gastos, saldo e ticket médio por dia, semana, mês ou ano."
+        icon={BarChart3}
+        actions={
+          <>
           <Button asChild variant="outline" size="sm">
             <a href={`/api/relatorios/exportar?period=${period}`} download>
               <Download className="mr-2 h-4 w-4" />
@@ -110,8 +106,9 @@ export default async function RelatoriosPage({
             </a>
           </Button>
           <PeriodToggle period={period} />
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
@@ -140,24 +137,14 @@ export default async function RelatoriosPage({
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Vendas por período</CardTitle>
-          <CardDescription>{periodDescriptions[period]}</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <SectionCard title="Vendas por período" description={periodDescriptions[period]}>
           <SalesChart data={chartData} labelPrefix={periodLabels[period]} />
-        </CardContent>
-      </Card>
+      </SectionCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Detalhamento do período</CardTitle>
-          <CardDescription>
-            Melhor saldo: {bestPoint.name} com {currency.format(bestPoint.net)}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <SectionCard
+        title="Detalhamento do período"
+        description={`Melhor saldo: ${bestPoint.name} com ${currency.format(bestPoint.net)}.`}
+      >
           <Table>
             <TableHeader>
               <TableRow>
@@ -188,8 +175,7 @@ export default async function RelatoriosPage({
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+      </SectionCard>
     </div>
   );
 }

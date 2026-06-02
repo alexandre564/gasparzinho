@@ -31,11 +31,11 @@ export default async function Header() {
   const canDownloadBackup = userRole === 'ADMIN';
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur transition-shadow duration-200">
       <div className="flex min-h-[4.75rem] flex-wrap items-center gap-3 px-3 py-3 sm:px-4 lg:flex-nowrap lg:px-8">
         <Sheet>
           <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="shrink-0 rounded-lg border-slate-300 bg-white lg:hidden" aria-label="Abrir menu">
+            <Button size="icon" variant="outline" className="interactive-lift shrink-0 rounded-lg border-slate-300 bg-white lg:hidden" aria-label="Abrir menu">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Abrir menu</span>
             </Button>
@@ -76,7 +76,7 @@ export default async function Header() {
           </div>
         </div>
 
-        <div className="hidden min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm md:flex">
+        <div className="hidden min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm transition-colors duration-150 md:flex">
           <Building2 className="h-4 w-4 text-emerald-700" />
           <div className="min-w-0">
             <p className="truncate text-xs font-bold leading-none text-slate-950">{userName}</p>
@@ -94,14 +94,14 @@ export default async function Header() {
 
         <BranchScopeSelector />
 
-        <Button size="icon" variant="outline" className="hidden rounded-lg border-slate-300 bg-white shadow-sm md:inline-flex" aria-label="Notificações">
+        <Button size="icon" variant="outline" className="interactive-lift hidden rounded-lg border-slate-300 bg-white shadow-sm md:inline-flex" aria-label="Notificações">
           <Bell className="h-4 w-4" />
           <span className="sr-only">Notificações</span>
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="shrink-0 rounded-full border-slate-300 bg-white shadow-sm">
+            <Button variant="outline" size="icon" className="interactive-lift shrink-0 rounded-full border-slate-300 bg-white shadow-sm">
               <CircleUser className="h-5 w-5" />
               <span className="sr-only">Abrir conta</span>
             </Button>

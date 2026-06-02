@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, ArrowUpDown, Download, Pencil, PlusCircle } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Boxes, Download, Pencil, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import Pagination from '@/components/Pagination';
+import { EmptyState, PageHeader } from '@/components/PageShell';
 import { Search } from '@/components/Search';
 import { CategoryFilter } from './CategoryFilter';
 import DeleteProductButton from './DeleteProductButton';
@@ -158,14 +159,13 @@ export default async function StockPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Estoque</h2>
-          <p className="text-sm text-muted-foreground">
-            Controle saldos, custos e preços dos produtos vendidos.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        eyebrow="Produtos"
+        title="Estoque"
+        description="Controle saldos, custos e preços dos produtos vendidos."
+        icon={Boxes}
+        actions={
+          <>
           <Button asChild size="sm" variant="outline" className="gap-2">
             <a href={exportHref} download>
               <Download className="h-4 w-4" />
@@ -185,8 +185,9 @@ export default async function StockPage({
               Novo produto
             </Link>
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader className="gap-4">
@@ -285,12 +286,7 @@ export default async function StockPage({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
-                      <div className="mx-auto max-w-sm space-y-2">
-                        <p className="font-medium">Nenhum produto encontrado</p>
-                        <p className="text-sm text-muted-foreground">
-                          Cadastre produtos para liberar vendas e controle de entregas.
-                        </p>
-                      </div>
+                      <EmptyState title="Nenhum produto encontrado" description="Cadastre produtos para liberar vendas e controle de entregas." />
                     </TableCell>
                   </TableRow>
                 )}

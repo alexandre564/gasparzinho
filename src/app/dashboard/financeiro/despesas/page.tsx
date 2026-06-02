@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Expense } from '@prisma/client';
-import { Download, FileSpreadsheet, Loader2, Repeat } from 'lucide-react';
+import { Download, FileSpreadsheet, Loader2, ReceiptText, Repeat } from 'lucide-react';
 import Link from 'next/link';
 
 import { getPaginatedExpenses } from './actions';
@@ -11,17 +11,11 @@ import ExpenseForm from './ExpenseForm';
 import ImportExpensesButton from './ImportExpensesButton';
 import { expenseLabel } from './categories';
 import Pagination from '@/components/Pagination';
+import { PageHeader, SectionCard } from '@/components/PageShell';
 import { Search } from '@/components/Search';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { requirePageAccess } from '@/lib/page-auth';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -67,15 +61,14 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   }`;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Gastos</h1>
-          <p className="text-sm text-muted-foreground">
-            Registre gastos por centro de custo, importe planilhas e acompanhe despesas recorrentes.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Centros de custo"
+        title="Gastos"
+        description="Registre gastos por centro de custo, importe planilhas e acompanhe despesas recorrentes."
+        icon={ReceiptText}
+        actions={
+          <>
           <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href={exportHref}>
               <Download className="mr-2 h-4 w-4" />
@@ -89,13 +82,13 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
             </Link>
           </Button>
           <ImportExpensesButton />
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
+          <SectionCard title="Lista de gastos" description="Filtre por texto, categoria e período para conferir as saídas.">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <Search placeholder="Buscar por descrição, categoria, responsável ou veículo..." />
                 <Suspense fallback={<div className="h-11 w-full rounded-md border bg-white sm:max-w-xs" />}>
@@ -105,8 +98,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
               <Suspense fallback={<div className="h-20 rounded-md border bg-white" />}>
                 <ExpenseDateRangeFilter />
               </Suspense>
-            </CardHeader>
-            <CardContent>
+            <div className="mt-5">
               <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
                 <Table>
                   <TableHeader>
@@ -168,23 +160,17 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
                   </TableBody>
                 </Table>
               </Suspense>
-            </CardContent>
-          </Card>
+            </div>
+          </SectionCard>
           <div className="mt-4 flex justify-center">
             <Pagination totalPages={totalPages} />
           </div>
         </div>
 
         <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Novo gasto</CardTitle>
-              <CardDescription>Adicione uma saída ao fluxo financeiro.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <SectionCard title="Novo gasto" description="Adicione uma saída ao fluxo financeiro.">
               <ExpenseForm />
-            </CardContent>
-          </Card>
+          </SectionCard>
         </div>
       </div>
     </div>

@@ -33,7 +33,7 @@ export default function DateRangeFilter() {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-end">
+    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm sm:flex-row sm:items-end">
       <label className="grid gap-1 text-xs font-bold uppercase text-slate-600">
         De
         <Input
