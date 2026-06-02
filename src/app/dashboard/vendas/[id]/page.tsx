@@ -32,6 +32,7 @@ import CancelOrderButton from './CancelOrderButton';
 import { OrderStatus } from "@/types/enums";
 import { deliveryStatusLabels, labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
 import { buildGoogleMapsUrl, buildWazeUrl } from '@/lib/maps';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -60,6 +61,8 @@ export default async function OrderDetailsPage({
 }: {
   params: { id: string };
 }) {
+  await requirePageAccess(['ADMIN', 'VENDEDOR']);
+
   const order = await getOrderDetails(params.id);
 
   if (!order) {

@@ -6,10 +6,13 @@ import { DataTable } from './data-table';
 import { getTeamMembers } from './actions';
 import ImportTeamButton from './ImportTeamButton';
 import { Button } from '@/components/ui/button';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
 export default async function TeamPage() {
+  await requirePageAccess(['ADMIN']);
+
   const members = await getTeamMembers();
 
   return (

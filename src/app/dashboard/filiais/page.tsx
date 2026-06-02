@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getBranchOverview } from '@/lib/branch-data';
 import { DEFAULT_BRANCH_ID } from '@/lib/branch-scope';
 import { getDefaultBranchName } from '@/lib/branch-settings';
+import { requirePageAccess } from '@/lib/page-auth';
 import { createBranch, pauseOrActivateBranch, updateBranch } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,8 @@ function statusVariant(status: string) {
 }
 
 export default async function BranchesPage() {
+  await requirePageAccess(['ADMIN']);
+
   const [branchName, branchOverview] = await Promise.all([getDefaultBranchName(), getBranchOverview()]);
   const branchCount = branchOverview.organizations.reduce((total, organization) => total + organization.branches.length, 0);
 

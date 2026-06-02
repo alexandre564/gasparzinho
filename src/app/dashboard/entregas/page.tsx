@@ -27,6 +27,7 @@ import DeliveryDateRangeFilter from './DeliveryDateRangeFilter';
 import { getPaginatedDeliveries } from './actions';
 import { getDriverWhatsappNumber } from '../configuracoes/actions';
 import { buildGoogleMapsRouteUrl } from '@/lib/maps';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,8 @@ export default async function DeliveriesPage({
 }: {
   searchParams?: { query?: string; page?: string; status?: DeliveryStatus; from?: string; to?: string };
 }) {
+  await requirePageAccess(['ADMIN', 'ENTREGADOR']);
+
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const status = searchParams?.status;

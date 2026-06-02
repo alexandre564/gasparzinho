@@ -27,6 +27,43 @@ const protectedApiChecks = [
   { pathname: '/api/fidelizacao/exportar', label: 'exportacao de fidelizacao' },
 ];
 
+function formatConnectionError(error) {
+  if (error.name === 'AbortError') {
+    return `Tempo limite de ${timeoutMs}ms excedido ao conectar no servidor.`;
+  }
+
+  const causeCode = error?.cause?.code;
+  if (causeCode === 'ECONNREFUSED') {
+    return 'Conexao recusada: o servidor local provavelmente nao esta aberto na porta esperada.';
+  }
+
+  if (causeCode === 'ENOTFOUND') {
+    return 'Host nao encontrado: confira o endereco configurado em E2E_BASE_URL.';
+  }
+
+  if (causeCode === 'ECONNRESET') {
+    return 'Conexao interrompida pelo servidor durante o teste.';
+  }
+
+  if (error.message === 'fetch failed') {
+    return 'Fetch falhou antes de receber resposta HTTP. Verifique se o servidor esta ativo e se a porta/base URL estao corretas.';
+  }
+
+  return error.message || String(error);
+}
+
+function printServerHelp() {
+  const parsed = new URL(baseUrl);
+  console.error(`Base URL testada: ${baseUrl}`);
+  console.error(`Porta esperada: ${parsed.port || (parsed.protocol === 'https:' ? '443' : '80')}`);
+  console.error('Abra o servidor antes do teste:');
+  console.error('  cd "C:\\Users\\User\\Documents\\New project\\gasparzinho-v2-work"');
+  console.error('  npm run dev -- --port 3004');
+  console.error('Se estiver usando outra porta ou Vercel:');
+  console.error('  $env:E2E_BASE_URL="http://localhost:3005"; npm run e2e:smoke');
+  console.error('  $env:E2E_BASE_URL="https://gasparzinho-o4fo.vercel.app"; npm run e2e:smoke');
+}
+
 async function request(pathname, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -90,9 +127,8 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`Falha no smoke E2E em ${baseUrl}.`);
-  console.error(error.name === 'AbortError' ? `Tempo limite de ${timeoutMs}ms excedido.` : error.message);
-  console.error('Confirme que o servidor esta ativo. Exemplo: cd "C:\\Users\\User\\Documents\\New project\\gasparzinho-v2-work"; npm run dev -- --port 3004');
-  console.error('Para outro endereco, defina E2E_BASE_URL antes de rodar npm run e2e:smoke.');
+  console.error('Falha no smoke E2E.');
+  console.error(formatConnectionError(error));
+  printServerHelp();
   process.exit(1);
 });

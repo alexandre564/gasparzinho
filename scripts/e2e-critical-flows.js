@@ -48,6 +48,23 @@ function assertHttpOk(result, label) {
   );
 }
 
+function formatConnectionError(error) {
+  if (error.name === 'AbortError') {
+    return `Tempo limite de ${timeoutMs}ms excedido ao conectar no servidor.`;
+  }
+
+  const causeCode = error?.cause?.code;
+  if (causeCode === 'ECONNREFUSED') {
+    return 'Conexao recusada: o servidor local provavelmente nao esta aberto na porta esperada.';
+  }
+
+  if (error.message === 'fetch failed') {
+    return 'Fetch falhou antes de receber resposta HTTP. Confira servidor, porta e E2E_BASE_URL.';
+  }
+
+  return error.message || String(error);
+}
+
 function runContractChecks() {
   const vendaAction = read('src/app/dashboard/vendas/actions.ts');
   assertContains(vendaAction, /hasUsableDeliveryAddress/, 'Venda precisa validar endereco de entrega utilizavel.');
@@ -128,8 +145,8 @@ async function main() {
 
 main().catch((error) => {
   console.error(`Falha no E2E critico em ${baseUrl}.`);
-  console.error(error.name === 'AbortError' ? `Tempo limite de ${timeoutMs}ms excedido.` : error.message);
+  console.error(formatConnectionError(error));
   console.error('Confirme que o servidor esta ativo antes de rodar: npm run dev -- --port 3004');
-  console.error('Para outro endereco, defina E2E_BASE_URL.');
+  console.error('Para outro endereco, defina E2E_BASE_URL. Exemplo: $env:E2E_BASE_URL="http://localhost:3005"');
   process.exit(1);
 });

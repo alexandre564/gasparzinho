@@ -29,6 +29,7 @@ import type { DebtStatus } from '@/types/enums';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
 import { getDebtPaymentBreakdown } from '@/lib/debts';
+import { requirePageAccess } from '@/lib/page-auth';
 import StatusFilter from './StatusFilter';
 
 export const dynamic = 'force-dynamic';
@@ -239,6 +240,8 @@ export default async function CobrancaPage({
 }: {
   searchParams?: { query?: string; page?: string; sort?: string; direction?: string; status?: string; cols?: string };
 }) {
+  await requirePageAccess(['ADMIN']);
+
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const requestedSort = searchParams?.sort;

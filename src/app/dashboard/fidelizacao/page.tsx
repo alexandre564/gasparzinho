@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { Search } from '@/components/Search';
+import { requirePageAccess } from '@/lib/page-auth';
 import {
   Card,
   CardContent,
@@ -140,6 +141,8 @@ export default async function FidelizacaoPage({
 }: {
   searchParams?: { days?: string; query?: string };
 }) {
+  await requirePageAccess(['ADMIN', 'VENDEDOR']);
+
   const requestedDays = Number(searchParams?.days) || 3;
   const days = periodOptions.includes(requestedDays) ? requestedDays : 3;
   const query = searchParams?.query ?? '';

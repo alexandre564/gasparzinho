@@ -8,6 +8,7 @@ import DebtRenegotiationForm from './DebtRenegotiationForm';
 import { getDebtPaymentBreakdown } from '@/lib/debts';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
+import { requirePageAccess } from '@/lib/page-auth';
 
 async function getDebt(id: string) {
   const branchScope = await getCurrentBranchScope();
@@ -34,6 +35,8 @@ const currency = new Intl.NumberFormat('pt-BR', {
 const formatDate = (date?: Date | null) => (date ? format(date, 'dd/MM/yyyy') : '-');
 
 export default async function RenegotiateDebtPage({ params }: { params: { id: string } }) {
+  await requirePageAccess(['ADMIN']);
+
   const debt = await getDebt(params.id);
   const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
 

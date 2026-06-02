@@ -11,11 +11,11 @@ import {
   Settings,
   ShieldCheck,
 } from 'lucide-react';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { getDefaultBranchName } from '@/lib/branch-settings';
+import { requirePageAccess } from '@/lib/page-auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,7 +98,7 @@ function SummaryCard({
 }
 
 export default async function ConfiguracoesPage() {
-  const session = await auth();
+  const session = await requirePageAccess(['ADMIN']);
   const canDownloadBackup = session?.user?.role?.toUpperCase() === 'ADMIN';
   const data = await getSettingsData();
 

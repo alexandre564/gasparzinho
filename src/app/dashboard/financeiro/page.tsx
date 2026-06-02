@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/table';
 import SalesChart from '@/components/SalesChart';
 import { PeriodToggle } from '../relatorios/PeriodToggle';
+import { requirePageAccess } from '@/lib/page-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -170,7 +171,9 @@ async function WeeklyChart({ period }: { period: FinancialPeriod }) {
   );
 }
 
-export default function FinancialPage({ searchParams }: { searchParams?: { period?: string } }) {
+export default async function FinancialPage({ searchParams }: { searchParams?: { period?: string } }) {
+  await requirePageAccess(['ADMIN']);
+
   const period = getPeriod(searchParams?.period);
 
   return (

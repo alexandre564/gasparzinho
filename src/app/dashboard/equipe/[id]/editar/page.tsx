@@ -5,11 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
+import { requirePageAccess } from '@/lib/page-auth';
 import type { User } from '@/types';
 
 
 export const dynamic = 'force-dynamic';
 export default async function EditUserPage({ params }: { params: { id: string } }) {
+  await requirePageAccess(['ADMIN']);
+
   const branchScope = await getCurrentBranchScope();
   const user = await prisma.user.findFirst({
     where: buildBranchWhere(branchScope, { id: params.id }),

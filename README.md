@@ -55,6 +55,7 @@ Com o servidor local aberto na porta 3004:
 ```bash
 npm run e2e:smoke
 npm run e2e:critical
+npm run e2e:multifilial
 ```
 
 Auditorias recomendadas antes de publicar mudancas:
@@ -88,6 +89,8 @@ Para preparar um teste manual com uma segunda filial, simule primeiro e aplique 
 npm run branches:seed-test
 npm run branches:seed-test:apply
 ```
+
+Depois de aplicar a filial de teste e iniciar o servidor local, rode `npm run e2e:multifilial`. Ele valida login ADMIN, VENDEDOR e ENTREGADOR, acesso por URL direta, APIs sensiveis, filial padrao, filial norte e isolamento transacional sem deixar clientes de teste gravados. O teste tambem confirma que VENDEDOR nao acessa cobranca, financeiro, gastos, relatorios, filiais, frota, fechamento, equipe ou configuracoes por URL direta.
 
 ## Usuarios iniciais do seed
 

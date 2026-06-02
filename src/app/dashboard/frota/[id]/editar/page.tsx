@@ -4,6 +4,7 @@ import { VehicleForm } from '@/app/dashboard/frota/VehicleForm'
 import { prisma } from '@/lib/prisma'
 import { buildBranchWhere } from '@/lib/branch-scope'
 import { getCurrentBranchScope } from '@/lib/current-branch-scope'
+import { requirePageAccess } from '@/lib/page-auth'
 
 async function getVehicle(id: string) {
   const branchScope = await getCurrentBranchScope()
@@ -14,6 +15,8 @@ async function getVehicle(id: string) {
 }
 
 export default async function EditVehiclePage({ params }: { params: { id: string } }) {
+  await requirePageAccess(['ADMIN'])
+
   const vehicle = await getVehicle(params.id)
 
   return (

@@ -7,6 +7,7 @@ import ClosingHistory from './ClosingHistory';
 import ClosingSummary from './ClosingSummary';
 import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components/ui/button';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,8 @@ export default async function FechamentoPage({
 }: {
   searchParams?: { from?: string; to?: string };
 }) {
+  await requirePageAccess(['ADMIN']);
+
   const closingData = await getDailyClosingData();
   const history = await getClosingHistory(searchParams?.from, searchParams?.to);
   const { sales, expenses, stockForecast, isAlreadyClosed, ...summaryData } = closingData;

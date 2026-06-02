@@ -1,112 +1,128 @@
-# PRD - Gás Gasparzinho v1
+# PRD - Gas Gasparzinho v1
 
 ## Objetivo
-Construir e evoluir o Gás Gasparzinho como painel operacional único para revenda de gás e água, usando uma única fonte de dados em PostgreSQL. O sistema deve apoiar vendas, entregas, clientes, estoque, cobrança, financeiro, frota, fidelização, fechamento do dia e configurações, com interface moderna, responsiva e segura.
 
-## Decisão de evolução
-Este projeto não será recomeçado do zero. A versão atual publicada no GitHub é a base v1. As melhorias serão aplicadas por etapas, mantendo o banco único, corrigindo divergências estruturais e evitando reescrever módulos que já funcionam.
+Construir e evoluir o Gas Gasparzinho como painel operacional unico para revenda de gas e agua, usando uma unica fonte de dados em PostgreSQL. O sistema deve apoiar vendas, entregas, clientes, estoque, cobranca, financeiro, frota, fidelizacao, fechamento do dia, configuracoes e operacao multifilial controlada.
 
-## Prioridades
-1. Estabilidade: login, conexão com Neon, build, deploy e rotas principais sem erro.
-2. Modelo de dados: Prisma, banco real e migrations sempre alinhados.
-3. Fluxo operacional: clientes, vendas, estoque, entregas e cobrança funcionando de ponta a ponta.
-4. Visual: interface menos branca, tabelas com contraste, dashboard vivo e navegação responsiva.
-5. Financeiro: entradas, saídas, dívidas, despesas e fechamento do dia confiáveis.
-6. Fidelização: previsão baseada no histórico real de compras.
-7. Permissões: ADMIN, VENDEDOR e ENTREGADOR com acesso coerente.
+## Decisao de evolucao
 
-## Módulos
+O projeto atual publicado no GitHub e a base v1. As melhorias devem preservar o que ja funciona, evitar reescrita desnecessaria e evoluir por auditoria, validacao e correcoes seguras.
 
-### Dashboard
-- KPIs de vendas, clientes, dívidas, estoque crítico e entregas.
-- Gráfico de vendas ou financeiro.
+## Prioridades atuais
+
+1. Estabilidade: login, Neon, build, deploy e rotas principais sem erro.
+2. Operacao: clientes, vendas, estoque, entregas e cobranca funcionando de ponta a ponta.
+3. Dados reais: auditoria e reparo de dados com simulacao antes de aplicacao.
+4. Multifilial: filial padrao, filial norte de teste, perfis e isolamento.
+5. Financeiro: entradas, saidas, dividas, despesas, gastos e fechamento confiaveis.
+6. Fidelizacao: previsao baseada no historico real de compras.
+7. Usabilidade: telas claras, responsivas e com acoes evidentes.
+
+## Modulos
+
+### Pagina principal
+
+- KPIs de vendas, clientes, dividas, estoque critico, entregas e fidelizacao.
+- Grafico de vendas.
 - Pedidos recentes.
-- Oportunidades de fidelização nos próximos dias.
+- Escopo por filial para dados operacionais.
 
 ### Clientes
-- Cadastro completo com nome, telefone, CEP, rua, número, bairro, cidade e referência.
-- Número sempre manual.
-- Cidade padrão Lavras, mas editável.
+
+- Cadastro com nome, telefone, CEP, rua, numero, bairro, cidade e referencia.
+- Numero sempre manual.
+- Cidade padrao Lavras, mas editavel.
 - Busca por nome e telefone.
-- Importação e exportação de clientes.
-- Dívida destacada visualmente.
-- Ação para iniciar pedido a partir do cliente.
+- Importacao/exportacao.
+- Acao para iniciar pedido.
+- Validacao reforcada para novos cadastros com entrega.
 
 ### Vendas
-- Pedido com cliente, itens, quantidade, preço, custo, pagamento e data prevista de pagamento.
-- Cálculo de valor bruto, custo e lucro.
-- Criação automática de entrega quando aplicável.
-- Criação automática de dívida quando for fiado.
-- Atualização de estoque e movimentação.
+
+- Pedido com cliente, itens, quantidade, preco, custo, pagamento e data prevista.
+- Criacao automatica de entrega.
+- Criacao automatica de divida quando for fiado.
+- Atualizacao de estoque e movimentacao.
+- Endereco efetivo de entrega registrado no pedido.
+- Bloqueio de venda com entrega sem endereco utilizavel.
 
 ### Entregas
+
 - Estados: pedido feito, enviado ao entregador, entregue pago, entregue a receber.
-- Mensagens de WhatsApp para cliente e entregador.
-- Ao confirmar entrega, registrar pagamento ou conta a receber.
+- WhatsApp, Maps/Waze e destaque para entregas sem endereco.
+- Confirmacao de pagamento ou conta a receber.
+
+### Cobranca
+
+- Lista de dividas pendentes, vencidas, renegociadas e pagas.
+- Vencimento, renegociacao, nova data prevista, pagamento e dias em atraso.
+- Texto de WhatsApp configuravel.
+- Importacao/exportacao e destaque para vencidos.
+
+### Financeiro e gastos
+
+- Despesas operacionais e gastos por categoria.
+- Dividas e valores em aberto.
+- KPIs por periodo.
+- Integracao com vendas, cobrancas e fechamento.
 
 ### Estoque
-- Produtos com preço de venda, custo e saldo.
-- Alerta de estoque crítico.
-- Movimentações por venda, cancelamento e ajustes.
-- Evolução futura: controle cheio/vazio para botijões.
 
-### Cobrança
-- Lista de dívidas pendentes, vencidas e renegociadas.
-- Vencimento, data original, renegociação, nova data prevista e pagamento.
-- Texto de WhatsApp configurável com variáveis `{cliente}`, `{valor}` e `{vencimento}`.
-- Marcar pagamento com data.
-
-### Financeiro
-- Despesas operacionais.
-- Dívidas e valores em aberto.
-- KPIs por dia, semana e mês.
-- Evolução futura: gráfico de entradas e saídas.
+- Produtos com preco de venda, custo e saldo.
+- Alerta de estoque critico.
+- Movimentacoes por venda, cancelamento e ajustes.
 
 ### Frota
-- Cadastro de veículos, status e custo médio.
-- Evolução futura: logs de manutenção e custos.
 
-### Fidelização
-- Previsão por intervalo médio individual entre compras.
-- Ação para iniciar venda com cliente já selecionado.
+- Cadastro de veiculos, status e custo medio.
+- Evolucao futura: logs detalhados de manutencao e custos.
+
+### Fidelizacao
+
+- Previsao por intervalo medio individual entre compras.
+- Acao para iniciar venda com cliente selecionado.
+
+### Filiais
+
+- Cadastro e edicao de filiais.
+- Status operacional e contratual.
+- Seletor de filial para administrador.
+- Vendedor e entregador restritos a filial vinculada.
+- Auditorias e E2E especificos para isolamento.
 
 ### Fechamento do dia
-- Somar vendas e despesas.
-- Saldo líquido.
-- Histórico de fechamento.
+
+- Somar vendas, despesas e saldo liquido.
+- Historico de fechamento.
 - Resumo para WhatsApp.
-- Evolução futura: PDF.
+- Evolucao futura: PDF.
 
-### Configurações
-- Produtos e preços.
-- Despesas e custos operacionais.
-- Texto de cobrança.
-- Backup do sistema.
+## Regras de negocio
 
-## Regras de negócio
-- O banco único é o PostgreSQL Neon.
-- O schema padrão da aplicação é `gasparzinho_v2_dev`.
-- Vendas fiadas geram dívida.
-- Entrega paga quita dívida vinculada.
-- Entrega a receber mantém ou cria dívida.
-- O texto de cobrança deve ser cordial e editável.
-- Dados sensíveis não devem ir para GitHub.
+- O banco unico e PostgreSQL Neon.
+- O schema padrao da aplicacao e `gasparzinho_v2_dev`.
+- Vendas fiadas geram divida.
+- Entrega paga quita ou atualiza cobranca vinculada.
+- Entrega a receber mantem ou cria divida.
+- Dados operacionais respeitam filial ativa.
+- Administrador pode operar visao consolidada; vendedores e entregadores nao.
+- Dados sensiveis nao devem ir para GitHub.
 
-## Critérios de aceite globais
+## Criterios de aceite globais
+
 - `npm run build` deve passar antes de publicar.
-- Login admin deve funcionar com usuário ativo no banco.
-- `/dashboard`, `/dashboard/clientes`, `/dashboard/vendas`, `/dashboard/entregas`, `/dashboard/cobranca`, `/dashboard/configuracoes` e `/dashboard/financeiro/dividas` devem abrir sem erro.
-- Nenhum módulo deve depender de dados mockados quando já houver tabela real.
-- Links internos devem usar parâmetros existentes, como `customerId` para novo pedido.
+- `npm run flows:audit`, `branches:audit` e `branches:schema-audit` devem passar.
+- `npm run e2e:smoke` e `e2e:critical` devem passar com servidor local.
+- `npm run e2e:multifilial` deve passar quando o ambiente tiver banco acessivel e filial norte seedada.
+- Login admin deve funcionar com usuario ativo no banco.
+- Rotas principais devem abrir sem erro.
+- Nenhum modulo deve depender de dados mockados quando houver tabela real.
 - Tabelas devem ter contraste suficiente e leitura boa em desktop e celular.
 
-## Backlog próximo
-1. Conferir variáveis da Vercel e garantir `schema=gasparzinho_v2_dev`.
-2. Validar login em produção.
-3. Revisar responsividade mobile de clientes, vendas e entregas.
-4. Melhorar dashboard financeiro com entradas, saídas e saldo.
-5. Adicionar logs de frota.
-6. Refinar fidelização e exibir oportunidades no dashboard.
-7. Implementar PDF do fechamento.
-8. Limpar arquivos antigos e duplicidades remanescentes com segurança.
-9. Preparar a evolução futura para plataforma Gas multifilial, conforme `docs/PLANO-Gas-Multifilial.md`, sem migrar o banco antes da etapa técnica.
+## Backlog proximo
+
+1. Rodar `e2e:multifilial` no ambiente com acesso ao Neon.
+2. Homologar perfis ADMIN, VENDEDOR e ENTREGADOR em producao.
+3. Confirmar relatorios consolidados apenas para administrador geral.
+4. Usar o sistema por alguns dias com duas filiais antes de tornar `branchId` obrigatorio.
+5. Evoluir configuracoes por filial quando a operacao multifilial estiver comprovada.

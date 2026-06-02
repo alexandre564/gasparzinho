@@ -25,6 +25,7 @@ import { DateFilter } from './DateFilter';
 import { PaymentMethodFilter } from './PaymentMethodFilter';
 import { StatusFilter } from './StatusFilter';
 import { labelFrom, orderStatusLabels, paymentMethodLabels } from '@/lib/labels';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -144,6 +145,8 @@ export default async function OrdersPage({
     direction?: string;
   };
 }) {
+  await requirePageAccess(['ADMIN', 'VENDEDOR']);
+
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const status = searchParams?.status;

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { getSalesReportData, type ReportPeriod } from './actions';
 import { PeriodToggle } from './PeriodToggle';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -73,6 +74,8 @@ export default async function RelatoriosPage({
 }: {
   searchParams?: { period?: string };
 }) {
+  await requirePageAccess(['ADMIN']);
+
   const period = getPeriod(searchParams?.period);
   const salesData = await getSalesReportData(period);
   const total = salesData.reduce((sum, item) => sum + item.total, 0);

@@ -4,6 +4,7 @@ import { Download, FileSpreadsheet, Pencil, PlusCircle } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
+import { requirePageAccess } from '@/lib/page-auth';
 import ImportVehiclesButton from './ImportVehiclesButton';
 import VehicleFilters from './VehicleFilters';
 import { labelFrom, vehicleStatusLabels, vehicleTypeLabels } from '@/lib/labels';
@@ -75,6 +76,8 @@ type VehiclesPageProps = {
 };
 
 export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
+  await requirePageAccess(['ADMIN']);
+
   const query = searchParams?.query ?? '';
   const status = searchParams?.status;
   const type = searchParams?.type;

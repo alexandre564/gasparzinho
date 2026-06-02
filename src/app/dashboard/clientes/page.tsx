@@ -24,6 +24,7 @@ import DeleteCustomerButton from './DeleteCustomerButton';
 import ImportCustomersButton from './ImportCustomersButton';
 import { getPaginatedCustomers } from './actions';
 import type { CustomerSortKey, SortDirection } from './actions';
+import { requirePageAccess } from '@/lib/page-auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -116,6 +117,8 @@ export default async function CustomersPage({
 }: {
   searchParams?: { query?: string; page?: string; sort?: string; direction?: string };
 }) {
+  await requirePageAccess(['ADMIN', 'VENDEDOR']);
+
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const sort = normalizeSort(searchParams?.sort);

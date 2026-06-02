@@ -30,6 +30,7 @@ import MarkAsPaidButton from './MarkAsPaidButton';
 import ImportDebtsButton from '../../cobranca/ImportDebtsButton';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -123,6 +124,8 @@ type PageProps = {
 };
 
 export default async function Page({ searchParams }: PageProps) {
+  await requirePageAccess(['ADMIN']);
+
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page ?? '1');
   const status = searchParams?.status as DebtStatus | undefined;

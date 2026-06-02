@@ -14,6 +14,7 @@ import Pagination from '@/components/Pagination';
 import { Search } from '@/components/Search';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { requirePageAccess } from '@/lib/page-auth';
 import {
   Card,
   CardContent,
@@ -46,6 +47,8 @@ type ExpensesPageProps = {
 };
 
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
+  await requirePageAccess(['ADMIN']);
+
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
   const category = searchParams?.category;

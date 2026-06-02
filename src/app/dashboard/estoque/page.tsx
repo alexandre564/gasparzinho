@@ -26,6 +26,7 @@ import { StockLevelFilter } from './StockLevelFilter';
 import { getPaginatedProducts } from './actions';
 import type { ProductSortKey, SortDirection } from './actions';
 import { labelFrom, productCategoryLabels } from '@/lib/labels';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -129,6 +130,8 @@ export default async function StockPage({
     direction?: string;
   };
 }) {
+  await requirePageAccess(['ADMIN', 'VENDEDOR']);
+
   const query = searchParams?.query ?? '';
   const currentPage = Number(searchParams?.page) || 1;
   const category = searchParams?.category;

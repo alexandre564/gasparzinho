@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { quoteIdentifier, withDatabase } = require('./database');
+const { formatDatabaseError, quoteIdentifier, withDatabase } = require('./database');
 
 async function main() {
   if (!process.env.DIRECT_URL && !process.env.DATABASE_URL) {
@@ -97,6 +97,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Falha ao atualizar o banco:', error.message);
+  console.error('Falha ao atualizar o banco:', formatDatabaseError(error));
   process.exit(1);
 });

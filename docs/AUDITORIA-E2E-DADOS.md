@@ -63,6 +63,7 @@ Com o servidor ativo:
 npm run dev -- --port 3004
 npm run e2e:smoke
 npm run e2e:critical
+npm run e2e:multifilial
 ```
 
 Para outro endereco:
@@ -75,6 +76,10 @@ npm run e2e:smoke
 O smoke atual nao cria dados reais. Ele valida disponibilidade, redirecionamentos e protecao de APIs sensiveis. A automacao completa de login autenticado, criacao de cliente, venda paga, venda fiado, entrega, gasto e backup deve ser feita depois com usuario de teste e massa de dados controlada.
 
 `npm run e2e:critical` complementa o smoke: alem de consultar rotas essenciais com o servidor ativo, confere contratos de alto risco em venda fiado, endereco de entrega, cobranca vencida, troca de filial e backup.
+
+`npm run e2e:multifilial` e o teste comportamental real para a fase atual. Ele exige servidor ativo, banco acessivel e filial norte seedada. O teste entra com ADMIN, VENDEDOR e ENTREGADOR, valida rotas permitidas e bloqueadas por navegacao e URL direta, confere APIs sensiveis e faz uma simulacao transacional de isolamento entre filial padrao e filial norte sem gravar clientes permanentes.
+
+Regra critica validada: VENDEDOR nao pode acessar `/dashboard/cobranca` nem outras areas administrativas como financeiro, gastos, relatorios, equipe, filiais, frota, fechamento e configuracoes. O bloqueio deve existir na pagina server-side e nas APIs, nao apenas no menu.
 
 ## Teste multifilial manual minimo
 
@@ -94,4 +99,12 @@ Depois de revisar a simulacao, aplique com:
 
 ```powershell
 npm run branches:seed-test:apply
+```
+
+Com a segunda filial aplicada, o ciclo minimo desta fase e:
+
+```powershell
+npm run data:diagnose
+npm run branches:data-audit
+npm run e2e:multifilial
 ```

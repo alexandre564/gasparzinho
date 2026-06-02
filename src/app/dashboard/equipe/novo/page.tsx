@@ -5,6 +5,7 @@ import { TEAM_ROLES } from '../roles';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,9 @@ async function createMember(formData: FormData) {
   }
 }
 
-export default function NovoMembroPage() {
+export default async function NovoMembroPage() {
+  await requirePageAccess(['ADMIN']);
+
   return (
     <div className="mx-auto max-w-2xl">
       <Card className="border-slate-300">

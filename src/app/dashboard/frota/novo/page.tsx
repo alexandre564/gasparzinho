@@ -1,8 +1,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { VehicleForm } from '../VehicleForm'
+import { requirePageAccess } from '@/lib/page-auth'
 
-export default function NewVehiclePage() {
+export default async function NewVehiclePage() {
+  await requirePageAccess(['ADMIN'])
+
   return (
     <Card>
       <CardHeader>

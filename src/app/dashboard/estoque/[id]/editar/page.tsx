@@ -2,10 +2,13 @@ import { notFound } from 'next/navigation';
 import { getProduct } from '../../actions';
 import ProductForm from '../../ProductForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { requirePageAccess } from '@/lib/page-auth';
 
 
 export const dynamic = 'force-dynamic';
 export default async function EditarProdutoPage({ params }: { params: { id: string } }) {
+  await requirePageAccess(['ADMIN', 'VENDEDOR']);
+
   const product = await getProduct(params.id);
 
   if (!product) {

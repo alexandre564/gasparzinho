@@ -103,6 +103,43 @@ const checks = [
     ],
   },
   {
+    flow: 'Protecao de paginas sensiveis',
+    file: 'src/lib/page-auth.ts',
+    expectations: [
+      [/redirect\('\/login'\)/, 'usuario sem sessao e redirecionado para login'],
+      [/allowedRoles\.includes\(userRole\)/, 'perfil da sessao e comparado com papeis permitidos'],
+      [/redirect\(fallbackPath\)/, 'URL direta sem permissao e bloqueada no servidor'],
+    ],
+  },
+  {
+    flow: 'Pagina de cobranca',
+    file: 'src/app/dashboard/cobranca/page.tsx',
+    expectations: [
+      [/requirePageAccess\(\['ADMIN'\]\)/, 'pagina de cobranca bloqueia URL direta para vendedor/entregador'],
+    ],
+  },
+  {
+    flow: 'Pagina de financeiro',
+    file: 'src/app/dashboard/financeiro/page.tsx',
+    expectations: [
+      [/requirePageAccess\(\['ADMIN'\]\)/, 'pagina financeira bloqueia URL direta para perfis nao administrativos'],
+    ],
+  },
+  {
+    flow: 'Pagina de filiais',
+    file: 'src/app/dashboard/filiais/page.tsx',
+    expectations: [
+      [/requirePageAccess\(\['ADMIN'\]\)/, 'pagina de filiais bloqueia URL direta para perfis nao administrativos'],
+    ],
+  },
+  {
+    flow: 'Pagina de entregas',
+    file: 'src/app/dashboard/entregas/page.tsx',
+    expectations: [
+      [/requirePageAccess\(\['ADMIN', 'ENTREGADOR'\]\)/, 'pagina de entregas permite apenas administrador e entregador'],
+    ],
+  },
+  {
     flow: 'Gastos e financeiro',
     file: 'src/app/dashboard/financeiro/despesas/actions.ts',
     expectations: [
@@ -172,6 +209,25 @@ for (const filePath of apiRouteFiles) {
   if (!/requireApiAccess\(/.test(content)) {
     failures.push(`FALHA: API sem protecao de sessao/perfil (${relativePath})`);
   }
+}
+
+const sensitiveApiRoles = [
+  ['src/app/api/backup/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'backup JSON restrito a administrador'],
+  ['src/app/api/backup/planilha/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'backup planilha restrito a administrador'],
+  ['src/app/api/cobranca/exportar/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'exportacao de cobranca restrita a administrador'],
+  ['src/app/api/cobranca/modelo/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'modelo de cobranca restrito a administrador'],
+  ['src/app/api/financeiro/exportar/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'financeiro restrito a administrador'],
+  ['src/app/api/financeiro/despesas/exportar/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'exportacao de gastos restrita a administrador'],
+  ['src/app/api/relatorios/exportar/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'relatorios restritos a administrador'],
+  ['src/app/api/equipe/exportar/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'equipe restrita a administrador'],
+  ['src/app/api/frota/exportar/route.ts', /requireApiAccess\(\['ADMIN'\]\)/, 'frota restrita a administrador'],
+  ['src/app/api/fechamento/exportar/route.ts', /requireApiAccess\(\["ADMIN"\]\)/, 'fechamento restrito a administrador'],
+];
+
+for (const [file, pattern, description] of sensitiveApiRoles) {
+  const content = read(file);
+  const failure = assertContains(content, pattern, `API sensivel - ${description} (${file})`);
+  if (failure) failures.push(failure);
 }
 
 console.log('Auditoria de fluxos criticos');

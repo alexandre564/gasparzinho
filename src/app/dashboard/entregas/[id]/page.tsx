@@ -7,6 +7,7 @@ import { deliveryStatusLabels, labelFrom, paymentMethodLabels } from '@/lib/labe
 import { buildGoogleMapsUrl, buildWazeUrl } from '@/lib/maps';
 import { getDeliveryDetails } from '../actions';
 import DeliveryWorkflowActions from '../DeliveryWorkflowActions';
+import { requirePageAccess } from '@/lib/page-auth';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +46,8 @@ export default async function DeliveryDetailsPage({
 }: {
   params: { id: string };
 }) {
+  await requirePageAccess(['ADMIN', 'ENTREGADOR']);
+
   const [delivery, driverWhatsapp] = await Promise.all([
     getDeliveryDetails(params.id),
     getDriverWhatsappNumber(),
