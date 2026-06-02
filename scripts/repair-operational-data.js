@@ -13,6 +13,8 @@ const CUSTOMER_TEXT_FIELDS = [
 ];
 
 const applyChanges = process.argv.includes('--apply') || process.env.REPAIR_APPLY === '1';
+const mergeDuplicates =
+  process.argv.includes('--merge-duplicates') || process.env.REPAIR_MERGE_DUPLICATES === '1';
 
 async function cleanCustomerEncoding(client) {
   const fields = CUSTOMER_TEXT_FIELDS.map(quoteIdentifier).join(', ');
@@ -103,11 +105,85 @@ async function mergeDuplicateCustomers(client) {
   return merged;
 }
 
+async function countDuplicateCustomerGroups(client) {
+  const result = await client.query(`
+    SELECT COUNT(*)::int AS count
+    FROM (
+      SELECT branch_id, digits
+      FROM (
+        SELECT
+          COALESCE("branchId", 'sem-filial') AS branch_id,
+          REGEXP_REPLACE("phone", '\\D', '', 'g') AS digits
+        FROM "Customer"
+      ) cleaned
+      WHERE LENGTH(digits) >= 8
+      GROUP BY branch_id, digits
+      HAVING COUNT(*) > 1
+    ) duplicates
+  `);
+
+  return Number(result.rows[0]?.count ?? 0);
+}
+
+async function countIncompleteCustomers(client) {
+  const result = await client.query(`
+    SELECT
+      COUNT(*)::int AS total,
+      COALESCE(SUM(CASE WHEN COALESCE("street", '') = '' THEN 1 ELSE 0 END), 0)::int AS rua,
+      COALESCE(SUM(CASE WHEN COALESCE("number", '') = '' THEN 1 ELSE 0 END), 0)::int AS numero,
+      COALESCE(SUM(CASE WHEN COALESCE("neighborhood", '') = '' THEN 1 ELSE 0 END), 0)::int AS bairro,
+      COALESCE(SUM(CASE WHEN COALESCE("city", '') = '' THEN 1 ELSE 0 END), 0)::int AS cidade,
+      COALESCE(SUM(CASE WHEN COALESCE("cep", '') = '' THEN 1 ELSE 0 END), 0)::int AS cep
+    FROM "Customer"
+    WHERE COALESCE("street", '') = ''
+       OR COALESCE("number", '') = ''
+       OR COALESCE("neighborhood", '') = ''
+       OR COALESCE("city", '') = ''
+  `);
+
+  return result.rows[0] ?? { total: 0, rua: 0, numero: 0, bairro: 0, cidade: 0, cep: 0 };
+}
+
+async function countDeliveryAddressRepairability(client) {
+  const result = await client.query(`
+    SELECT
+      COUNT(*)::int AS total,
+      COALESCE(SUM(
+        CASE
+          WHEN COALESCE(c."street", '') <> ''
+            AND COALESCE(c."number", '') <> ''
+            AND COALESCE(c."neighborhood", '') <> ''
+            AND COALESCE(c."city", '') <> ''
+          THEN 1 ELSE 0
+        END
+      ), 0)::int AS reparaveis,
+      COALESCE(SUM(
+        CASE
+          WHEN COALESCE(c."street", '') = ''
+            OR COALESCE(c."number", '') = ''
+            OR COALESCE(c."neighborhood", '') = ''
+            OR COALESCE(c."city", '') = ''
+          THEN 1 ELSE 0
+        END
+      ), 0)::int AS requerem_complementacao
+    FROM "Order" o
+    JOIN "Customer" c ON c."id" = o."customerId"
+    WHERE o."status" <> 'CANCELADO'
+      AND COALESCE(o."deliveryAddress", '') = ''
+  `);
+
+  return result.rows[0] ?? { total: 0, reparaveis: 0, requerem_complementacao: 0 };
+}
+
 async function main() {
   await withDatabase(async (client, schema) => {
     await client.query('BEGIN');
 
     try {
+      const incompleteCustomers = await countIncompleteCustomers(client);
+      const deliveryAddressRepairability = await countDeliveryAddressRepairability(client);
+      const duplicateGroups = await countDuplicateCustomerGroups(client);
+
       const overdue = await client.query(`
         UPDATE "Debt"
         SET "status" = 'VENCIDO', "updatedAt" = NOW()
@@ -188,7 +264,7 @@ async function main() {
           AND COALESCE(c."city", '') <> ''
       `);
       const cleanedCustomers = await cleanCustomerEncoding(client);
-      const mergedCustomers = await mergeDuplicateCustomers(client);
+      const mergedCustomers = mergeDuplicates ? await mergeDuplicateCustomers(client) : 0;
 
       if (applyChanges) {
         await client.query('COMMIT');
@@ -197,12 +273,24 @@ async function main() {
       }
 
       console.log(`${applyChanges ? 'Reparo operacional aplicado' : 'Simulacao de reparo operacional'} no schema ${schema}.`);
-      console.log(`Cobranças vencidas atualizadas: ${overdue.rowCount}`);
+      console.log(`Clientes sem endereco completo preservados para complementacao manual: ${incompleteCustomers.total}`);
+      console.log(
+        `Campos faltando em clientes: rua=${incompleteCustomers.rua}, numero=${incompleteCustomers.numero}, bairro=${incompleteCustomers.bairro}, cidade=${incompleteCustomers.cidade}, cep=${incompleteCustomers.cep}`,
+      );
+      console.log(
+        `Pedidos sem endereco de entrega: total=${deliveryAddressRepairability.total}, reparaveis automaticamente=${deliveryAddressRepairability.reparaveis}, exigem complementacao manual=${deliveryAddressRepairability.requerem_complementacao}`,
+      );
+      console.log(`Cobrancas vencidas atualizadas: ${overdue.rowCount}`);
       console.log(`Entregas ausentes criadas: ${missingDeliveries.rowCount}`);
-      console.log(`Cobranças ausentes criadas: ${missingDebts.rowCount}`);
+      console.log(`Cobrancas ausentes criadas: ${missingDebts.rowCount}`);
       console.log(`Pedidos com endereco de entrega reparado: ${missingDeliveryAddresses.rowCount}`);
       console.log(`Clientes com codificacao corrigida: ${cleanedCustomers}`);
-      console.log(`Clientes duplicados mesclados por telefone: ${mergedCustomers}`);
+      if (mergeDuplicates) {
+        console.log(`Clientes duplicados mesclados por telefone: ${mergedCustomers}`);
+      } else {
+        console.log(`Grupos de telefones duplicados preservados para revisao manual: ${duplicateGroups}`);
+        console.log('Mesclagem automatica de clientes duplicados nao foi executada. Para simular/aplicar com mesclagem, use --merge-duplicates ou REPAIR_MERGE_DUPLICATES=1.');
+      }
       if (!applyChanges) {
         console.log('Nenhuma alteracao foi gravada. Para aplicar, rode: npm run data:repair:apply');
       }

@@ -81,7 +81,9 @@ $env:AUDIT_DATABASE_URL="postgresql://..."
 npm run data:audit
 ```
 
-`npm run data:repair` simula reparos operacionais sem gravar no banco. Para aplicar de fato, revise a simulacao e rode `npm run data:repair:apply`.
+`npm run data:repair` simula reparos operacionais sem gravar no banco. Para aplicar de fato, revise a simulacao e rode `npm run data:repair:apply`. O reparo padrao evita mudancas agressivas: nao inventa endereco de clientes importados e nao mescla clientes duplicados automaticamente. Mesclagem por telefone exige execucao consciente com `node scripts/repair-operational-data.js --apply --merge-duplicates`.
+
+O checklist de homologacao da versao publicada fica em `docs/HOMOLOGACAO-Producao.md`.
 
 Para preparar um teste manual com uma segunda filial, simule primeiro e aplique apenas depois de revisar:
 

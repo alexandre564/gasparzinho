@@ -67,7 +67,7 @@ A evolucao multifilial continua incremental. O Gasparzinho permanece como filial
 - [x] Criar `branches:seed-test` e `branches:seed-test:apply` para segunda filial.
 - [x] Criar `e2e:smoke` e `e2e:critical`.
 - [x] Criar `e2e:multifilial` para login, perfis, URL direta, APIs e isolamento transacional.
-- [ ] Rodar `e2e:multifilial` no mesmo ambiente em que `data:diagnose` acessa o Neon.
+- [x] Rodar `e2e:multifilial` no mesmo ambiente em que `data:diagnose` acessa o Neon.
 - [ ] Validar em producao que relatorios consolidados somam filiais apenas para administrador geral.
 
 ## Criterios de aceite
@@ -78,8 +78,8 @@ A evolucao multifilial continua incremental. O Gasparzinho permanece como filial
 - [x] Auditoria estatica confirma que acessos operacionais Prisma usam escopo por filial.
 - [x] Auditoria de schema confirma `branchId` nos modelos operacionais.
 - [x] Fluxos criticos possuem contratos de validacao automatizada.
-- [ ] Validacao comportamental multifilial executada em ambiente com banco acessivel.
+- [x] Validacao comportamental multifilial executada em ambiente com banco acessivel.
 
 ## Proximo passo seguro
 
-Rodar `data:audit`, `branches:data-audit` e `e2e:multifilial` no ambiente com acesso ao Neon. Usar o sistema em producao com dados reais por alguns dias e, somente depois, avaliar se `branchId` deve se tornar obrigatorio nos modelos operacionais.
+Concluir homologacao manual do uso diario em producao: cliente, venda, entrega, fiado, cobranca, financeiro, fechamento e backup. Em paralelo, sanear os 2 pedidos sem endereco de entrega quando houver endereco seguro no cliente e manter os 1593 clientes legados sem endereco completo como fila de complementacao operacional. Somente depois de alguns dias de uso real avaliar se `branchId` deve se tornar obrigatorio nos modelos operacionais.

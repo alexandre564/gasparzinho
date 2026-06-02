@@ -26,10 +26,27 @@ npm run branches:data-audit
 npm run data:repair
 ```
 
+O reparo automatico corrige apenas pontos considerados seguros:
+
+- cobrancas pendentes ja vencidas passam para `VENCIDO`;
+- entregas ausentes podem ser criadas para pedidos ativos;
+- cobrancas ausentes podem ser criadas para pedidos fiados;
+- pedidos sem endereco de entrega podem receber o endereco do cliente apenas quando o cadastro do cliente ja possui rua, numero, bairro e cidade;
+- textos importados com codificacao quebrada podem ser normalizados.
+
+Clientes sem endereco completo nao sao inventados automaticamente. Eles permanecem no historico e devem ser complementados quando voltarem a comprar. Telefones duplicados tambem nao sao mesclados por padrao, para evitar perda de historico em cadastros importados.
+
 4. Aplicar reparos apenas depois de revisar a simulacao:
 
 ```powershell
 npm run data:repair:apply
+```
+
+Mesclagem de clientes duplicados por telefone e uma acao mais agressiva e fica fora do fluxo padrao. Para simular/aplicar conscientemente:
+
+```powershell
+node scripts/repair-operational-data.js --merge-duplicates
+node scripts/repair-operational-data.js --apply --merge-duplicates
 ```
 
 ## O que a auditoria operacional aponta

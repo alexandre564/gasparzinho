@@ -44,6 +44,20 @@ function getDaysColor(days: number | null) {
   return 'bg-red-600 text-white';
 }
 
+function hasCompleteDeliveryAddress(customer: {
+  street?: string | null;
+  number?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+}) {
+  return Boolean(
+    customer.street?.trim() &&
+      customer.number?.trim() &&
+      customer.neighborhood?.trim() &&
+      customer.city?.trim(),
+  );
+}
+
 const sortLabels: Record<CustomerSortKey, string> = {
   name: 'Cliente',
   city: 'Cidade',
@@ -224,7 +238,7 @@ export default async function CustomersPage({
               <TableBody>
                 {customers.length > 0 ? (
                   customers.map((customer) => (
-                    <TableRow key={customer.id}>
+                    <TableRow key={customer.id} className={!hasCompleteDeliveryAddress(customer) ? 'bg-amber-50/50' : undefined}>
                       <TableCell>
                         <Link
                           href={`/dashboard/vendas/novo?customerId=${customer.id}`}
@@ -233,7 +247,17 @@ export default async function CustomersPage({
                         >
                           {customer.name}
                         </Link>
-                        <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200"><MessageCircle className="h-3 w-3" />{customer.phone}</div>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                            <MessageCircle className="h-3 w-3" />
+                            {customer.phone}
+                          </span>
+                          {!hasCompleteDeliveryAddress(customer) ? (
+                            <Badge className="bg-amber-100 text-amber-800 ring-1 ring-amber-200">
+                              Endereço pendente
+                            </Badge>
+                          ) : null}
+                        </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">{customer.city}</TableCell>
                       <TableCell className="hidden lg:table-cell">

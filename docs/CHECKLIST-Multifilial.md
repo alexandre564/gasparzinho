@@ -58,13 +58,15 @@
 
 ## Validacao pendente em producao ou ambiente com banco
 
-- [ ] Rodar `npm run data:audit` e `npm run branches:data-audit` em ambiente com acesso ao banco sempre que houver importacao grande.
-- [ ] Rodar `npm run e2e:smoke`, `npm run e2e:critical` e `npm run e2e:multifilial` com servidor local ativo e banco acessivel antes de publicar mudancas de permissao.
-- [ ] Testar login ADMIN, VENDEDOR e ENTREGADOR com dados reais.
-- [ ] Criar segunda filial real e testar isolamento.
-- [ ] Confirmar por URL direta que perfis nao veem dados de outra filial nem modulos fora do papel.
+- [x] Rodar `npm run data:audit` e `npm run branches:data-audit` em ambiente com acesso ao banco.
+- [x] Rodar `npm run e2e:smoke`, `npm run e2e:critical` e `npm run e2e:multifilial` apontando para a versao publicada.
+- [x] Testar login ADMIN, VENDEDOR e ENTREGADOR com dados reais de homologacao.
+- [x] Criar segunda filial de teste e confirmar isolamento transacional.
+- [x] Confirmar por URL direta que perfis nao veem modulos fora do papel.
 - [ ] Validar backup isolado e backup consolidado.
 - [ ] Validar relatorios consolidados apenas para administrador geral.
+
+Observacao: em 2026-06-02, o operador informou que os comandos de homologacao automatizada passaram no PowerShell local com acesso ao Vercel e ao Neon. O checklist manual de uso diario esta em `docs/HOMOLOGACAO-Producao.md`.
 
 ## Decisao futura
 

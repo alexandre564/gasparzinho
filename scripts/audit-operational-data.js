@@ -219,12 +219,58 @@ const checks = [
 
 const addressBreakdownSql = `
   SELECT
-    SUM(CASE WHEN COALESCE("street", '') = '' THEN 1 ELSE 0 END)::int AS rua,
-    SUM(CASE WHEN COALESCE("number", '') = '' THEN 1 ELSE 0 END)::int AS numero,
-    SUM(CASE WHEN COALESCE("neighborhood", '') = '' THEN 1 ELSE 0 END)::int AS bairro,
-    SUM(CASE WHEN COALESCE("city", '') = '' THEN 1 ELSE 0 END)::int AS cidade,
-    SUM(CASE WHEN COALESCE("cep", '') = '' THEN 1 ELSE 0 END)::int AS cep
+    COALESCE(SUM(CASE WHEN COALESCE("street", '') = '' THEN 1 ELSE 0 END), 0)::int AS rua,
+    COALESCE(SUM(CASE WHEN COALESCE("number", '') = '' THEN 1 ELSE 0 END), 0)::int AS numero,
+    COALESCE(SUM(CASE WHEN COALESCE("neighborhood", '') = '' THEN 1 ELSE 0 END), 0)::int AS bairro,
+    COALESCE(SUM(CASE WHEN COALESCE("city", '') = '' THEN 1 ELSE 0 END), 0)::int AS cidade,
+    COALESCE(SUM(CASE WHEN COALESCE("cep", '') = '' THEN 1 ELSE 0 END), 0)::int AS cep
   FROM "Customer"
+`;
+
+const addressBreakdownByBranchSql = `
+  SELECT
+    COALESCE("branchId", 'sem-filial') AS filial,
+    COUNT(*)::int AS total_incompletos,
+    COALESCE(SUM(CASE WHEN COALESCE("street", '') = '' THEN 1 ELSE 0 END), 0)::int AS rua,
+    COALESCE(SUM(CASE WHEN COALESCE("number", '') = '' THEN 1 ELSE 0 END), 0)::int AS numero,
+    COALESCE(SUM(CASE WHEN COALESCE("neighborhood", '') = '' THEN 1 ELSE 0 END), 0)::int AS bairro,
+    COALESCE(SUM(CASE WHEN COALESCE("city", '') = '' THEN 1 ELSE 0 END), 0)::int AS cidade,
+    COALESCE(SUM(CASE WHEN COALESCE("cep", '') = '' THEN 1 ELSE 0 END), 0)::int AS cep
+  FROM "Customer"
+  WHERE COALESCE("street", '') = ''
+     OR COALESCE("number", '') = ''
+     OR COALESCE("neighborhood", '') = ''
+     OR COALESCE("city", '') = ''
+  GROUP BY COALESCE("branchId", 'sem-filial')
+  ORDER BY total_incompletos DESC, filial ASC
+  LIMIT $1
+`;
+
+const deliveryAddressRepairabilitySql = `
+  SELECT
+    COUNT(*)::int AS total,
+    COALESCE(SUM(
+      CASE
+        WHEN COALESCE(c."street", '') <> ''
+          AND COALESCE(c."number", '') <> ''
+          AND COALESCE(c."neighborhood", '') <> ''
+          AND COALESCE(c."city", '') <> ''
+        THEN 1 ELSE 0
+      END
+    ), 0)::int AS reparaveis_automaticamente,
+    COALESCE(SUM(
+      CASE
+        WHEN COALESCE(c."street", '') = ''
+          OR COALESCE(c."number", '') = ''
+          OR COALESCE(c."neighborhood", '') = ''
+          OR COALESCE(c."city", '') = ''
+        THEN 1 ELSE 0
+      END
+    ), 0)::int AS exigem_complementacao_manual
+  FROM "Order" o
+  JOIN "Customer" c ON c."id" = o."customerId"
+  WHERE o."status" <> 'CANCELADO'
+    AND COALESCE(o."deliveryAddress", '') = ''
 `;
 
 function formatValue(value) {
@@ -277,6 +323,14 @@ async function main() {
     const addressBreakdown = await client.query(addressBreakdownSql);
     console.log('\nCampos de endereco faltando em clientes:');
     printRows(addressBreakdown.rows);
+
+    const addressByBranch = await client.query(addressBreakdownByBranchSql, [DETAIL_LIMIT]);
+    console.log('\nClientes sem endereco completo por filial:');
+    printRows(addressByBranch.rows);
+
+    const deliveryAddressRepairability = await client.query(deliveryAddressRepairabilitySql);
+    console.log('\nPedidos sem endereco de entrega - estrategia de saneamento:');
+    printRows(deliveryAddressRepairability.rows);
 
     console.log('\nResultado:');
     console.log(
