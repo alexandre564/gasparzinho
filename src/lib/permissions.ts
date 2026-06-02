@@ -17,9 +17,13 @@ export const dashboardRoutePermissions = [
   { prefix: '/dashboard', roles: ['ADMIN', 'VENDEDOR', 'ENTREGADOR'] },
 ] as const;
 
+function matchesRoute(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 export function canAccessPath(pathname: string, role?: string | null) {
   const normalizedRole = role?.toUpperCase();
-  const permission = dashboardRoutePermissions.find((route) => pathname.startsWith(route.prefix));
+  const permission = dashboardRoutePermissions.find((route) => matchesRoute(pathname, route.prefix));
 
   if (!permission) {
     return true;

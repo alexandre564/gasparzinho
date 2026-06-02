@@ -20,7 +20,14 @@ async function setActiveBranch(formData: FormData) {
   if (branchId === 'ALL') {
     cookies().delete(ACTIVE_BRANCH_COOKIE);
   } else {
-    const branch = await prisma.branch.findUnique({ where: { id: branchId }, select: { id: true } });
+    const branch = await prisma.branch.findFirst({
+      where: {
+        id: branchId,
+        organizationId: session.user.organizationId || undefined,
+        status: { not: 'CANCELADA' },
+      },
+      select: { id: true },
+    });
     if (!branch) return;
 
     cookies().set(ACTIVE_BRANCH_COOKIE, branch.id, {
@@ -44,7 +51,10 @@ export async function BranchScopeSelector() {
 
   try {
     branches = await prisma.branch.findMany({
-      where: { status: { not: 'CANCELADA' } },
+      where: {
+        organizationId: session?.user?.organizationId || undefined,
+        status: { not: 'CANCELADA' },
+      },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     });
@@ -57,7 +67,7 @@ export async function BranchScopeSelector() {
   const activeBranchId = cookies().get(ACTIVE_BRANCH_COOKIE)?.value ?? 'ALL';
 
   return (
-    <form action={setActiveBranch} className="hidden items-center gap-2 xl:flex">
+    <form action={setActiveBranch} className="order-last flex w-full items-center gap-2 sm:w-auto lg:order-none">
       <label className="sr-only" htmlFor="active-branch-id">
         Filial ativa
       </label>
@@ -65,7 +75,7 @@ export async function BranchScopeSelector() {
         id="active-branch-id"
         name="branchId"
         defaultValue={activeBranchId}
-        className="h-10 max-w-56 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        className="h-10 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:w-56 sm:flex-none"
       >
         <option value="ALL">Todas as filiais</option>
         {branches.map((branch) => (
@@ -74,7 +84,7 @@ export async function BranchScopeSelector() {
           </option>
         ))}
       </select>
-      <Button type="submit" variant="outline" size="sm">
+      <Button type="submit" variant="outline" size="sm" className="shrink-0">
         Aplicar
       </Button>
     </form>

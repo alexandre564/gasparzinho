@@ -19,7 +19,7 @@ export function getFallbackBranchScope(): BranchScope {
   return {
     organizationId: DEFAULT_ORGANIZATION_ID,
     branchId: DEFAULT_BRANCH_ID,
-    canSeeAllBranches: true,
+    canSeeAllBranches: false,
   };
 }
 

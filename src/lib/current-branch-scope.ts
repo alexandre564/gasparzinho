@@ -11,6 +11,19 @@ export async function getCurrentBranchScope() {
   const selectedBranchId = cookies().get(ACTIVE_BRANCH_COOKIE)?.value;
 
   if (scope.canSeeAllBranches && selectedBranchId && selectedBranchId !== 'ALL') {
+    const branch = await prisma.branch.findFirst({
+      where: {
+        id: selectedBranchId,
+        organizationId: scope.organizationId,
+        status: { not: 'CANCELADA' },
+      },
+      select: { id: true },
+    });
+
+    if (!branch) {
+      return scope;
+    }
+
     return {
       ...scope,
       branchId: selectedBranchId,
@@ -37,8 +50,12 @@ export async function getCurrentBranchDisplayName(fallbackName: string) {
   }
 
   try {
-    const branch = await prisma.branch.findUnique({
-      where: { id: branchId },
+    const branch = await prisma.branch.findFirst({
+      where: {
+        id: branchId,
+        organizationId: scope.organizationId,
+        status: { not: 'CANCELADA' },
+      },
       select: { name: true },
     });
 
