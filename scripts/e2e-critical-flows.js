@@ -58,6 +58,10 @@ function formatConnectionError(error) {
     return 'Conexao recusada: o servidor local provavelmente nao esta aberto na porta esperada.';
   }
 
+  if (causeCode === 'EACCES') {
+    return 'Acesso de rede negado pelo ambiente atual antes de receber resposta HTTP. Rode este teste no PowerShell local liberado ou no ambiente que acessa Vercel/Neon.';
+  }
+
   if (error.message === 'fetch failed') {
     return 'Fetch falhou antes de receber resposta HTTP. Confira servidor, porta e E2E_BASE_URL.';
   }
@@ -146,7 +150,12 @@ async function main() {
 main().catch((error) => {
   console.error(`Falha no E2E critico em ${baseUrl}.`);
   console.error(formatConnectionError(error));
-  console.error('Confirme que o servidor esta ativo antes de rodar: npm run dev -- --port 3004');
+  const parsed = new URL(baseUrl);
+  if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+    console.error('Confirme que o servidor esta ativo antes de rodar: npm run dev -- --port 3004');
+  } else {
+    console.error('Como a base URL e externa, confirme se este terminal tem permissao de rede para acessar a Internet.');
+  }
   console.error('Para outro endereco, defina E2E_BASE_URL. Exemplo: $env:E2E_BASE_URL="http://localhost:3005"');
   process.exit(1);
 });

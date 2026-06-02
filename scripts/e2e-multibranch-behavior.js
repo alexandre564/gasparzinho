@@ -109,6 +109,27 @@ function assert(condition, message) {
   }
 }
 
+function formatNetworkError(error) {
+  if (error.name === 'AbortError') {
+    return `Tempo limite de ${timeoutMs}ms excedido ao conectar no servidor.`;
+  }
+
+  const causeCode = error?.cause?.code;
+  if (causeCode === 'EACCES') {
+    return 'Acesso de rede negado pelo ambiente atual antes de receber resposta HTTP. Rode este teste no PowerShell local liberado ou no ambiente que acessa Vercel/Neon.';
+  }
+
+  if (causeCode === 'ECONNREFUSED') {
+    return 'Conexao recusada: o servidor local provavelmente nao esta aberto na porta esperada.';
+  }
+
+  if (error.message === 'fetch failed') {
+    return 'Fetch falhou antes de receber resposta HTTP. Confira servidor, porta e E2E_BASE_URL.';
+  }
+
+  return error.message || String(error);
+}
+
 function getSetCookies(headers) {
   if (typeof headers.getSetCookie === 'function') {
     return headers.getSetCookie();
@@ -360,7 +381,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  const message = error?.code ? formatDatabaseError(error) : error?.message || String(error);
+  const message = error?.code ? formatDatabaseError(error) : formatNetworkError(error);
   console.error(`Falha no E2E comportamental multifilial em ${baseUrl}: ${message}`);
   console.error('Requisitos: servidor ativo, banco acessivel, usuarios seedados e variaveis AUTH_SECRET/NEXTAUTH_SECRET iguais ao ambiente testado.');
   process.exit(1);

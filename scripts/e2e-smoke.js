@@ -37,6 +37,10 @@ function formatConnectionError(error) {
     return 'Conexao recusada: o servidor local provavelmente nao esta aberto na porta esperada.';
   }
 
+  if (causeCode === 'EACCES') {
+    return 'Acesso de rede negado pelo ambiente atual antes de receber resposta HTTP. Rode este teste no PowerShell local liberado ou no ambiente que acessa Vercel/Neon.';
+  }
+
   if (causeCode === 'ENOTFOUND') {
     return 'Host nao encontrado: confira o endereco configurado em E2E_BASE_URL.';
   }
@@ -56,9 +60,13 @@ function printServerHelp() {
   const parsed = new URL(baseUrl);
   console.error(`Base URL testada: ${baseUrl}`);
   console.error(`Porta esperada: ${parsed.port || (parsed.protocol === 'https:' ? '443' : '80')}`);
-  console.error('Abra o servidor antes do teste:');
-  console.error('  cd "C:\\Users\\User\\Documents\\New project\\gasparzinho-v2-work"');
-  console.error('  npm run dev -- --port 3004');
+  if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+    console.error('Abra o servidor antes do teste:');
+    console.error('  cd "C:\\Users\\User\\Documents\\New project\\gasparzinho-v2-work"');
+    console.error('  npm run dev -- --port 3004');
+  } else {
+    console.error('Como a base URL e externa, confirme se este terminal tem permissao de rede para acessar a Internet.');
+  }
   console.error('Se estiver usando outra porta ou Vercel:');
   console.error('  $env:E2E_BASE_URL="http://localhost:3005"; npm run e2e:smoke');
   console.error('  $env:E2E_BASE_URL="https://gasparzinho-o4fo.vercel.app"; npm run e2e:smoke');
