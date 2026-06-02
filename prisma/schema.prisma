@@ -34,7 +34,7 @@ model User {
 model Customer {
   id           String    @id @default(cuid())
   name         String
-  phone        String    @unique
+  phone        String
   street       String
   number       String
   complement   String?
@@ -53,11 +53,12 @@ model Customer {
   @@index([phone])
   @@index([name])
   @@index([branchId])
+  @@unique([branchId, phone])
 }
 
 model Product {
   id          String    @id @default(cuid())
-  name        String    @unique
+  name        String
   description String?
   price       Float
   cost        Float
@@ -74,6 +75,7 @@ model Product {
   butaneCylinders    ButaneCylinder[]
 
   @@index([branchId])
+  @@unique([branchId, name])
 }
 
 model ButaneCylinder {
@@ -205,7 +207,7 @@ model Expense {
 
 model Vehicle {
   id           String  @id @default(cuid())
-  placa        String  @unique
+  placa        String
   modelo       String
   tipo         String
   status       String
@@ -219,6 +221,7 @@ model Vehicle {
   branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   @@index([branchId])
+  @@unique([branchId, placa])
 }
 
 

@@ -67,13 +67,15 @@ const checks = [
     sql: `
       SELECT COUNT(*)::int AS count
       FROM (
-        SELECT digits
+        SELECT branch_id, digits
         FROM (
-          SELECT REGEXP_REPLACE("phone", '\\D', '', 'g') AS digits
+          SELECT
+            COALESCE("branchId", 'sem-filial') AS branch_id,
+            REGEXP_REPLACE("phone", '\\D', '', 'g') AS digits
           FROM "Customer"
         ) cleaned
         WHERE LENGTH(digits) >= 8
-        GROUP BY digits
+        GROUP BY branch_id, digits
         HAVING COUNT(*) > 1
       ) duplicates
     `,

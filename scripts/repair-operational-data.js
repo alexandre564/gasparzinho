@@ -49,7 +49,7 @@ async function cleanCustomerEncoding(client) {
 
 async function mergeDuplicateCustomers(client) {
   const result = await client.query(`
-    SELECT c."id", c."phone", c."createdAt",
+    SELECT c."id", c."phone", c."branchId", c."createdAt",
       (SELECT COUNT(*)::int FROM "Order" o WHERE o."customerId" = c."id") AS orders_count,
       (SELECT COUNT(*)::int FROM "Debt" d WHERE d."customerId" = c."id") AS debts_count
     FROM "Customer" c
@@ -63,11 +63,13 @@ async function mergeDuplicateCustomers(client) {
       continue;
     }
 
-    if (!groups.has(digits)) {
-      groups.set(digits, []);
+    const key = `${row.branchId || 'sem-filial'}:${digits}`;
+
+    if (!groups.has(key)) {
+      groups.set(key, []);
     }
 
-    groups.get(digits).push(row);
+    groups.get(key).push(row);
   }
 
   let merged = 0;

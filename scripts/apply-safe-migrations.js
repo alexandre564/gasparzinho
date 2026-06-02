@@ -85,6 +85,13 @@ async function main() {
 
     await client.query(branchScopeMigration);
 
+    const branchUniqueMigration = fs.readFileSync(
+      path.join(__dirname, '..', 'prisma', 'migrations', '20260602064500_scope_unique_indexes_by_branch', 'migration.sql'),
+      'utf8',
+    );
+
+    await client.query(branchUniqueMigration);
+
     console.log(`Banco atualizado no schema ${schema}.`);
   });
 }
