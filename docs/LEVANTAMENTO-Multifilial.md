@@ -2,99 +2,57 @@
 
 ## Objetivo
 
-Este levantamento prepara a evolução do Gasparzinho para a plataforma **Gas**, sem alterar ainda o isolamento de dados em produção. A regra desta etapa é mapear escopos, pontos de acesso ao banco e riscos antes de adicionar `branchId` aos modelos operacionais.
+Registrar o estado técnico da transição do Gasparzinho para a plataforma **Gas**, com foco em isolamento por filial, segurança operacional e redução de risco antes de tornar `branchId` obrigatório.
 
-## Estado seguro já iniciado
+## Estado atual
 
-- Existe uma filial padrão configurável por `SystemSetting.defaultBranchName`.
-- A filial padrão aparece no cabeçalho e no menu lateral.
-- A tela de Configurações permite alterar o nome da filial ativa sem migração de banco.
-- O menu administrativo possui a área "Filiais" para acompanhar a preparação multifilial.
-- O Prisma já possui os modelos isolados `Organization` e `Branch`, sem vínculo obrigatório com os dados atuais.
-- A migração `20260601093000_add_multibranch_foundation` e o `db:safe-sync` já estão preparados para criar as tabelas.
-- O comando `npm run branches:seed-default` prepara a organização `Gas` e a filial `Gás Gasparzinho`.
-- O comando `npm run branches:schema-audit` confere se o schema ainda está em estado seguro antes do vínculo operacional por filial.
-- O helper `src/lib/branch-scope.ts` padroniza o formato futuro do escopo de filial sem forçar filtro em tabelas que ainda não possuem `branchId`.
-- O seed cria a filial padrão lógica como "Gás Gasparzinho".
-- Os modelos operacionais já possuem `branchId` opcional e a migração segura preenche os dados existentes com `branch_gasparzinho_default`.
-- A sessão de login já carrega `organizationId` e `branchId` quando esses campos existem no usuário.
-- As consultas operacionais principais, exportações, backup, relatórios e fechamento já aplicam escopo por filial, com administrador geral podendo alternar entre visão consolidada e filial ativa.
+- Existe organização padrão `org_gas_default`.
+- Existe filial padrão `branch_gasparzinho_default`.
+- Cabeçalho, menu lateral e mobile exibem filial ativa.
+- Administrador geral pode selecionar filial ativa ou visão consolidada.
+- Usuários carregam `organizationId` e `branchId` na sessão.
+- Modelos operacionais possuem `branchId` opcional.
+- Dados antigos são preenchidos com filial padrão por migração segura.
+- Clientes, produtos e veículos usam unicidade por filial.
+- Exportações, backups, relatórios, fechamento e módulos operacionais aplicam escopo por filial.
+- `npm run branches:audit` separa acessos operacionais com escopo de acessos globais/administrativos.
+- `npm run branches:schema-audit` confirma presença de `branchId` nos modelos operacionais.
 
-## Classificação de escopo atual
+## Escopo por área
 
-| Área | Escopo atual | Escopo futuro | Observação |
-| --- | --- | --- | --- |
-| Usuários/equipe | Global do sistema | Organização + filial opcional | Administrador geral poderá ver tudo; perfis operacionais devem ficar presos à filial. |
-| Clientes | Global | Filial | Cada filial deve ter sua própria base de clientes, com prevenção de duplicidade por telefone dentro da filial. |
-| Produtos/estoque | Global | Filial | Preços e saldos podem variar por filial. |
-| Vendas/pedidos | Global | Filial | Pedido deve herdar a filial do vendedor ou da filial ativa. |
-| Entregas | Global | Filial | Entregador deve enxergar apenas entregas da filial vinculada. |
-| Cobranças/dívidas | Global | Filial | Histórico de fiado deve acompanhar a filial do pedido. |
-| Gastos/despesas | Global | Filial | Gastos alimentam financeiro e fechamento por filial. |
-| Frota | Global | Filial ou compartilhada | Veículos podem ser exclusivos de uma filial ou compartilhados em fase posterior. |
-| Fechamento do dia | Global por data | Filial + consolidado | Fechamento precisa ser único por filial/data e consolidável para administrador geral. |
-| Configurações | Global | Organização + filial | Mensagens, WhatsApp e preços podem ter configuração global ou sobrescrita por filial. |
-| Backup/exportações | Global | Filial ou consolidado | Administrador geral exporta tudo; filial exporta apenas seus dados. |
+| Área | Estado atual | Observação |
+| --- | --- | --- |
+| Usuários/equipe | Organização + filial opcional | Login usa e-mail global; perfil define permissão. |
+| Clientes | Filial | Telefone é único dentro da filial. |
+| Produtos/estoque | Filial | Nome do produto é único dentro da filial. |
+| Vendas/pedidos | Filial | Pedido herda filial do usuário ou filial ativa. |
+| Entregas | Filial | Entregador vê escopo permitido pelo perfil. |
+| Cobranças/dívidas | Filial | Dívida acompanha filial do pedido/cliente. |
+| Gastos/despesas | Filial | Alimenta financeiro e relatórios por filial. |
+| Frota | Filial | Placa é única dentro da filial. |
+| Fechamento | Filial | Fechamento pode ser consolidado por administrador geral. |
+| Configurações | Global por enquanto | Mensagens e preferências ainda podem evoluir para escopo por filial. |
+| Backup/exportações | Filial ou consolidado | Depende da filial ativa e do perfil. |
 
-## Pontos de acesso ao banco que precisarão de revisão
+## Pontos globais preservados
 
-O comando `npm run branches:audit` lista os arquivos que acessam Prisma e ajuda a manter este levantamento atualizado antes da migração real.
-
-### Consultas por filial obrigatória
-
-- `src/app/dashboard/clientes/**`
-- `src/app/dashboard/vendas/**`
-- `src/app/dashboard/entregas/**`
-- `src/app/dashboard/cobranca/**`
-- `src/app/dashboard/estoque/**`
-- `src/app/dashboard/financeiro/**`
-- `src/app/dashboard/fechamento/**`
-- `src/app/dashboard/fidelizacao/**`
-- `src/app/dashboard/frota/**`
-- `src/app/api/clientes/**`
-- `src/app/api/vendas/**`
-- `src/app/api/entregas/**`
-- `src/app/api/cobranca/**`
-- `src/app/api/estoque/**`
-- `src/app/api/financeiro/**`
-- `src/app/api/fechamento/**`
-- `src/app/api/fidelizacao/**`
-- `src/app/api/frota/**`
-
-### Consultas globais ou administrativas
-
-- `src/app/dashboard/configuracoes/**`
-- `src/app/dashboard/equipe/**`
-- `src/app/api/equipe/**`
-- `src/app/api/backup/**`
-- `src/lib/permissions.ts`
-- `src/auth.ts`
-
-## Sequência técnica recomendada
-
-1. Criar modelos `Organization` e `Branch`. Concluído no schema.
-2. Criar uma organização e uma filial padrão para os dados atuais. Script preparado e executado de forma segura quando o banco está acessível.
-3. Adicionar `organizationId` e `branchId` opcionais aos usuários. Concluído no schema e na sessão.
-4. Adicionar `branchId` opcional aos modelos operacionais, ainda sem tornar obrigatório. Concluído.
-5. Rodar script de preenchimento para associar dados antigos à filial padrão. Preparado em migração segura.
-6. Atualizar sessão para carregar filial ativa. Concluído.
-7. Criar helpers de consulta, por exemplo `getCurrentBranchScope()` e `withBranchWhere()`. Concluído com escopo por sessão/cookie de filial ativa.
-8. Atualizar módulo por módulo, começando por clientes e vendas. Concluído nos módulos operacionais principais e nas exportações.
-9. Tornar `branchId` obrigatório apenas depois de todos os módulos validarem isolamento.
+- `User.email` continua global para evitar login duplicado.
+- `SystemSetting` continua global nesta fase.
+- `Organization` e `Branch` são administrativos.
+- Compatibilidades legadas de rota, como `/dashboard/recompra`, redirecionam para o módulo atual.
 
 ## Riscos controlados
 
-- Não aplicar filtro por filial antes de preencher dados antigos.
-- Não alterar unicidade global de telefone/produto antes de decidir a regra por filial.
-- Não misturar administrador geral com administrador de filial na mesma permissão.
-- Não permitir backup global para usuário de filial.
+- `branchId` ainda é opcional para evitar quebra em dados antigos.
+- O fallback sem sessão fica restrito à filial padrão.
+- O seletor de filial valida organização e status antes de aplicar cookie.
+- Migração de unicidade consolida duplicados exatos antes de criar índices.
+- Auditorias locais validam schema e presença de escopo, mas auditoria de dados reais depende de acesso ao banco.
 
-## Critério para iniciar migração real
+## Próximos pontos técnicos
 
-A migração real só deve começar quando houver decisão fechada sobre:
-
-- Se cliente pode existir em mais de uma filial com o mesmo telefone.
-- Se estoque será sempre separado por filial.
-- Se frota pode ser compartilhada entre filiais.
-- Se configurações de cobrança e entrega serão globais ou por filial.
-- Quais usuários atuais serão administradores gerais e quais serão administradores da filial Gasparzinho.
+1. Rodar `npm run branches:data-audit` no ambiente com acesso ao banco de produção.
+2. Validar em produção usuários ADMIN, VENDEDOR e ENTREGADOR.
+3. Testar criação de uma segunda filial real com poucos dados controlados.
+4. Confirmar que exportações e backups isolam corretamente a filial ativa.
+5. Só depois avaliar `branchId` obrigatório.

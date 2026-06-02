@@ -37,6 +37,15 @@ function walk(dir) {
   });
 }
 
+function hasBranchScope(content) {
+  return (
+    content.includes('buildBranchWhere(') ||
+    content.includes('getCurrentBranchWhere(') ||
+    content.includes('branchScope.branchId') ||
+    content.includes('branchId:')
+  );
+}
+
 function classifyFile(file) {
   const content = fs.readFileSync(file, 'utf8');
 
@@ -51,7 +60,7 @@ function classifyFile(file) {
   if (operationalModels.length > 0) {
     return {
       path: relativePath,
-      scope: 'FILIAL_FUTURA',
+      scope: hasBranchScope(content) ? 'FILIAL_COM_ESCOPO' : 'FILIAL_REVISAR',
       models: operationalModels,
     };
   }
@@ -94,6 +103,9 @@ for (const [scope, items] of Object.entries(groups)) {
   }
 }
 
-if (groups.FILIAL_FUTURA?.length) {
-  console.log('\nProxima acao segura: manter buildBranchWhere/getCurrentBranchScope nos novos acessos Prisma e revisar manualmente os pontos listados.');
+if (groups.FILIAL_REVISAR?.length) {
+  console.log('\nResultado: revisar os arquivos FILIAL_REVISAR antes de tornar branchId obrigatorio.');
+  process.exitCode = 1;
+} else {
+  console.log('\nResultado: todos os acessos operacionais Prisma encontrados usam algum mecanismo de escopo por filial.');
 }

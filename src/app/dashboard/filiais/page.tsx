@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { Building2, CheckCircle2, FileText, LockKeyhole, PlayCircle, PlusCircle, Save, Settings } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getBranchOverview } from '@/lib/branch-data';
 import { getDefaultBranchName } from '@/lib/branch-settings';
 import { createBranch, pauseOrActivateBranch, updateBranch } from './actions';
@@ -13,53 +13,54 @@ export const dynamic = 'force-dynamic';
 const readinessItems = [
   {
     title: 'Filial padrão configurável',
-    status: 'Iniciado',
-    description: 'O sistema já exibe uma filial ativa sem alterar o isolamento dos dados atuais.',
-  },
-  {
-    title: 'Mapeamento técnico',
-    status: 'Documentado',
-    description: 'Os módulos foram classificados entre escopo global, por usuário e por filial.',
-  },
-  {
-    title: 'Modelos Prisma preparados',
     status: 'Concluído',
-    description: 'Organization, Branch e branchId já estão conectados aos dados operacionais principais.',
+    description: 'O sistema exibe a filial ativa no desktop e no celular.',
   },
   {
-    title: 'Criação no banco',
-    status: 'Pronto para executar',
-    description: 'Migração, db:safe-sync e seed da filial padrão já estão preparados.',
+    title: 'Escopo operacional',
+    status: 'Concluído',
+    description: 'Módulos principais, exportações, backup e relatórios aplicam filtro por filial.',
   },
   {
-    title: 'Migração real de dados',
-    status: 'Em validação',
-    description: 'A filial padrão, os vínculos operacionais e os filtros por filial já foram preparados com migração segura.',
+    title: 'Unicidade por filial',
+    status: 'Concluído',
+    description: 'Clientes, produtos e veículos podem se repetir em filiais diferentes sem conflito.',
+  },
+  {
+    title: 'Validação de produção',
+    status: 'Pendente',
+    description: 'Ainda falta validar com usuários reais e segunda filial controlada.',
   },
 ] as const;
 
 const technicalChecks = [
   {
     command: 'npm run branches:audit',
-    description: 'Lista os pontos do sistema que usam Prisma e que precisarão de filtro por filial no futuro.',
+    description: 'Confirma se acessos Prisma operacionais usam escopo por filial.',
   },
   {
     command: 'npm run branches:schema-audit',
-    description: 'Confere se o schema está na etapa correta antes de adicionar branchId aos dados operacionais.',
+    description: 'Confere se o schema possui a base multifilial esperada.',
   },
   {
-    command: 'npm run branches:seed-default',
-    description: 'Cria a organização Gas e a filial padrão no banco quando as variáveis de conexão estiverem ativas.',
+    command: 'npm run branches:data-audit',
+    description: 'Confere, no banco real, se existem registros antigos sem filial.',
   },
 ] as const;
 
 const nextDecisions = [
-  'Cliente com mesmo telefone poderá existir em mais de uma filial?',
-  'Estoque será sempre separado por filial ou poderá ser compartilhado?',
-  'Frota será exclusiva por filial ou poderá atender várias unidades?',
-  'Configurações de cobrança e entrega serão globais ou por filial?',
-  'Quais usuários atuais serão administradores gerais da plataforma Gas?',
+  'Validar isolamento com uma segunda filial real de teste.',
+  'Definir se configurações de WhatsApp serão globais ou por filial.',
+  'Definir quando branchId poderá se tornar obrigatório no banco.',
+  'Validar quais usuários serão administradores gerais da plataforma Gas.',
 ] as const;
+
+function statusVariant(status: string) {
+  if (status === 'ATIVA') return 'success' as const;
+  if (status === 'PAUSADA') return 'secondary' as const;
+  if (status === 'CANCELADA' || status === 'SUSPENSA') return 'destructive' as const;
+  return 'default' as const;
+}
 
 export default async function BranchesPage() {
   const [branchName, branchOverview] = await Promise.all([getDefaultBranchName(), getBranchOverview()]);
@@ -75,13 +76,13 @@ export default async function BranchesPage() {
           </div>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight">Filiais</h2>
           <p className="text-sm text-slate-600">
-            Preparação segura para administrar o Gasparzinho e futuras revendas sem misturar dados.
+            Administre o Gasparzinho e futuras revendas sem misturar clientes, vendas, estoque ou cobrança.
           </p>
         </div>
         <Button asChild variant="outline" className="gap-2">
           <Link href="/dashboard/configuracoes">
             <Settings className="h-4 w-4" />
-            Alterar filial padrão
+            Configurações
           </Link>
         </Button>
       </div>
@@ -91,25 +92,22 @@ export default async function BranchesPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-emerald-700" />
-              Filial ativa atual
+              Filial ativa
             </CardTitle>
-            <CardDescription>
-              Esta é a filial lógica usada enquanto a migração multifilial real ainda não foi aplicada.
-            </CardDescription>
+            <CardDescription>Esta é a filial lógica usada como base da operação atual.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg border border-emerald-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Filial padrão</p>
               <p className="mt-2 text-2xl font-bold text-slate-950">{branchName}</p>
               <p className="mt-2 text-sm text-slate-600">
-                Os dados atuais continuam funcionando como antes. Esta etapa prepara a identidade da filial sem alterar vendas,
-                clientes, cobranças ou estoque.
+                O sistema já trabalha com escopo por filial, mantendo a operação atual preservada.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge className="bg-emerald-600 text-white">Sem migração arriscada</Badge>
+              <Badge className="bg-emerald-600 text-white">Base segura</Badge>
               <Badge variant="outline" className="border-emerald-300 bg-white text-emerald-800">
-                Compatível com a versão atual
+                Escopo operacional ativo
               </Badge>
             </div>
           </CardContent>
@@ -121,9 +119,7 @@ export default async function BranchesPage() {
               <LockKeyhole className="h-5 w-5 text-slate-700" />
               Próximas decisões
             </CardTitle>
-            <CardDescription>
-              Pontos que precisam ser definidos antes de isolar dados por filial.
-            </CardDescription>
+            <CardDescription>Pontos que dependem de validação real antes de endurecer o banco.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
@@ -140,14 +136,12 @@ export default async function BranchesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Andamento da preparação</CardTitle>
-          <CardDescription>
-            O objetivo é avançar por camadas, mantendo a operação atual estável.
-          </CardDescription>
+          <CardDescription>Resumo do que já está pronto e do que ainda precisa de homologação.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {readinessItems.map((item) => (
             <div key={item.title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <Badge variant={item.status.includes('validação') ? 'secondary' : 'default'}>{item.status}</Badge>
+              <Badge variant={item.status === 'Pendente' ? 'secondary' : 'default'}>{item.status}</Badge>
               <h3 className="mt-3 font-semibold text-slate-950">{item.title}</h3>
               <p className="mt-2 text-sm text-slate-600">{item.description}</p>
             </div>
@@ -161,15 +155,13 @@ export default async function BranchesPage() {
             <PlusCircle className="h-5 w-5 text-emerald-700" />
             Nova filial
           </CardTitle>
-          <CardDescription>
-            Cadastro administrativo para unidades próprias, alugadas ou licenciadas.
-          </CardDescription>
+          <CardDescription>Cadastro administrativo para unidades próprias, alugadas ou licenciadas.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={createBranch} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <label className="space-y-1 text-sm font-semibold text-slate-700">
               Nome
-              <input name="name" required minLength={3} className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Gás Gasparzinho Zona Norte" />
+              <input name="name" required minLength={3} className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm" placeholder="Gas Gasparzinho Zona Norte" />
             </label>
             <label className="space-y-1 text-sm font-semibold text-slate-700">
               Cidade
@@ -213,10 +205,8 @@ export default async function BranchesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Filiais registradas no banco</CardTitle>
-          <CardDescription>
-            Leitura segura da base multifilial. Se as tabelas ainda não existirem, a operação atual continua preservada.
-          </CardDescription>
+          <CardTitle>Filiais registradas</CardTitle>
+          <CardDescription>Unidades reais disponíveis para acompanhamento e seleção pelo administrador.</CardDescription>
         </CardHeader>
         <CardContent>
           {branchOverview.setupAvailable ? (
@@ -230,7 +220,7 @@ export default async function BranchesPage() {
                           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{organization.name}</p>
                           <h3 className="mt-1 font-semibold text-slate-950">{branch.name}</h3>
                         </div>
-                        <Badge className="bg-emerald-600 text-white">{branch.status}</Badge>
+                        <Badge variant={statusVariant(branch.status)}>{branch.status}</Badge>
                       </div>
                       <dl className="mt-4 grid gap-2 text-sm text-slate-600">
                         <div className="flex justify-between gap-3">
@@ -278,12 +268,12 @@ export default async function BranchesPage() {
               </div>
             ) : (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                As tabelas multifiliais existem, mas a filial padrão ainda não foi criada. Execute o seed seguro quando o banco estiver acessível.
+                As tabelas multifiliais existem, mas a filial padrão ainda não foi criada.
               </div>
             )
           ) : (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              A base de filiais ainda não está disponível neste ambiente. Isso é esperado antes da sincronização segura do banco.
+              A base de filiais ainda não está disponível neste ambiente.
             </div>
           )}
         </CardContent>
@@ -295,9 +285,7 @@ export default async function BranchesPage() {
             <PlayCircle className="h-5 w-5 text-emerald-700" />
             Verificações seguras
           </CardTitle>
-          <CardDescription>
-            Etapas técnicas que podem ser conferidas sem alterar vendas, clientes, cobranças ou estoque.
-          </CardDescription>
+          <CardDescription>Comandos de auditoria para acompanhar a evolução multifilial.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
           {technicalChecks.map((item) => (
@@ -315,9 +303,7 @@ export default async function BranchesPage() {
             <FileText className="h-5 w-5 text-slate-700" />
             Documentos de apoio
           </CardTitle>
-          <CardDescription>
-            Base para a próxima etapa técnica antes de mexer no banco.
-          </CardDescription>
+          <CardDescription>Plano, levantamento e checklist usados para controlar a transição.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="outline" className="justify-start">

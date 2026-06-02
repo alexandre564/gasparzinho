@@ -1,57 +1,61 @@
 # Checklist de execução multifilial
 
-Este checklist controla a transição do Gasparzinho para a plataforma **Gas** sem quebrar a operação atual.
+## Base técnica
 
-## Estado seguro atual
+- [x] Criar `Organization` e `Branch`.
+- [x] Criar filial padrão `branch_gasparzinho_default`.
+- [x] Exibir filial ativa no layout.
+- [x] Adicionar `organizationId` e `branchId` ao usuário.
+- [x] Adicionar `branchId` opcional aos modelos operacionais.
+- [x] Preencher dados antigos com filial padrão.
+- [x] Criar índices por filial.
+- [x] Criar unicidade por filial para cliente, produto e veículo.
+- [x] Incluir filiais no backup JSON e planilha.
+- [x] Criar auditorias multifiliais.
 
-- [x] O sistema atual continua usando os dados existentes sem filtro por filial.
-- [x] A filial padrão aparece no cabeçalho, no menu lateral e nas configurações.
-- [x] Os modelos `Organization` e `Branch` foram preparados no Prisma.
-- [x] O `db:safe-sync` cria a base multifilial quando as variáveis do banco existem.
-- [x] O build da Vercel não falha quando o ambiente não expõe `DATABASE_URL` ou `DIRECT_URL` para o passo de sincronização.
-- [x] O seed da filial padrão está disponível em `npm run branches:seed-default`.
-- [x] A auditoria de consultas Prisma está disponível em `npm run branches:audit`.
-- [x] A auditoria de schema está disponível em `npm run branches:schema-audit`.
-- [x] A auditoria de dados por filial está disponível em `npm run branches:data-audit`.
-- [x] O backup JSON e o backup em planilha já incluem organização e filiais quando essas tabelas existem.
-- [x] A tela de Filiais já tenta ler as filiais reais do banco sem quebrar quando a base ainda não foi criada.
-- [x] O seed da filial padrão também cria a base `Organization`/`Branch` se ela ainda não existir.
-- [x] `branchId` opcional foi preparado nos modelos operacionais.
-- [x] `organizationId` e `branchId` foram preparados no usuário.
-- [x] A migração segura preenche dados atuais com a filial padrão.
-- [x] Os scripts de inicialização rodam sincronização segura antes de abrir o sistema local.
+## Escopo operacional
 
-## Confirmações de produção
+- [x] Clientes.
+- [x] Vendas.
+- [x] Entregas.
+- [x] Cobrança.
+- [x] Estoque.
+- [x] Financeiro.
+- [x] Gastos.
+- [x] Relatórios.
+- [x] Fechamento.
+- [x] Fidelização.
+- [x] Frota.
+- [x] Backup e exportações.
 
-- [ ] Confirmar que `Organization` e `Branch` existem no banco de produção, pela tela de Filiais ou pelo seed.
-- [ ] Executar `npm run branches:seed-default` com acesso ao banco correto, caso a filial padrão ainda não apareça.
-- [ ] Confirmar que a filial padrão criada é `branch_gasparzinho_default`.
-- [ ] Confirmar com `npm run branches:data-audit` que não há registros antigos sem filial.
-- [ ] Definir se telefone de cliente será único por filial ou único no sistema inteiro.
-- [ ] Definir se produto e estoque serão separados por filial desde o início.
-- [ ] Definir se frota será exclusiva por filial ou compartilhada.
-- [ ] Definir se mensagens de cobrança, WhatsApp e preços serão globais ou por filial.
+## Segurança e permissões
 
-## Migração operacional planejada
+- [x] ADMIN acessa visão consolidada e filial ativa.
+- [x] VENDEDOR acessa módulos operacionais permitidos.
+- [x] ENTREGADOR acessa entregas e página principal.
+- [x] APIs principais exigem sessão e perfil.
+- [x] Rota legada de Recompra redireciona para Fidelização.
+- [x] Seletor de filial valida organização e status.
 
-- [x] Adicionar `branchId` opcional em usuários.
-- [x] Adicionar `branchId` opcional em clientes, produtos, estoque, pedidos, entregas, dívidas, gastos, frota e fechamento.
-- [x] Preencher dados existentes com `branch_gasparzinho_default`.
-- [x] Criar índices por `branchId`.
-- [x] Atualizar sessão para carregar filial ativa.
-- [x] Aplicar helpers de escopo por filial nos módulos operacionais.
-- [x] Bloquear acesso direto por URL quando o usuário não pertencer à filial nos fluxos já escopados.
-- [x] Aplicar escopo por filial em exportações, backup, relatórios e fechamento.
-- [x] Criar seleção de filial ativa para administrador geral.
-- [ ] Só depois tornar `branchId` obrigatório onde fizer sentido.
+## Validação local
 
-## Validação obrigatória após migração
+- [x] `npx tsc --noEmit`.
+- [x] `npm run lint`.
+- [x] `npm run build`.
+- [x] `npm run vercel-build`.
+- [x] `npm run branches:audit`.
+- [x] `npm run branches:schema-audit`.
 
-- [ ] Login de administrador geral.
-- [ ] Login de administrador da filial.
-- [ ] Login de vendedor.
-- [ ] Login de entregador.
-- [x] Clientes isolados por filial.
-- [x] Venda gerando entrega, financeiro e cobrança na filial correta.
-- [x] Backup/exportações respeitando filial ativa.
-- [x] Relatórios consolidados apenas para administrador geral.
+## Validação pendente em produção
+
+- [ ] Rodar `npm run branches:data-audit` em ambiente com acesso ao banco.
+- [ ] Testar login ADMIN, VENDEDOR e ENTREGADOR com dados reais.
+- [ ] Criar segunda filial real e testar isolamento.
+- [ ] Confirmar por URL direta que perfis não veem dados de outra filial.
+- [ ] Validar backup isolado e backup consolidado.
+- [ ] Validar relatórios consolidados apenas para administrador geral.
+
+## Decisão futura
+
+- [ ] Tornar `branchId` obrigatório apenas depois da validação de produção.
+- [ ] Decidir se configurações de WhatsApp, mensagens e preços serão globais, por organização ou por filial.

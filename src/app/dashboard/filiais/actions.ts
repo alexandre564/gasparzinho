@@ -7,15 +7,18 @@ import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/branch-scope';
 
+const statusValues = ['ATIVA', 'PAUSADA', 'SUSPENSA', 'CANCELADA'] as const;
+const contractStatusValues = ['PROPRIA', 'TESTE', 'ALUGADA', 'LICENCIADA', 'SUSPENSA', 'CANCELADA'] as const;
+
 const branchSchema = z.object({
   id: z.string().optional(),
-  name: z.string().trim().min(3),
+  name: z.string().trim().min(3, 'Informe um nome com pelo menos 3 caracteres.'),
   tradingName: z.string().trim().optional(),
   document: z.string().trim().optional(),
   phone: z.string().trim().optional(),
   city: z.string().trim().optional(),
-  status: z.enum(['ATIVA', 'PAUSADA', 'SUSPENSA', 'CANCELADA']).default('ATIVA'),
-  contractStatus: z.enum(['PROPRIA', 'TESTE', 'ALUGADA', 'LICENCIADA', 'SUSPENSA', 'CANCELADA']).default('PROPRIA'),
+  status: z.enum(statusValues).default('ATIVA'),
+  contractStatus: z.enum(contractStatusValues).default('PROPRIA'),
   planName: z.string().trim().optional(),
   contractDueAt: z.string().trim().optional(),
   notes: z.string().trim().optional(),
@@ -24,7 +27,10 @@ const branchSchema = z.object({
 async function ensureDefaultOrganization() {
   return prisma.organization.upsert({
     where: { id: DEFAULT_ORGANIZATION_ID },
-    update: {},
+    update: {
+      name: 'Gas',
+      status: 'ATIVA',
+    },
     create: {
       id: DEFAULT_ORGANIZATION_ID,
       name: 'Gas',
@@ -34,33 +40,72 @@ async function ensureDefaultOrganization() {
   });
 }
 
+function emptyToUndefined(value?: string) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function normalizeOptionalDigits(value?: string) {
+  const digits = value?.replace(/\D/g, '');
+  return digits || undefined;
+}
+
+function parseContractDueAt(value?: string) {
+  if (!value) return null;
+
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
 function normalizeBranchData(formData: FormData) {
   const parsed = branchSchema.safeParse({
-    id: String(formData.get('id') ?? '') || undefined,
+    id: emptyToUndefined(String(formData.get('id') ?? '')),
     name: String(formData.get('name') ?? ''),
-    tradingName: String(formData.get('tradingName') ?? '') || undefined,
-    document: String(formData.get('document') ?? '') || undefined,
-    phone: String(formData.get('phone') ?? '') || undefined,
-    city: String(formData.get('city') ?? '') || undefined,
+    tradingName: emptyToUndefined(String(formData.get('tradingName') ?? '')),
+    document: emptyToUndefined(String(formData.get('document') ?? '')),
+    phone: emptyToUndefined(String(formData.get('phone') ?? '')),
+    city: emptyToUndefined(String(formData.get('city') ?? '')),
     status: String(formData.get('status') ?? 'ATIVA'),
     contractStatus: String(formData.get('contractStatus') ?? 'PROPRIA'),
-    planName: String(formData.get('planName') ?? '') || undefined,
-    contractDueAt: String(formData.get('contractDueAt') ?? '') || undefined,
-    notes: String(formData.get('notes') ?? '') || undefined,
+    planName: emptyToUndefined(String(formData.get('planName') ?? '')),
+    contractDueAt: emptyToUndefined(String(formData.get('contractDueAt') ?? '')),
+    notes: emptyToUndefined(String(formData.get('notes') ?? '')),
   });
 
   if (!parsed.success) {
-    return null;
+    return { success: false as const, message: parsed.error.issues[0]?.message || 'Revise os dados da filial.' };
   }
 
-  const { id, contractDueAt, ...data } = parsed.data;
+  const { id, contractDueAt, document, phone, ...data } = parsed.data;
+  const dueAt = parseContractDueAt(contractDueAt);
+
+  if (dueAt === undefined) {
+    return { success: false as const, message: 'Data de vencimento inválida.' };
+  }
+
   return {
+    success: true as const,
     id,
     data: {
       ...data,
-      contractDueAt: contractDueAt ? new Date(`${contractDueAt}T12:00:00`) : null,
+      document: normalizeOptionalDigits(document),
+      phone: normalizeOptionalDigits(phone),
+      contractDueAt: dueAt,
     },
   };
+}
+
+async function branchNameExists(name: string, idToIgnore?: string) {
+  const existing = await prisma.branch.findFirst({
+    where: {
+      organizationId: DEFAULT_ORGANIZATION_ID,
+      name,
+      ...(idToIgnore ? { id: { not: idToIgnore } } : {}),
+    },
+    select: { id: true },
+  });
+
+  return Boolean(existing);
 }
 
 export async function createBranch(formData: FormData) {
@@ -68,11 +113,16 @@ export async function createBranch(formData: FormData) {
   if (denied) return denied;
 
   const normalized = normalizeBranchData(formData);
-  if (!normalized) {
-    return { success: false, message: 'Revise os dados da filial.' };
+  if (!normalized.success) {
+    return { success: false, message: normalized.message };
   }
 
   await ensureDefaultOrganization();
+
+  if (await branchNameExists(normalized.data.name)) {
+    return { success: false, message: 'Já existe uma filial com este nome.' };
+  }
+
   await prisma.branch.create({
     data: {
       organizationId: DEFAULT_ORGANIZATION_ID,
@@ -89,8 +139,21 @@ export async function updateBranch(formData: FormData) {
   if (denied) return denied;
 
   const normalized = normalizeBranchData(formData);
-  if (!normalized?.id) {
-    return { success: false, message: 'Filial não encontrada.' };
+  if (!normalized.success || !normalized.id) {
+    return { success: false, message: !normalized.success ? normalized.message : 'Filial não encontrada.' };
+  }
+
+  const currentBranch = await prisma.branch.findFirst({
+    where: { id: normalized.id, organizationId: DEFAULT_ORGANIZATION_ID },
+    select: { id: true },
+  });
+
+  if (!currentBranch) {
+    return { success: false, message: 'Filial não encontrada nesta organização.' };
+  }
+
+  if (await branchNameExists(normalized.data.name, normalized.id)) {
+    return { success: false, message: 'Já existe outra filial com este nome.' };
   }
 
   await prisma.branch.update({
@@ -111,6 +174,15 @@ export async function pauseOrActivateBranch(formData: FormData) {
 
   if (!id) {
     return { success: false, message: 'Filial não encontrada.' };
+  }
+
+  const branch = await prisma.branch.findFirst({
+    where: { id, organizationId: DEFAULT_ORGANIZATION_ID },
+    select: { id: true },
+  });
+
+  if (!branch) {
+    return { success: false, message: 'Filial não encontrada nesta organização.' };
   }
 
   await prisma.branch.update({
