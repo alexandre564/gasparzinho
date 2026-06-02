@@ -1,5 +1,15 @@
 import Link from 'next/link';
-import { AlertTriangle, Banknote, CreditCard, Package, Repeat, TrendingUp, Truck, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Banknote,
+  CreditCard,
+  Package,
+  Repeat,
+  TrendingUp,
+  Truck,
+  Users,
+} from 'lucide-react';
 import type { ComponentType } from 'react';
 import { redirect } from 'next/navigation';
 
@@ -137,6 +147,7 @@ function MetricCard({
   icon: Icon,
   tone = 'emerald',
   href,
+  emphasis = 'normal',
 }: {
   title: string;
   value: string | number;
@@ -144,28 +155,73 @@ function MetricCard({
   icon: ComponentType<{ className?: string }>;
   tone?: 'emerald' | 'blue' | 'amber' | 'rose' | 'slate';
   href?: string;
+  emphasis?: 'normal' | 'strong';
 }) {
   const toneClass = {
-    emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    blue: 'bg-sky-50 text-sky-700 ring-sky-200',
-    amber: 'bg-amber-50 text-amber-700 ring-amber-200',
-    rose: 'bg-rose-50 text-rose-700 ring-rose-200',
-    slate: 'bg-slate-100 text-slate-700 ring-slate-300',
+    emerald: {
+      accent: 'bg-emerald-500',
+      chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+      strong: 'border-emerald-700 bg-slate-950 text-white shadow-slate-300/70',
+    },
+    blue: {
+      accent: 'bg-sky-500',
+      chip: 'bg-sky-50 text-sky-700 ring-sky-200',
+      strong: 'border-sky-700 bg-slate-950 text-white shadow-slate-300/70',
+    },
+    amber: {
+      accent: 'bg-amber-500',
+      chip: 'bg-amber-50 text-amber-700 ring-amber-200',
+      strong: 'border-amber-400 bg-amber-50 text-slate-950 shadow-amber-100',
+    },
+    rose: {
+      accent: 'bg-rose-500',
+      chip: 'bg-rose-50 text-rose-700 ring-rose-200',
+      strong: 'border-rose-300 bg-rose-50 text-slate-950 shadow-rose-100',
+    },
+    slate: {
+      accent: 'bg-slate-500',
+      chip: 'bg-slate-100 text-slate-700 ring-slate-300',
+      strong: 'border-slate-800 bg-slate-950 text-white shadow-slate-300/70',
+    },
   }[tone];
 
+  const isStrong = emphasis === 'strong';
   const card = (
-    <Card className="h-full overflow-hidden border-slate-300 shadow-lg shadow-slate-200/80 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-xl">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 border-b border-slate-200 bg-slate-50 pb-3">
-        <CardTitle className="text-base font-extrabold uppercase tracking-wide text-slate-950">
+    <Card
+      className={`group relative h-full overflow-hidden border shadow-lg transition duration-200 hover:-translate-y-0.5 hover:shadow-xl ${
+        isStrong ? toneClass.strong : 'border-slate-300 bg-white shadow-slate-200/80 hover:border-emerald-300'
+      }`}
+    >
+      <div className={`absolute inset-x-0 top-0 h-1 ${toneClass.accent}`} />
+      <CardHeader className={`flex flex-row items-start justify-between space-y-0 border-b pb-3 ${
+        isStrong ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50/80'
+      }`}
+      >
+        <CardTitle className={`text-sm font-extrabold uppercase tracking-wide ${
+          isStrong && (tone === 'emerald' || tone === 'blue' || tone === 'slate') ? 'text-white' : 'text-slate-950'
+        }`}
+        >
           {title}
         </CardTitle>
-        <div className={`rounded-md p-2 ring-1 ${toneClass}`}>
+        <div className={`rounded-md p-2 ring-1 ${toneClass.chip}`}>
           <Icon className="h-4 w-4" />
         </div>
       </CardHeader>
       <CardContent className="pt-5">
-        <div className="text-3xl font-extrabold tracking-tight text-slate-950">{value}</div>
-        <p className="mt-2 text-sm font-medium leading-5 text-slate-700">{description}</p>
+        <div
+          className={`text-3xl font-black tracking-tight ${
+            isStrong && (tone === 'emerald' || tone === 'blue' || tone === 'slate') ? 'text-white' : 'text-slate-950'
+          }`}
+        >
+          {value}
+        </div>
+        <p
+          className={`mt-2 text-sm font-medium leading-5 ${
+            isStrong && (tone === 'emerald' || tone === 'blue' || tone === 'slate') ? 'text-slate-300' : 'text-slate-700'
+          }`}
+        >
+          {description}
+        </p>
       </CardContent>
     </Card>
   );
@@ -193,20 +249,32 @@ function OperationalAlert({
   tone?: 'amber' | 'rose' | 'sky';
 }) {
   const toneClass = {
-    amber: 'border-amber-300 bg-amber-50 text-amber-900',
-    rose: 'border-rose-300 bg-rose-50 text-rose-900',
-    sky: 'border-sky-300 bg-sky-50 text-sky-900',
+    amber: 'border-amber-300 bg-amber-50 text-amber-950 hover:border-amber-400',
+    rose: 'border-rose-300 bg-rose-50 text-rose-950 hover:border-rose-400',
+    sky: 'border-sky-300 bg-sky-50 text-sky-950 hover:border-sky-400',
+  }[tone];
+
+  const iconClass = {
+    amber: 'bg-amber-100 text-amber-700',
+    rose: 'bg-rose-100 text-rose-700',
+    sky: 'bg-sky-100 text-sky-700',
   }[tone];
 
   return (
     <Link
       href={href}
-      className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-sm transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${toneClass}`}
+      className={`group flex items-start gap-3 rounded-lg border px-4 py-4 text-sm shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${toneClass}`}
     >
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-      <span>
-        <strong className="block">{title}</strong>
-        <span className="mt-0.5 block opacity-85">{description}</span>
+      <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${iconClass}`}>
+        <AlertTriangle className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <strong className="block text-base">{title}</strong>
+        <span className="mt-1 block leading-5 opacity-85">{description}</span>
+      </span>
+      <span className="mt-1 hidden items-center gap-1 text-xs font-extrabold uppercase tracking-wide opacity-80 group-hover:opacity-100 sm:flex">
+        Ver
+        <ArrowRight className="h-3.5 w-3.5" />
       </span>
     </Link>
   );
@@ -258,25 +326,41 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950 text-white shadow-xl shadow-slate-300/60">
-        <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
-          <div>
-            <p className="text-sm font-semibold text-emerald-300">Página principal</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-              Gás Gasparzinho em movimento
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              Acompanhe vendas, entregas, estoque e cobranças em um painel mais claro para decidir rápido.
-            </p>
+      <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-white shadow-xl shadow-slate-300/60">
+        <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.35fr_0.65fr] lg:p-8">
+          <div className="flex min-w-0 flex-col justify-between">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-300">Página principal</p>
+              <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">
+                Gasparzinho em operação
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+                Vendas, entregas, cobranças e estoque em uma visão executiva para decidir rápido.
+              </p>
+            </div>
+            <div className="mt-6 grid gap-3 text-sm sm:grid-cols-3">
+              <div className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
+                <p className="text-xs font-bold uppercase text-slate-300">Pedidos hoje</p>
+                <p className="mt-1 text-lg font-black text-white">{data.salesTodayCount}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
+                <p className="text-xs font-bold uppercase text-slate-300">Ticket médio</p>
+                <p className="mt-1 text-lg font-black text-white">{currency.format(data.averageTicketToday)}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
+                <p className="text-xs font-bold uppercase text-slate-300">Vendas no mês</p>
+                <p className="mt-1 text-lg font-black text-white">{currency.format(data.monthRevenue)}</p>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 text-sm">
             <Link href="/dashboard/vendas" className="rounded-lg border border-white/10 bg-white/10 p-4 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
               <p className="font-bold uppercase text-slate-100">Vendas hoje</p>
-              <p className="mt-1 text-xl font-bold text-white">{currency.format(data.totalSalesToday)}</p>
+              <p className="mt-2 text-2xl font-black text-white">{currency.format(data.totalSalesToday)}</p>
             </Link>
-            <Link href="/dashboard/entregas" className="rounded-lg border border-white/10 bg-emerald-500 p-4 text-white transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200">
-              <p className="font-bold uppercase text-emerald-50">Entregas</p>
-              <p className="mt-1 text-xl font-bold">{data.deliveriesInProgress}</p>
+            <Link href="/dashboard/entregas" className="rounded-lg border border-emerald-300/20 bg-emerald-500 p-4 text-white transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200">
+              <p className="font-bold uppercase text-emerald-50">Entregas em andamento</p>
+              <p className="mt-2 text-2xl font-black">{data.deliveriesInProgress}</p>
             </Link>
           </div>
         </div>
@@ -290,6 +374,25 @@ export default async function DashboardPage() {
           icon={Banknote}
           tone="emerald"
           href="/dashboard/vendas"
+          emphasis="strong"
+        />
+        <MetricCard
+          title="Entregas"
+          value={data.deliveriesInProgress}
+          description="Entregas pendentes ou em rota."
+          icon={Truck}
+          tone="blue"
+          href="/dashboard/entregas"
+          emphasis="strong"
+        />
+        <MetricCard
+          title="A receber"
+          value={currency.format(data.openDebtValue)}
+          description="Valor aberto em cobranças pendentes, vencidas ou renegociadas."
+          icon={CreditCard}
+          tone="rose"
+          href="/dashboard/cobranca"
+          emphasis="strong"
         />
         <MetricCard
           title="Clientes"
@@ -316,14 +419,6 @@ export default async function DashboardPage() {
           href="/dashboard/estoque?stock=CRITICO"
         />
         <MetricCard
-          title="Entregas em andamento"
-          value={data.deliveriesInProgress}
-          description="Entregas pendentes ou em rota."
-          icon={Truck}
-          tone="blue"
-          href="/dashboard/entregas"
-        />
-        <MetricCard
           title="Fidelização"
           value={data.loyaltyOpportunities}
           description="Clientes com previsão de nova compra nos últimos ou próximos 3 dias."
@@ -347,14 +442,6 @@ export default async function DashboardPage() {
           tone="blue"
           href="/dashboard/financeiro?period=monthly"
         />
-        <MetricCard
-          title="A receber"
-          value={currency.format(data.openDebtValue)}
-          description="Valor aberto em cobranças pendentes, vencidas ou renegociadas."
-          icon={CreditCard}
-          tone="rose"
-          href="/dashboard/cobranca"
-        />
       </div>
 
       {operationalAlerts.length > 0 ? (
@@ -364,25 +451,32 @@ export default async function DashboardPage() {
           ))}
         </section>
       ) : (
-        <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900 shadow-sm">
           Operação sem alertas críticos no momento.
         </section>
       )}
 
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-        <Card className="border-slate-300">
-          <CardHeader className="border-b border-slate-200 bg-slate-50">
-            <CardTitle className="text-xl font-extrabold text-slate-950">Vendas dos últimos 7 dias</CardTitle>
-            <CardDescription>Valor bruto por dia, sem pedidos cancelados.</CardDescription>
+        <Card className="overflow-hidden border-slate-300">
+          <CardHeader className="border-b border-slate-200 bg-white">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <CardTitle className="text-xl font-black text-slate-950">Vendas dos últimos 7 dias</CardTitle>
+                <CardDescription>Valor bruto por dia, sem pedidos cancelados.</CardDescription>
+              </div>
+              <Badge variant="secondary" className="w-fit border border-slate-300 bg-slate-100 text-slate-700">
+                Análise semanal
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent className="pt-6">
             <SalesChart data={data.salesData} />
           </CardContent>
         </Card>
 
-        <Card className="border-slate-300">
-          <CardHeader className="border-b border-slate-200 bg-slate-50">
-            <CardTitle className="text-xl font-extrabold text-slate-950">Pedidos recentes</CardTitle>
+        <Card className="overflow-hidden border-slate-300">
+          <CardHeader className="border-b border-slate-200 bg-white">
+            <CardTitle className="text-xl font-black text-slate-950">Pedidos recentes</CardTitle>
             <CardDescription>Últimas movimentações registradas.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-6">
@@ -391,24 +485,24 @@ export default async function DashboardPage() {
                 <Link
                   href={`/dashboard/vendas/${order.id}`}
                   key={order.id}
-                  className="flex items-start justify-between gap-3 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="flex items-start justify-between gap-3 rounded-lg border border-slate-300 bg-slate-50 px-3 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-950">{decodeContactText(order.customer.name)}</p>
+                    <p className="truncate text-sm font-extrabold text-slate-950">{decodeContactText(order.customer.name)}</p>
                     <p className="text-xs font-medium text-slate-600">
                       {new Date(order.createdAt).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-extrabold text-slate-950">{currency.format(order.grossValue)}</p>
-                    <Badge variant="secondary" className="mt-1">
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-black text-slate-950">{currency.format(order.grossValue)}</p>
+                    <Badge variant="secondary" className="mt-1 border border-slate-300 bg-white">
                       {labelFrom(orderStatusLabels, order.status)}
                     </Badge>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600">
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600">
                 Nenhum pedido registrado ainda.
               </div>
             )}

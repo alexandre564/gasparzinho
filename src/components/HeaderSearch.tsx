@@ -120,7 +120,7 @@ export function HeaderSearch() {
       <Input
         type="search"
         placeholder="Buscar cliente por nome ou celular..."
-        className="h-11 rounded-md border-slate-300 bg-white pl-10 pr-10 text-slate-950 shadow-sm placeholder:text-slate-500 focus-visible:ring-emerald-600"
+        className="h-11 rounded-lg border-slate-300 bg-white pl-10 pr-10 text-slate-950 shadow-sm placeholder:text-slate-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-600"
         value={value}
         onChange={(event) => handleChange(event.target.value)}
         onFocus={() => {
@@ -145,8 +145,8 @@ export function HeaderSearch() {
       ) : null}
 
       {open && value.trim() ? (
-        <div className="absolute right-0 top-12 z-50 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl">
-          <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase text-slate-500">
+        <div className="absolute right-0 top-12 z-50 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/60">
+          <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold uppercase tracking-wide text-slate-500">
             Clientes encontrados
           </div>
           {loading ? (
@@ -157,7 +157,7 @@ export function HeaderSearch() {
                 <button
                   key={customer.id}
                   type="button"
-                  className="flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-emerald-50"
+                  className="flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500"
                   onClick={() => goToNewOrder(customer.id)}
                 >
                   <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">

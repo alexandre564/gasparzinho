@@ -43,26 +43,26 @@ export default function SalesChart({
   );
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+    <ResponsiveContainer width="100%" height={320}>
+      <BarChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#d8e0ea" />
         <XAxis
           dataKey="name"
           tickLine={false}
           axisLine={false}
-          tick={{ fill: '#475569', fontSize: 13 }}
+          tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
-          tick={{ fill: '#475569', fontSize: 13 }}
+          tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }}
           tickFormatter={(value) => `R$ ${value}`}
           width={64}
         />
         <Tooltip
-          cursor={{ fill: '#f1f5f9' }}
+          cursor={{ fill: '#ecfdf5' }}
           contentStyle={{
-            border: '1px solid #cbd5e1',
+            border: '1px solid #94a3b8',
             borderRadius: 8,
             boxShadow: '0 10px 30px rgb(15 23 42 / 0.12)',
           }}
@@ -74,11 +74,11 @@ export default function SalesChart({
         />
         {hasFinanceSeries ? (
           <>
-            <Bar dataKey="Entradas" fill="#047857" radius={[5, 5, 0, 0]} />
-            <Bar dataKey="Saidas" name="Saídas" fill="#dc2626" radius={[5, 5, 0, 0]} />
+            <Bar dataKey="Entradas" fill="#047857" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="Saidas" name="Saídas" fill="#dc2626" radius={[6, 6, 0, 0]} />
           </>
         ) : (
-          <Bar dataKey="total" name="Vendas" fill="#047857" radius={[5, 5, 0, 0]} />
+          <Bar dataKey="total" name="Vendas" fill="#047857" radius={[7, 7, 0, 0]} />
         )}
       </BarChart>
     </ResponsiveContainer>
