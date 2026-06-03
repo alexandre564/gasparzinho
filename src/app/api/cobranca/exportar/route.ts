@@ -3,7 +3,7 @@ import { requireApiAccess } from '@/lib/api-auth';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
-import { getDebtPaymentBreakdown } from '@/lib/debts';
+import { calculateDebtDaysLate, getDebtEffectiveStatus, getDebtPaymentBreakdown } from '@/lib/debts';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -17,26 +17,32 @@ function formatDate(value?: Date | null) {
   return value ? value.toLocaleDateString('pt-BR') : '';
 }
 
-function daysLate(dueDate: Date, paidAt?: Date | null) {
-  const due = new Date(dueDate);
-  const reference = paidAt ? new Date(paidAt) : new Date();
-  due.setHours(0, 0, 0, 0);
-  reference.setHours(0, 0, 0, 0);
-
-  return Math.max(Math.floor((reference.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)), 0);
-}
-
 type ExportDebt = Awaited<ReturnType<typeof prisma.debt.findMany>>[number] & {
   customer: { name: string; phone: string };
   order: { id: string; createdAt: Date; paymentMethod: string } | null;
 };
 
+type EnhancedExportDebt = ExportDebt & {
+  daysLate: number;
+  effectiveStatus: string;
+  paymentValue: number;
+};
+
 const debtSortKeys = ['customer', 'phone', 'value', 'dueDate', 'daysLate', 'status', 'paidAt'] as const;
-const debtStatusFilterValues = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO'] as const;
+const debtStatusFilterValues = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO', 'CANCELADA'] as const;
 type DebtSortKey = (typeof debtSortKeys)[number];
 type SortDirection = 'asc' | 'desc';
 
-function debtMatchesSearch(debt: ExportDebt, query: string) {
+function enhanceDebt(debt: ExportDebt): EnhancedExportDebt {
+  return {
+    ...debt,
+    paymentValue: debt.renegotiatedValue ?? debt.value,
+    daysLate: calculateDebtDaysLate(debt.dueDate, debt.status, debt.paidAt),
+    effectiveStatus: getDebtEffectiveStatus(debt),
+  };
+}
+
+function debtMatchesSearch(debt: EnhancedExportDebt, query: string) {
   const term = normalizeSearchText(query);
   const digits = onlyDigits(query);
 
@@ -44,7 +50,7 @@ function debtMatchesSearch(debt: ExportDebt, query: string) {
 
   const customerName = decodeContactText(debt.customer.name);
   const customerPhone = decodeContactText(debt.customer.phone);
-  const textMatch = [customerName, customerPhone, debt.status, debt.notes, debt.id]
+  const textMatch = [customerName, customerPhone, debt.effectiveStatus, debt.status, debt.notes, debt.id]
     .map(normalizeSearchText)
     .some((value) => value.includes(term));
   const phoneMatch = Boolean(digits) && onlyDigits(customerPhone).includes(digits);
@@ -66,10 +72,6 @@ function normalizeStatusFilter(status?: string | null) {
     : undefined;
 }
 
-function paymentValue(debt: ExportDebt) {
-  return debt.renegotiatedValue ?? debt.value;
-}
-
 function compareNullableNumber(
   left: number | null | undefined,
   right: number | null | undefined,
@@ -86,7 +88,7 @@ function compareNullableNumber(
   return direction === 'asc' ? result : -result;
 }
 
-function compareDebts(left: ExportDebt, right: ExportDebt, sort: DebtSortKey, direction: SortDirection) {
+function compareDebts(left: EnhancedExportDebt, right: EnhancedExportDebt, sort: DebtSortKey, direction: SortDirection) {
   if (sort === 'customer') {
     const result = left.customer.name.localeCompare(right.customer.name, 'pt-BR', { sensitivity: 'base' });
     return direction === 'asc' ? result : -result;
@@ -98,16 +100,16 @@ function compareDebts(left: ExportDebt, right: ExportDebt, sort: DebtSortKey, di
   }
 
   if (sort === 'status') {
-    const result = left.status.localeCompare(right.status, 'pt-BR', { sensitivity: 'base' });
+    const result = left.effectiveStatus.localeCompare(right.effectiveStatus, 'pt-BR', { sensitivity: 'base' });
     return direction === 'asc' ? result : -result;
   }
 
   if (sort === 'value') {
-    return compareNullableNumber(paymentValue(left), paymentValue(right), direction);
+    return compareNullableNumber(left.paymentValue, right.paymentValue, direction);
   }
 
   if (sort === 'daysLate') {
-    return compareNullableNumber(daysLate(left.dueDate, left.paidAt), daysLate(right.dueDate, right.paidAt), direction);
+    return compareNullableNumber(left.daysLate, right.daysLate, direction);
   }
 
   if (sort === 'paidAt') {
@@ -130,9 +132,7 @@ export async function GET(request: NextRequest) {
   const direction = normalizeSortDirection(request.nextUrl.searchParams.get('direction'));
   const branchScope = await getCurrentBranchScope();
   const debts = await prisma.debt.findMany({
-    where: buildBranchWhere(branchScope, {
-      ...(status && { status }),
-    }),
+    where: buildBranchWhere(branchScope),
     orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
     include: {
       customer: { select: { name: true, phone: true } },
@@ -140,7 +140,9 @@ export async function GET(request: NextRequest) {
     },
   });
   const filteredDebts = debts
+    .map(enhanceDebt)
     .filter((debt) => debtMatchesSearch(debt, query))
+    .filter((debt) => !status || debt.effectiveStatus === status)
     .sort((left, right) => {
       const result = compareDebts(left, right, sort, direction);
 
@@ -175,10 +177,10 @@ export async function GET(request: NextRequest) {
       debt.orderId,
       decodeContactText(debt.customer.name),
       decodeContactText(debt.customer.phone),
-      (debt.renegotiatedValue ?? debt.value).toFixed(2).replace('.', ','),
+      debt.paymentValue.toFixed(2).replace('.', ','),
       formatDate(debt.dueDate),
-      daysLate(debt.dueDate, debt.paidAt),
-      debt.status,
+      debt.daysLate,
+      debt.effectiveStatus,
       formatDate(debt.order?.createdAt ?? debt.createdAt),
       formatDate(debt.paidAt),
       formatDate(debt.renegotiatedAt),

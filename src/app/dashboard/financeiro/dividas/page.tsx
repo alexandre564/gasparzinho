@@ -25,6 +25,7 @@ import ImportDebtsButton from '../../cobranca/ImportDebtsButton';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
 import { requirePageAccess } from '@/lib/page-auth';
+import { calculateDebtDaysLate, getDebtEffectiveStatus, isDebtClosedStatus, isDebtOverdue } from '@/lib/debts';
 
 
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,7 @@ const getStatusVariant = (status: string): BadgeProps['variant'] => {
     case 'VENCIDO':
       return 'destructive';
     case 'RENEGOCIADO':
+    case 'CANCELADA':
       return 'secondary';
     default:
       return 'outline';
@@ -51,18 +53,6 @@ const getStatusVariant = (status: string): BadgeProps['variant'] => {
 
 const formatDate = (date?: Date | null) =>
   date ? new Date(date).toLocaleDateString('pt-BR') : '-';
-
-function daysLate(dueDate: Date, paidAt?: Date | null) {
-  const reference = paidAt ? new Date(paidAt) : new Date();
-  const due = new Date(dueDate);
-  reference.setHours(0, 0, 0, 0);
-  due.setHours(0, 0, 0, 0);
-
-  return Math.max(
-    Math.floor((reference.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)),
-    0,
-  );
-}
 
 type DebtWithCustomer = Debt & {
   customer: {
@@ -187,19 +177,22 @@ export default async function Page({ searchParams }: PageProps) {
 
               <TableBody>
                 {debts.length > 0 ? (
-                  debts.map((debt: DebtWithCustomer) => {
+                debts.map((debt: DebtWithCustomer) => {
+                    const effectiveStatus = getDebtEffectiveStatus(debt);
                     const isRenegotiated = Boolean(debt.renegotiatedAt) || debt.status === 'RENEGOCIADO';
-                    const lateDays = daysLate(debt.dueDate, debt.paidAt);
+                    const lateDays = calculateDebtDaysLate(debt.dueDate, debt.status, debt.paidAt);
+                    const overdue = isDebtOverdue(debt);
+                    const closed = isDebtClosedStatus(debt.status);
 
                     return (
-                      <TableRow key={debt.id} className={debt.status === 'PAGO' ? 'bg-emerald-50/50' : undefined}>
+                      <TableRow key={debt.id} className={effectiveStatus === 'PAGO' ? 'bg-emerald-50/50' : undefined}>
                         <TableCell>
                           <div className="font-bold text-slate-950">{debt.customer.name}</div>
                           <div className="text-xs text-slate-600">{debt.customer.phone}</div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusVariant(debt.status)}>
-                            {labelFrom(debtStatusLabels, debt.status)}
+                          <Badge variant={getStatusVariant(effectiveStatus)}>
+                            {labelFrom(debtStatusLabels, effectiveStatus)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono font-semibold text-emerald-700">
@@ -215,8 +208,8 @@ export default async function Page({ searchParams }: PageProps) {
                           ) : null}
                         </TableCell>
                         <TableCell className="hidden text-center xl:table-cell">
-                          <Badge variant={lateDays > 0 && debt.status !== 'PAGO' ? 'destructive' : 'secondary'}>
-                            {lateDays === 0 ? 'Sem atraso' : `${lateDays} dia(s)`}
+                          <Badge variant={overdue ? 'destructive' : 'secondary'}>
+                            {closed ? labelFrom(debtStatusLabels, effectiveStatus) : lateDays === 0 ? 'Sem atraso' : `${lateDays} dia(s)`}
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden text-center xl:table-cell">
@@ -232,7 +225,7 @@ export default async function Page({ searchParams }: PageProps) {
                         <TableCell className="text-right">
                           <div className="flex flex-wrap items-center justify-end gap-2">
                             <WhatsAppButton debt={debt} template={messageTemplate} />
-                            {debt.status !== 'PAGO' ? <MarkAsPaidButton id={debt.id} /> : null}
+                            {!closed ? <MarkAsPaidButton id={debt.id} /> : null}
                             <Button asChild size="sm" className="gap-2" title={`Editar cobrança de ${debt.customer.name}`}>
                               <Link href={`/dashboard/cobranca/${debt.id}`} aria-label={`Editar cobrança de ${debt.customer.name}`}>
                                 <Pencil className="h-4 w-4" />

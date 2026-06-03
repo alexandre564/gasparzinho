@@ -111,6 +111,7 @@ function getStatusVariant(status: DebtStatus) {
     case 'PAGO':
       return 'success' as const;
     case 'RENEGOCIADO':
+    case 'CANCELADA':
       return 'secondary' as const;
     default:
       return 'default' as const;
@@ -228,12 +229,18 @@ function buildCollectionMessage(template: string, debt: DebtListItem) {
 
 function getDelayText(debt: DebtListItem) {
   if (debt.daysLate === 0) {
-    return debt.effectiveStatus === 'PAGO' ? 'Pago no prazo' : 'Sem atraso';
+    if (debt.effectiveStatus === 'PAGO') {
+      return 'Pago';
+    }
+
+    if (debt.effectiveStatus === 'CANCELADA') {
+      return 'Cancelada';
+    }
+
+    return 'Sem atraso';
   }
 
-  return debt.effectiveStatus === 'PAGO'
-    ? `${debt.daysLate} dia(s) em atraso`
-    : `${debt.daysLate} dia(s) atrasado`;
+  return `${debt.daysLate} dia(s) atrasado`;
 }
 
 export default async function CobrancaPage({
@@ -263,7 +270,7 @@ export default async function CobrancaPage({
     getPaginatedDebts(query, currentPage, requestedSort ? sort : undefined, direction, status),
     getCollectionMessageTemplate(),
   ]);
-  const overdueOnPage = debts.filter((debt) => debt.effectiveStatus !== 'PAGO' && debt.daysLate > 0).length;
+  const overdueOnPage = debts.filter((debt) => debt.isOverdue).length;
 
   return (
     <div className="space-y-6">
@@ -382,7 +389,7 @@ export default async function CobrancaPage({
             <TableBody>
               {debts.length > 0 ? (
                 debts.map((debt) => {
-                  const isRenegotiated = Boolean(debt.renegotiatedAt) || debt.effectiveStatus === 'RENEGOCIADO';
+                  const isRenegotiated = Boolean(debt.renegotiatedAt) || debt.status === 'RENEGOCIADO';
                   const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
                   const originalDueDate =
                     debt.originalDueDate && debt.originalDueDate.getTime() !== debt.dueDate.getTime()
@@ -411,14 +418,14 @@ export default async function CobrancaPage({
                       ) : null}
                       {showColumn('daysLate') ? (
                         <TableCell className="hidden lg:table-cell">
-                          <Badge variant={debt.daysLate > 0 && debt.effectiveStatus !== 'PAGO' ? 'destructive' : 'secondary'}>
+                          <Badge variant={debt.isOverdue ? 'destructive' : 'secondary'}>
                             {getDelayText(debt)}
                           </Badge>
-                          {debt.effectiveStatus !== 'PAGO' && debt.daysLate >= 30 ? (
+                          {debt.isOverdue && debt.daysLate >= 30 ? (
                             <div className="mt-1 text-xs font-semibold text-red-700">Alerta 30+ dias</div>
-                          ) : debt.effectiveStatus !== 'PAGO' && debt.daysLate >= 15 ? (
+                          ) : debt.isOverdue && debt.daysLate >= 15 ? (
                             <div className="mt-1 text-xs font-semibold text-amber-700">Alerta 15+ dias</div>
-                          ) : debt.effectiveStatus !== 'PAGO' && debt.daysLate >= 7 ? (
+                          ) : debt.isOverdue && debt.daysLate >= 7 ? (
                             <div className="mt-1 text-xs font-semibold text-amber-600">Alerta 7+ dias</div>
                           ) : null}
                         </TableCell>

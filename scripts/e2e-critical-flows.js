@@ -89,11 +89,13 @@ function runContractChecks() {
 
   const cobrancaPage = read('src/app/dashboard/cobranca/page.tsx');
   assertContains(cobrancaPage, /overdueOnPage/, 'Cobranca precisa destacar vencidos.');
+  assertContains(cobrancaPage, /debt\.isOverdue/, 'Cobranca precisa usar regra estrutural de atraso, sem contar pagas/canceladas.');
   assertContains(cobrancaPage, /Dias em Atraso/, 'Cobranca precisa exibir dias em atraso.');
   assertContains(cobrancaPage, /Renegociacao|Renegocia/, 'Cobranca precisa exibir renegociacao.');
 
   const cobrancaAction = read('src/app/dashboard/cobranca/actions.ts');
   assertContains(cobrancaAction, /effectiveStatus/, 'Cobranca precisa calcular status efetivo.');
+  assertContains(cobrancaAction, /isDebtClosedStatus/, 'Cobranca precisa tratar status pagos/cancelados como fechados.');
   assertContains(cobrancaAction, /buildBranchWhere\(branchScope/, 'Cobranca precisa respeitar filial.');
   assertContains(cobrancaAction, /status: fullPayment \? 'PAGO' : 'RENEGOCIADO'/, 'Renegociacao parcial precisa manter cobranca em aberto.');
 

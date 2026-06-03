@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
+import { calculateDebtDaysLate, getDebtEffectiveStatus, isDebtClosedStatus, isDebtOverdue } from '@/lib/debts';
 
 export type DebtSortKey =
   | 'customer'
@@ -21,7 +22,7 @@ export type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 10;
 const debtSortKeys: DebtSortKey[] = ['customer', 'phone', 'value', 'dueDate', 'daysLate', 'status', 'paidAt'];
-const debtStatusFilterValues = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO'] as const;
+const debtStatusFilterValues = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO', 'CANCELADA'] as const;
 
 const optionalDate = z.preprocess((value) => {
   if (value === '' || value === null || value === undefined) return undefined;
@@ -44,6 +45,7 @@ type DebtWithRelations = Awaited<ReturnType<typeof prisma.debt.findMany>>[number
 type EnhancedDebt = DebtWithRelations & {
   paymentValue: number;
   daysLate: number;
+  isOverdue: boolean;
   isOpen: boolean;
   effectiveStatus: string;
 };
@@ -67,21 +69,10 @@ function normalizeStatusFilter(status?: string) {
     : undefined;
 }
 
-function calculateDaysLate(dueDate: Date, paidAt?: Date | null) {
-  const referenceDate = paidAt ? new Date(paidAt) : new Date();
-  const due = new Date(dueDate);
-  due.setHours(0, 0, 0, 0);
-  referenceDate.setHours(0, 0, 0, 0);
-
-  return Math.max(
-    Math.floor((referenceDate.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)),
-    0,
-  );
-}
-
 function enhanceDebt(debt: DebtWithRelations): EnhancedDebt {
-  const daysLate = calculateDaysLate(debt.dueDate, debt.paidAt);
-  const isOpen = debt.status !== 'PAGO';
+  const daysLate = calculateDebtDaysLate(debt.dueDate, debt.status, debt.paidAt);
+  const isOpen = !isDebtClosedStatus(debt.status);
+  const isOverdueFlag = isDebtOverdue(debt);
 
   return {
     ...debt,
@@ -92,8 +83,9 @@ function enhanceDebt(debt: DebtWithRelations): EnhancedDebt {
     },
     paymentValue: debt.renegotiatedValue ?? debt.value,
     daysLate,
+    isOverdue: isOverdueFlag,
     isOpen,
-    effectiveStatus: isOpen && daysLate > 0 && debt.status === 'PENDENTE' ? 'VENCIDO' : debt.status,
+    effectiveStatus: getDebtEffectiveStatus(debt),
   };
 }
 
@@ -431,6 +423,10 @@ function normalizeImportedDebtStatus(value: string, paidAt: Date | null) {
 
   if (['renegociado', 'renegociada', 'renegociacao', 'renegociação'].includes(normalized)) {
     return 'RENEGOCIADO';
+  }
+
+  if (['cancelado', 'cancelada', 'cancelled', 'canceled'].includes(normalized)) {
+    return 'CANCELADA';
   }
 
   return 'PENDENTE';

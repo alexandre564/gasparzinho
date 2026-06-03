@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
 
-const statuses = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO'] as const;
+const statuses = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO', 'CANCELADA'] as const;
 
 export default function StatusFilter() {
   const searchParams = useSearchParams();

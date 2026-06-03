@@ -11,7 +11,7 @@ import {
 import { debtStatusLabels, labelFrom } from '@/lib/labels';
 import { DebtStatus } from './types';
 
-const statuses: DebtStatus[] = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO'];
+const statuses: DebtStatus[] = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO', 'PAGO', 'CANCELADA'];
 
 
 export default function StatusFilter() {
