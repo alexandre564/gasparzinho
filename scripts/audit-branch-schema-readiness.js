@@ -14,6 +14,7 @@ const FUTURE_BRANCH_MODELS = [
   'Order',
   'Delivery',
   'Debt',
+  'CashEntry',
   'Expense',
   'Vehicle',
   'DailyClosing',

@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { buildBranchWhere, type BranchScope } from '@/lib/branch-scope';
+import { getCashRevenueTotal } from '@/lib/cash-flow';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -94,18 +95,15 @@ async function getPeriodTotals(start: Date, end: Date, branchScope: BranchScope)
     createdAt: { gte: start, lte: end },
     status: { not: 'CANCELADO' },
   };
-  const [ordersTotal, ordersCount, expensesTotal] = await prisma.$transaction([
-    prisma.order.aggregate({
-      _sum: { grossValue: true },
-      where: buildBranchWhere(branchScope, orderWhere),
-    }),
+  const [cashRevenue, ordersCount, expensesTotal] = await Promise.all([
+    getCashRevenueTotal(start, end, branchScope),
     prisma.order.count({ where: buildBranchWhere(branchScope, orderWhere) }),
     prisma.expense.aggregate({
       _sum: { value: true },
       where: buildBranchWhere(branchScope, { date: { gte: start, lte: end } }),
     }),
   ]);
-  const total = ordersTotal._sum.grossValue ?? 0;
+  const total = cashRevenue;
   const expenses = expensesTotal._sum.value ?? 0;
 
   return {

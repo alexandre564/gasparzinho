@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { buildBranchWhere } from '@/lib/branch-scope';
+import { FIADO_PAYMENT_METHOD, getCashEntries } from '@/lib/cash-flow';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { OrderStatus } from '@/types/enums';
 
@@ -44,6 +45,14 @@ export type ClosingExpense = {
   date: Date;
 };
 
+export type ClosingCashEntry = {
+  id: string;
+  description: string;
+  category: string;
+  value: number;
+  date: Date;
+};
+
 export type StockForecastItem = {
   name: string;
   units: number;
@@ -54,15 +63,17 @@ export async function getDailyClosingData() {
   const todayEnd = endOfDay(new Date());
   const branchScope = await getCurrentBranchScope();
 
-  const [sales, expenses, currentStock, todayClosing] = await Promise.all([
+  const [sales, cashEntries, expenses, currentStock, todayClosing] = await Promise.all([
     prisma.order.findMany({
       where: buildBranchWhere(branchScope, {
         createdAt: { gte: todayStart, lte: todayEnd },
         status: { in: [OrderStatus.CONFIRMADO, OrderStatus.CONCLUIDO, OrderStatus.ENTREGUE] },
+        paymentMethod: { not: FIADO_PAYMENT_METHOD },
       }),
       include: { customer: { select: { name: true } } },
       orderBy: { createdAt: 'asc' },
     }),
+    getCashEntries(todayStart, todayEnd, branchScope),
     prisma.expense.findMany({
       where: buildBranchWhere(branchScope, { date: { gte: todayStart, lte: todayEnd } }),
     }),
@@ -76,7 +87,9 @@ export async function getDailyClosingData() {
     }),
   ]);
 
-  const totalRevenue = sales.reduce((sum, order) => sum + order.grossValue, 0);
+  const totalSalesRevenue = sales.reduce((sum, order) => sum + order.grossValue, 0);
+  const totalCashEntries = cashEntries.reduce((sum, entry) => sum + entry.value, 0);
+  const totalRevenue = totalSalesRevenue + totalCashEntries;
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.value, 0);
   const netBalance = totalRevenue - totalExpenses;
   const ordersCount = sales.length;
@@ -92,6 +105,13 @@ export async function getDailyClosingData() {
       customer: sale.customer,
       grossValue: sale.grossValue,
       netValue: sale.netValue,
+    })),
+    cashEntries: cashEntries.map((entry) => ({
+      id: entry.id,
+      description: entry.description,
+      category: entry.category,
+      value: entry.value,
+      date: entry.date,
     })),
     expenses: expenses.map((expense) => ({
       id: expense.id,

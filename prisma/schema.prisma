@@ -185,6 +185,34 @@ model Debt {
   @@index([branchId])
 }
 
+model CashEntry {
+  id            String   @id @default(cuid())
+  type          String   @default("ENTRADA")
+  category      String
+  description   String
+  value         Float
+  date          DateTime
+  source        String
+  debtId        String?
+  orderId       String?
+  customerId    String?
+  paymentMethod String?
+  responsible   String?
+  notes         String?
+  branchId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@index([source])
+  @@index([debtId])
+  @@index([orderId])
+  @@index([customerId])
+  @@index([branchId])
+}
+
 model Expense {
   id          String   @id @default(cuid())
   description String
@@ -294,6 +322,7 @@ model Branch {
   orders Order[]
   deliveries Delivery[]
   debts Debt[]
+  cashEntries CashEntry[]
   expenses Expense[]
   vehicles Vehicle[]
   dailyClosings DailyClosing[]

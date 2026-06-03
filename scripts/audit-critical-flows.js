@@ -99,6 +99,7 @@ const checks = [
       [/renegotiatedAt/, 'renegociacao registrada'],
       [/renegotiatedValue/, 'valor renegociado registrado'],
       [/status: 'PAGO'/, 'pagamento possui status proprio'],
+      [/createDebtPaymentCashEntry/, 'pagamento de divida gera lancamento de caixa'],
       [/branchId: branchScope\.branchId/, 'importacao/criacao recebe filial'],
     ],
   },
@@ -147,6 +148,7 @@ const checks = [
       [/branchId: branchScope\.branchId/, 'gasto criado na filial'],
       [/getFinancialSummary/, 'resumo financeiro por periodo existe'],
       [/getWeeklyChartData/, 'grafico financeiro por periodo existe'],
+      [/getCashRevenueTotal/, 'financeiro usa regime de caixa para entradas'],
       [/importExpenses/, 'importacao de gastos existe'],
       [/buildBranchWhere\(branchScope/, 'consultas financeiras usam filial'],
     ],
@@ -157,6 +159,7 @@ const checks = [
     expectations: [
       [/getCurrentBranchScope\(/, 'relatorio obtem filial atual'],
       [/buildBranchWhere\(branchScope/, 'relatorio usa escopo por filial'],
+      [/getCashRevenueTotal/, 'relatorio usa entradas por regime de caixa'],
       [/daily|weekly|monthly|yearly/, 'periodos de relatorio suportados'],
     ],
   },
@@ -168,6 +171,7 @@ const checks = [
       [/buildBranchWhere\(branchScope/, 'backup respeita filial ativa'],
       [/organizations/, 'organizacoes incluidas no backup'],
       [/branches/, 'filiais incluidas no backup'],
+      [/cashEntries/, 'entradas de caixa incluidas no backup'],
     ],
   },
   {

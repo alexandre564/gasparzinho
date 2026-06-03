@@ -92,6 +92,13 @@ async function main() {
 
     await client.query(branchUniqueMigration);
 
+    const cashEntriesMigration = fs.readFileSync(
+      path.join(__dirname, '..', 'prisma', 'migrations', '20260603090000_add_cash_entries', 'migration.sql'),
+      'utf8',
+    );
+
+    await client.query(cashEntriesMigration);
+
     console.log(`Banco atualizado no schema ${schema}.`);
   });
 }

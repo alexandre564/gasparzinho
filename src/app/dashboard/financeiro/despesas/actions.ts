@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireActionAccess } from '@/lib/api-auth';
 import { buildBranchWhere, type BranchScope } from '@/lib/branch-scope';
+import { getCashRevenueTotal } from '@/lib/cash-flow';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export type CreateExpenseState = {
@@ -352,12 +353,7 @@ export async function deleteExpense(id: string): Promise<{ success: boolean; mes
 }
 
 async function getRevenue(from: Date, to: Date, branchScope: BranchScope) {
-  const result = await prisma.order.aggregate({
-    _sum: { netValue: true },
-    where: buildBranchWhere(branchScope, { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } }),
-  });
-
-  return result._sum.netValue ?? 0;
+  return getCashRevenueTotal(from, to, branchScope);
 }
 
 async function getExpenses(from: Date, to: Date, branchScope: BranchScope) {

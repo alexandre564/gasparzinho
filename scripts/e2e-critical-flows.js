@@ -98,6 +98,19 @@ function runContractChecks() {
   assertContains(cobrancaAction, /isDebtClosedStatus/, 'Cobranca precisa tratar status pagos/cancelados como fechados.');
   assertContains(cobrancaAction, /buildBranchWhere\(branchScope/, 'Cobranca precisa respeitar filial.');
   assertContains(cobrancaAction, /status: fullPayment \? 'PAGO' : 'RENEGOCIADO'/, 'Renegociacao parcial precisa manter cobranca em aberto.');
+  assertContains(cobrancaAction, /createDebtPaymentCashEntry/, 'Pagamento de divida precisa gerar entrada no caixa do dia.');
+  assertContains(cobrancaAction, /CASH_ENTRY_SOURCE_DEBT_PARTIAL_PAYMENT/, 'Pagamento parcial de renegociacao precisa gerar entrada proporcional no caixa.');
+  assertContains(cobrancaAction, /cancelDebtWithAudit/, 'Cancelamento administrativo de divida precisa existir no backend.');
+  assertContains(cobrancaAction, /requireActionAccess\(\['ADMIN'\]\)/, 'Cancelamento de divida precisa ser restrito a ADMIN no backend.');
+  assertContains(cobrancaAction, /status: 'CANCELADA'/, 'Cancelamento de divida precisa ser logico, sem apagar historico.');
+
+  const cashFlow = read('src/lib/cash-flow.ts');
+  assertContains(cashFlow, /getCashRevenueTotal/, 'Financeiro precisa consolidar vendas pagas e recebimentos de fiado em regime de caixa.');
+  assertContains(cashFlow, /paymentMethod:\s*\{\s*not:\s*FIADO_PAYMENT_METHOD/, 'Vendas fiadas nao podem entrar no caixa antes do recebimento.');
+
+  const cobrancaResumo = read('src/app/dashboard/cobranca/[id]/page.tsx') + read('src/app/dashboard/cobranca/[id]/DeleteDebtButton.tsx');
+  assertContains(cobrancaResumo, /DeleteDebtButton/, 'Resumo da cobranca precisa expor acao administrativa para divida.');
+  assertContains(cobrancaResumo, /CANCELAR/, 'Exclusao administrativa de divida precisa exigir confirmacao forte.');
 
   const entregaPage = read('src/app/dashboard/entregas/page.tsx');
   assertContains(entregaPage, /missingAddress|endere[cç]o/i, 'Entregas precisam sinalizar endereco faltante.');
@@ -110,6 +123,15 @@ function runContractChecks() {
   const backupRoute = read('src/app/api/backup/route.ts') + read('src/app/api/backup/planilha/route.ts');
   assertContains(backupRoute, /requireApiAccess\(\["ADMIN"\]\)/, 'Backup precisa ser restrito a administrador.');
   assertContains(backupRoute, /buildBranchWhere\(branchScope/, 'Backup precisa respeitar filial ativa.');
+
+  const dashboard = read('src/app/dashboard/page.tsx');
+  assertContains(dashboard, /DateRangeFilter/, 'Dashboard precisa ter filtro de periodo De/Ate.');
+  assertContains(dashboard, /salesMonth/, 'Dashboard precisa manter indicador de vendas no mes.');
+  assertContains(dashboard, /getCashRevenueTotal/, 'Dashboard precisa mostrar entradas em caixa com pagamentos de fiado.');
+
+  const fechamento = read('src/app/dashboard/fechamento/actions.ts') + read('src/app/dashboard/fechamento/ClosingSummary.tsx');
+  assertContains(fechamento, /cashEntries/, 'Fechamento precisa incluir recebimentos de fiado do dia.');
+  assertContains(fechamento, /paymentMethod:\s*\{\s*not:\s*FIADO_PAYMENT_METHOD/, 'Fechamento precisa separar vendas fiadas de entradas reais em caixa.');
 
   const seedTest = read('scripts/seed-test-branches.js');
   assertContains(seedTest, /branch_gasparzinho_teste_norte/, 'Cenario de segunda filial precisa estar preparado.');

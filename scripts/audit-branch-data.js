@@ -11,6 +11,7 @@ const TABLES = [
   'Order',
   'Delivery',
   'Debt',
+  'CashEntry',
   'Expense',
   'Vehicle',
   'DailyClosing',

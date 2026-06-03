@@ -1,12 +1,14 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/auth';
 import { requireActionAccess } from '@/lib/api-auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
+import { CASH_ENTRY_SOURCE_DEBT_PARTIAL_PAYMENT, createDebtPaymentCashEntry } from '@/lib/cash-flow';
 import { calculateDebtDaysLate, getDebtEffectiveStatus, isDebtClosedStatus, isDebtOverdue } from '@/lib/debts';
 
 export type DebtSortKey =
@@ -36,6 +38,35 @@ const DebtActionSchema = z.object({
   paymentDate: optionalDate,
   notes: z.string().trim().max(500, 'Use no máximo 500 caracteres.').optional(),
 });
+
+const DebtCancellationSchema = z.object({
+  reason: z.enum(['ERRO_LANCAMENTO', 'DUPLICIDADE', 'CRIADA_POR_ENGANO', 'OUTRO']),
+  reasonDetails: z.string().trim().max(300, 'Use no maximo 300 caracteres.').optional(),
+  confirmation: z.string().trim(),
+}).superRefine((value, context) => {
+  if (value.confirmation !== 'CANCELAR') {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['confirmation'],
+      message: 'Digite CANCELAR para confirmar.',
+    });
+  }
+
+  if (value.reason === 'OUTRO' && !value.reasonDetails) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['reasonDetails'],
+      message: 'Informe o motivo quando escolher outro motivo.',
+    });
+  }
+});
+
+const debtCancellationReasonLabels: Record<z.infer<typeof DebtCancellationSchema>['reason'], string> = {
+  ERRO_LANCAMENTO: 'Erro de lancamento',
+  DUPLICIDADE: 'Duplicidade',
+  CRIADA_POR_ENGANO: 'Cobranca criada por engano',
+  OUTRO: 'Outro motivo',
+};
 
 type DebtWithRelations = Awaited<ReturnType<typeof prisma.debt.findMany>>[number] & {
   customer: { name: string; phone: string };
@@ -225,7 +256,10 @@ export async function updateDebt(id: string, data: unknown) {
 
   try {
     const branchScope = await getCurrentBranchScope();
-    const existingDebt = await prisma.debt.findFirst({ where: buildBranchWhere(branchScope, { id }) });
+    const existingDebt = await prisma.debt.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
+      include: { customer: { select: { name: true } } },
+    });
 
     if (!existingDebt) {
       return { success: false as const, message: 'Dívida não encontrada.' };
@@ -248,23 +282,45 @@ export async function updateDebt(id: string, data: unknown) {
       .join('\n');
     const fullNotes = [existingDebt.notes, paymentInfo].filter(Boolean).join('\n\n');
 
-    await prisma.debt.update({
-      where: { id: existingDebt.id },
-      data: {
-        value: nextDebtValue,
-        dueDate: newDueDate,
-        originalDueDate: existingDebt.originalDueDate ?? existingDebt.dueDate,
-        renegotiatedAt: new Date(),
-        renegotiatedValue: nextRenegotiatedValue,
-        paidAt: fullPayment ? paymentDate ?? new Date() : null,
-        notes: fullNotes,
-        status: fullPayment ? 'PAGO' : 'RENEGOCIADO',
-      },
+    const paymentReceivedAt = paymentDate ?? new Date();
+
+    await prisma.$transaction(async (tx) => {
+      if (paidAmount > 0) {
+        await createDebtPaymentCashEntry(tx, {
+          debtId: existingDebt.id,
+          orderId: existingDebt.orderId,
+          customerId: existingDebt.customerId,
+          value: paidAmount,
+          date: paymentReceivedAt,
+          branchId: existingDebt.branchId ?? branchScope.branchId,
+          source: CASH_ENTRY_SOURCE_DEBT_PARTIAL_PAYMENT,
+          notes: fullPayment
+            ? 'Recebimento final registrado na tela de renegociacao.'
+            : 'Pagamento parcial registrado na tela de renegociacao.',
+        });
+      }
+
+      await tx.debt.update({
+        where: { id: existingDebt.id },
+        data: {
+          value: nextDebtValue,
+          dueDate: newDueDate,
+          originalDueDate: existingDebt.originalDueDate ?? existingDebt.dueDate,
+          renegotiatedAt: new Date(),
+          renegotiatedValue: nextRenegotiatedValue,
+          paidAt: fullPayment ? paymentReceivedAt : null,
+          notes: fullNotes,
+          status: fullPayment ? 'PAGO' : 'RENEGOCIADO',
+        },
+      });
     });
 
     revalidatePath('/dashboard/cobranca');
     revalidatePath(`/dashboard/cobranca/${id}`);
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/financeiro');
     revalidatePath('/dashboard/financeiro/dividas');
+    revalidatePath('/dashboard/fechamento');
 
     return {
       success: true as const,
@@ -284,27 +340,143 @@ export async function markAsPaid(id: string) {
 
   try {
     const branchScope = await getCurrentBranchScope();
-    const existingDebt = await prisma.debt.findFirst({ where: buildBranchWhere(branchScope, { id }) });
+    const existingDebt = await prisma.debt.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
+      include: { customer: { select: { name: true } } },
+    });
 
     if (!existingDebt) {
       return { success: false as const, message: 'Dívida não encontrada para esta filial.' };
     }
 
-    await prisma.debt.update({
-      where: { id: existingDebt.id },
-      data: {
-        status: 'PAGO',
-        paidAt: new Date(),
-      },
+    if (isDebtClosedStatus(existingDebt.status)) {
+      return { success: true as const, message: 'Dívida já estava encerrada.' };
+    }
+
+    const paidAt = new Date();
+    const paymentValue = existingDebt.renegotiatedValue ?? existingDebt.value;
+
+    await prisma.$transaction(async (tx) => {
+      await createDebtPaymentCashEntry(tx, {
+        debtId: existingDebt.id,
+        orderId: existingDebt.orderId,
+        customerId: existingDebt.customerId,
+        customerName: existingDebt.customer.name,
+        value: paymentValue,
+        date: paidAt,
+        branchId: existingDebt.branchId ?? branchScope.branchId,
+        notes: 'Recebimento integral registrado em cobranca.',
+      });
+
+      await tx.debt.update({
+        where: { id: existingDebt.id },
+        data: {
+          status: 'PAGO',
+          paidAt,
+        },
+      });
     });
 
+    revalidatePath('/dashboard');
     revalidatePath('/dashboard/cobranca');
+    revalidatePath('/dashboard/financeiro');
     revalidatePath('/dashboard/financeiro/dividas');
+    revalidatePath('/dashboard/fechamento');
 
     return { success: true as const, message: 'Dívida marcada como paga!' };
   } catch (error) {
     console.error('Erro ao marcar dívida como paga:', error);
     return { success: false as const, message: 'Falha ao marcar como paga.' };
+  }
+}
+
+export async function cancelDebtWithAudit(id: string, data: unknown) {
+  const denied = await requireActionAccess(['ADMIN']);
+  if (denied) return denied;
+
+  const validatedData = DebtCancellationSchema.safeParse(data);
+
+  if (!validatedData.success) {
+    return {
+      success: false as const,
+      message: 'Confirmacao invalida. Revise o motivo e digite CANCELAR.',
+      errors: validatedData.error.issues,
+    };
+  }
+
+  try {
+    const [session, branchScope] = await Promise.all([auth(), getCurrentBranchScope()]);
+    const existingDebt = await prisma.debt.findFirst({
+      where: buildBranchWhere(branchScope, { id }),
+      include: {
+        customer: { select: { name: true, phone: true } },
+        order: { select: { id: true, status: true, paymentMethod: true } },
+        branch: { select: { organizationId: true } },
+      },
+    });
+
+    if (!existingDebt || existingDebt.branch?.organizationId !== branchScope.organizationId) {
+      return { success: false as const, message: 'Divida nao encontrada para esta filial.' };
+    }
+
+    const status = getDebtEffectiveStatus(existingDebt);
+
+    if (status === 'PAGO' || existingDebt.paidAt) {
+      return {
+        success: false as const,
+        message: 'Dividas pagas nao podem ser excluidas. O registro foi preservado para o historico financeiro.',
+      };
+    }
+
+    if (status === 'CANCELADA' || status === 'CANCELADO') {
+      return { success: true as const, message: 'Esta divida ja estava cancelada.' };
+    }
+
+    const { reason, reasonDetails } = validatedData.data;
+    const actor = [
+      session?.user?.name,
+      session?.user?.email,
+      session?.user?.id ? `id=${session.user.id}` : null,
+    ]
+      .filter(Boolean)
+      .join(' | ') || 'ADMIN';
+    const auditNote = [
+      '[CANCELAMENTO CONTROLADO DE COBRANCA]',
+      `Data: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`,
+      `Administrador: ${actor}`,
+      `Motivo: ${debtCancellationReasonLabels[reason]}`,
+      reasonDetails ? `Detalhe: ${reasonDetails}` : null,
+      `Status anterior: ${existingDebt.status}`,
+      `Valor preservado para auditoria: R$ ${existingDebt.value.toFixed(2)}`,
+      `Cliente: ${existingDebt.customer.name} (${existingDebt.customer.phone})`,
+      `Pedido vinculado: ${existingDebt.orderId}`,
+      'Estrategia: cancelamento logico; a divida nao foi apagada fisicamente.',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    await prisma.debt.update({
+      where: { id: existingDebt.id },
+      data: {
+        status: 'CANCELADA',
+        notes: [existingDebt.notes, auditNote].filter(Boolean).join('\n\n'),
+      },
+    });
+
+    revalidatePath('/dashboard/cobranca');
+    revalidatePath(`/dashboard/cobranca/${id}`);
+    revalidatePath('/dashboard/financeiro');
+    revalidatePath('/dashboard/financeiro/dividas');
+    revalidatePath('/dashboard/relatorios');
+    revalidatePath('/dashboard/fechamento');
+
+    return {
+      success: true as const,
+      message: 'Divida cancelada com rastreabilidade. Ela saiu das cobrancas pendentes e vencidas.',
+    };
+  } catch (error) {
+    console.error('Erro ao cancelar divida com auditoria:', error);
+    return { success: false as const, message: 'Falha ao cancelar a divida.' };
   }
 }
 

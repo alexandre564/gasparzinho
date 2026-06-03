@@ -14,6 +14,7 @@ import {
 type ChartPoint = {
   name: string;
   total?: number;
+  Vendas?: number;
   Entradas?: number;
   Saidas?: number;
 };
@@ -95,7 +96,7 @@ export default function SalesChart({
   const reducedMotion = usePrefersReducedMotion();
   const chartData = normalizeData(data);
   const hasFinanceSeries = chartData.some(
-    (item) => item.Entradas !== undefined || item.Saidas !== undefined
+    (item) => item.Vendas !== undefined || item.Entradas !== undefined || item.Saidas !== undefined
   );
   const animationProps = {
     isAnimationActive: !reducedMotion,
@@ -127,6 +128,15 @@ export default function SalesChart({
           />
           {hasFinanceSeries ? (
             <>
+              {chartData.some((item) => item.Vendas !== undefined) ? (
+                <Bar
+                  dataKey="Vendas"
+                  fill="#0284c7"
+                  radius={[6, 6, 0, 0]}
+                  activeBar={{ fill: '#0369a1', stroke: '#0c4a6e', strokeWidth: 1 }}
+                  {...animationProps}
+                />
+              ) : null}
               <Bar
                 dataKey="Entradas"
                 fill="#047857"

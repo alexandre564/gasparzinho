@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import type { ClosingExpense, ClosingSale, StockForecastItem } from './actions';
+import type { ClosingCashEntry, ClosingExpense, ClosingSale, StockForecastItem } from './actions';
 
 interface SummaryData {
   totalRevenue: number;
@@ -32,6 +32,7 @@ interface SummaryData {
 interface ClientData {
   summary: SummaryData;
   sales: ClosingSale[];
+  cashEntries: ClosingCashEntry[];
   expenses: ClosingExpense[];
   stockForecast: StockForecastItem[];
 }
@@ -56,6 +57,10 @@ export default function ClosingActions({ data, isAlreadyClosed }: Props) {
       .slice(0, 10)
       .map((item) => `- ${item.customer.name}: ${formatCurrency(item.grossValue)}`)
       .join('\n');
+    const cashEntriesText = data.cashEntries
+      .slice(0, 10)
+      .map((item) => `- ${item.description}: ${formatCurrency(item.value)}`)
+      .join('\n');
     const stockText = data.stockForecast
       .map((item) => `- ${item.name}: ${item.units}`)
       .join('\n');
@@ -70,8 +75,11 @@ export default function ClosingActions({ data, isAlreadyClosed }: Props) {
 *Despesas:* ${formatCurrency(totalExpenses)}
 *Saldo:* ${formatCurrency(netBalance)}
 
-*Vendas do dia:*
+*Vendas pagas do dia:*
 ${salesText || '- Nenhuma venda registrada'}
+
+*Recebimentos de fiado:*
+${cashEntriesText || '- Nenhum fiado recebido'}
 
 *Despesas do dia:*
 ${expensesText || '- Nenhuma despesa registrada'}

@@ -7,6 +7,7 @@ import { requireActionAccess } from '@/lib/api-auth';
 import { DeliveryStatus } from '@/types/enums';
 import { cleanCustomerTextFields, decodeContactText, normalizeSearchText, onlyDigits } from '@/lib/contact-text';
 import { buildBranchWhere } from '@/lib/branch-scope';
+import { createDebtPaymentCashEntry, FIADO_PAYMENT_METHOD } from '@/lib/cash-flow';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 const ITEMS_PER_PAGE = 15;
@@ -365,10 +366,49 @@ export async function confirmDeliveryPayment(
       });
 
       if (paymentResult === 'PAGO') {
+        const paidAt = new Date();
+
         if (delivery.order.debt) {
+          if (delivery.order.debt.status !== 'PAGO' && delivery.order.debt.status !== 'CANCELADA') {
+            await createDebtPaymentCashEntry(tx, {
+              debtId: delivery.order.debt.id,
+              orderId: delivery.orderId,
+              customerId: delivery.order.customerId,
+              customerName: delivery.order.customer.name,
+              value: delivery.order.debt.renegotiatedValue ?? delivery.order.debt.value,
+              date: paidAt,
+              branchId: delivery.branchId ?? branchScope.branchId,
+              notes: 'Recebimento de fiado registrado ao confirmar entrega paga.',
+            });
+          }
+
           await tx.debt.update({
             where: { id: delivery.order.debt.id },
-            data: { status: 'PAGO', paidAt: new Date() },
+            data: { status: 'PAGO', paidAt },
+          });
+        } else if (delivery.order.paymentMethod === FIADO_PAYMENT_METHOD) {
+          const debt = await tx.debt.create({
+            data: {
+              customerId: delivery.order.customerId,
+              orderId: delivery.orderId,
+              value: delivery.order.grossValue,
+              dueDate: paidAt,
+              originalDueDate: paidAt,
+              status: 'PAGO',
+              paidAt,
+              branchId: delivery.branchId ?? branchScope.branchId,
+            },
+          });
+
+          await createDebtPaymentCashEntry(tx, {
+            debtId: debt.id,
+            orderId: delivery.orderId,
+            customerId: delivery.order.customerId,
+            customerName: delivery.order.customer.name,
+            value: delivery.order.grossValue,
+            date: paidAt,
+            branchId: delivery.branchId ?? branchScope.branchId,
+            notes: 'Recebimento de fiado sem cobranca previa registrado na entrega.',
           });
         }
 
@@ -411,6 +451,9 @@ export async function confirmDeliveryPayment(
     revalidatePath('/dashboard/entregas');
     revalidatePath('/dashboard/vendas');
     revalidatePath('/dashboard/financeiro/dividas');
+    revalidatePath('/dashboard/financeiro');
+    revalidatePath('/dashboard/fechamento');
+    revalidatePath('/dashboard');
     revalidatePath('/dashboard/cobranca');
 
     return {

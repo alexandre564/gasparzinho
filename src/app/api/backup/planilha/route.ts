@@ -39,7 +39,7 @@ export async function GET() {
   }
 
   const branchScope = await getCurrentBranchScope();
-  const [users, customers, products, orders, debts, expenses, vehicles, closings, settings, organizations, branches] = await Promise.all([
+  const [users, customers, products, orders, debts, cashEntries, expenses, vehicles, closings, settings, organizations, branches] = await Promise.all([
     prisma.user.findMany({ where: buildBranchWhere(branchScope), orderBy: { name: 'asc' } }),
     prisma.customer.findMany({ where: buildBranchWhere(branchScope), orderBy: { name: 'asc' } }),
     prisma.product.findMany({ where: buildBranchWhere(branchScope), orderBy: { name: 'asc' } }),
@@ -53,6 +53,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       include: { customer: true },
     }),
+    prisma.cashEntry.findMany({ where: buildBranchWhere(branchScope), orderBy: { date: 'desc' } }),
     prisma.expense.findMany({ where: buildBranchWhere(branchScope), orderBy: { date: 'desc' } }),
     prisma.vehicle.findMany({ where: buildBranchWhere(branchScope), orderBy: { placa: 'asc' } }),
     prisma.dailyClosing.findMany({ where: buildBranchWhere(branchScope), orderBy: { date: 'desc' } }),
@@ -177,6 +178,24 @@ export async function GET() {
           debt.branchId,
         ];
       }),
+    ),
+    section(
+      'ENTRADAS_CAIXA',
+      ['data', 'tipo', 'categoria', 'descricao', 'valor', 'origem', 'divida', 'pedido', 'cliente', 'pagamento', 'responsavel', 'filial'],
+      cashEntries.map((entry) => [
+        entry.date.toLocaleDateString('pt-BR'),
+        entry.type,
+        entry.category,
+        entry.description,
+        entry.value.toFixed(2).replace('.', ','),
+        entry.source,
+        entry.debtId,
+        entry.orderId,
+        entry.customerId,
+        entry.paymentMethod,
+        entry.responsible,
+        entry.branchId,
+      ]),
     ),
     section(
       'DESPESAS',

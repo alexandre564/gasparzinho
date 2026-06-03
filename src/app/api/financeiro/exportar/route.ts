@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requireApiAccess } from '@/lib/api-auth';
 import { buildBranchWhere, type BranchScope } from '@/lib/branch-scope';
+import { getCashRevenueTotal } from '@/lib/cash-flow';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 import { prisma } from '@/lib/prisma';
 
@@ -14,12 +15,7 @@ function csvCell(value: unknown) {
 }
 
 async function getRevenue(from: Date, to: Date, branchScope: BranchScope) {
-  const result = await prisma.order.aggregate({
-    _sum: { grossValue: true },
-    where: buildBranchWhere(branchScope, { createdAt: { gte: from, lte: to }, status: { not: 'CANCELADO' } }),
-  });
-
-  return result._sum.grossValue ?? 0;
+  return getCashRevenueTotal(from, to, branchScope);
 }
 
 async function getExpenses(from: Date, to: Date, branchScope: BranchScope) {

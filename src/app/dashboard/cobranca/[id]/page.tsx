@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import DebtRenegotiationForm from './DebtRenegotiationForm';
+import DeleteDebtButton from './DeleteDebtButton';
 import { getDebtPaymentBreakdown } from '@/lib/debts';
 import { buildBranchWhere } from '@/lib/branch-scope';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
@@ -35,10 +36,11 @@ const currency = new Intl.NumberFormat('pt-BR', {
 const formatDate = (date?: Date | null) => (date ? format(date, 'dd/MM/yyyy') : '-');
 
 export default async function RenegotiateDebtPage({ params }: { params: { id: string } }) {
-  await requirePageAccess(['ADMIN']);
+  const session = await requirePageAccess(['ADMIN']);
 
   const debt = await getDebt(params.id);
   const paymentBreakdown = getDebtPaymentBreakdown(debt.notes);
+  const isAdmin = session.user?.role?.toUpperCase() === 'ADMIN';
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
@@ -86,6 +88,18 @@ export default async function RenegotiateDebtPage({ params }: { params: { id: st
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
               Renegociado em {formatDate(debt.renegotiatedAt)}. Vencimento original:{' '}
               {formatDate(debt.originalDueDate)}.
+            </div>
+          ) : null}
+          {isAdmin ? (
+            <div className="space-y-2 rounded-lg border border-red-100 bg-white p-3">
+              <div>
+                <p className="text-sm font-bold text-red-800">Acao administrativa</p>
+                <p className="text-xs text-slate-600">
+                  Use somente para erro de lancamento, duplicidade ou cobranca criada indevidamente.
+                  Para recebimento, prefira marcar como paga; para novo combinado, prefira renegociar.
+                </p>
+              </div>
+              <DeleteDebtButton debtId={debt.id} status={debt.status} paidAt={debt.paidAt} />
             </div>
           ) : null}
         </CardContent>

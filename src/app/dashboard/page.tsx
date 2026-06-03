@@ -14,6 +14,7 @@ import type { ComponentType } from 'react';
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/auth';
+import DateRangeFilter from '@/components/DateRangeFilter';
 import SalesChart from '@/components/SalesChart';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { labelFrom, orderStatusLabels } from '@/lib/labels';
 import { getLoyaltyPredictions } from './fidelizacao/actions';
 import { decodeContactText } from '@/lib/contact-text';
 import { buildBranchWhere } from '@/lib/branch-scope';
+import { getCashRevenueTotal } from '@/lib/cash-flow';
 import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 
 export const dynamic = 'force-dynamic';
@@ -33,16 +35,93 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-async function getDashboardData() {
+function parseFilterDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function startOfDay(date: Date) {
+  const value = new Date(date);
+  value.setHours(0, 0, 0, 0);
+  return value;
+}
+
+function endOfDay(date: Date) {
+  const value = new Date(date);
+  value.setHours(23, 59, 59, 999);
+  return value;
+}
+
+function getDashboardRange(from?: string, to?: string) {
+  const start = parseFilterDate(from);
+  const end = parseFilterDate(to);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (start || end) {
+    const rangeStart = start ?? end ?? today;
+    const rangeEnd = end ? endOfDay(end) : endOfDay(today);
+
+    return rangeStart <= rangeEnd
+      ? { from: rangeStart, to: rangeEnd, isCustom: true }
+      : { from: startOfDay(rangeEnd), to: endOfDay(rangeStart), isCustom: true };
+  }
+
+  const defaultStart = new Date(today);
+  defaultStart.setDate(defaultStart.getDate() - 6);
+
+  return { from: defaultStart, to: endOfDay(today), isCustom: false };
+}
+
+function getChartPoints(from: Date, to: Date) {
+  const days = Math.max(1, Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)));
+
+  if (days <= 31) {
+    return Array.from({ length: days }).map((_, index) => {
+      const start = new Date(from);
+      start.setDate(from.getDate() + index);
+      start.setHours(0, 0, 0, 0);
+
+      return { start, end: endOfDay(start), name: start.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) };
+    });
+  }
+
+  const points = [];
+  const cursor = new Date(from.getFullYear(), from.getMonth(), 1);
+
+  while (cursor <= to && points.length < 24) {
+    const start = new Date(cursor);
+    const end = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59, 999);
+    points.push({
+      start,
+      end: end > to ? to : end,
+      name: start.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', ''),
+    });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return points;
+}
+
+async function getDashboardData(from?: string, to?: string) {
   const branchScope = await getCurrentBranchScope();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const monthStart = new Date(today);
   monthStart.setDate(1);
+  const dashboardRange = getDashboardRange(from, to);
 
   const [
     salesToday,
     salesMonth,
+    periodSales,
+    periodCashRevenue,
+    periodExpenses,
     expensesMonth,
     openDebtValue,
     overdueDebts,
@@ -63,6 +142,19 @@ async function getDashboardData() {
       _sum: { grossValue: true, netValue: true },
       _count: { id: true },
       where: buildBranchWhere(branchScope, { createdAt: { gte: monthStart }, status: { not: 'CANCELADO' } }),
+    }),
+    prisma.order.aggregate({
+      _sum: { grossValue: true },
+      _count: { id: true },
+      where: buildBranchWhere(branchScope, {
+        createdAt: { gte: dashboardRange.from, lte: dashboardRange.to },
+        status: { not: 'CANCELADO' },
+      }),
+    }),
+    getCashRevenueTotal(dashboardRange.from, dashboardRange.to, branchScope),
+    prisma.expense.aggregate({
+      _sum: { value: true },
+      where: buildBranchWhere(branchScope, { date: { gte: dashboardRange.from, lte: dashboardRange.to } }),
     }),
     prisma.expense.aggregate({
       _sum: { value: true },
@@ -94,29 +186,29 @@ async function getDashboardData() {
     getLoyaltyPredictions(3),
   ]);
 
+  const chartPoints = getChartPoints(dashboardRange.from, dashboardRange.to);
   const salesData = await Promise.all(
-    Array.from({ length: 7 }).map(async (_, index) => {
-      const start = new Date();
-      start.setDate(start.getDate() - index);
-      start.setHours(0, 0, 0, 0);
-
-      const end = new Date(start);
-      end.setHours(23, 59, 59, 999);
-
-      const dailySales = await prisma.order.aggregate({
-        _sum: { grossValue: true },
-        where: buildBranchWhere(branchScope, {
-          createdAt: { gte: start, lte: end },
-          status: { not: 'CANCELADO' },
+    chartPoints.map(async ({ start, end, name }) => {
+      const [dailySales, dailyCashRevenue] = await Promise.all([
+        prisma.order.aggregate({
+          _sum: { grossValue: true },
+          where: buildBranchWhere(branchScope, {
+            createdAt: { gte: start, lte: end },
+            status: { not: 'CANCELADO' },
+          }),
         }),
-      });
+        getCashRevenueTotal(start, end, branchScope),
+      ]);
+      const dailySalesTotal = dailySales._sum.grossValue ?? 0;
 
       return {
-        name: start.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
-        total: dailySales._sum.grossValue ?? 0,
+        name,
+        total: dailySalesTotal,
+        Vendas: dailySalesTotal,
+        Entradas: dailyCashRevenue,
       };
     }),
-  ).then((data) => data.reverse());
+  );
 
   return {
     totalSalesToday: salesToday._sum.grossValue ?? 0,
@@ -127,6 +219,12 @@ async function getDashboardData() {
     monthProfit: (salesMonth._sum.netValue ?? 0) - (expensesMonth._sum.value ?? 0),
     monthOrders: salesMonth._count.id,
     monthExpenses: expensesMonth._sum.value ?? 0,
+    periodSales: periodSales._sum.grossValue ?? 0,
+    periodOrders: periodSales._count.id,
+    periodCashRevenue,
+    periodExpenses: periodExpenses._sum.value ?? 0,
+    periodNetCash: periodCashRevenue - (periodExpenses._sum.value ?? 0),
+    periodLabel: dashboardRange.isCustom ? 'Periodo filtrado' : 'Ultimos 7 dias',
     openDebtValue: openDebtValue.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0),
     overdueDebts,
     activeCustomers,
@@ -287,14 +385,18 @@ type OperationalAlertItem = {
   tone: 'amber' | 'rose' | 'sky';
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: { from?: string; to?: string };
+}) {
   const session = await auth();
 
   if (!session?.user) {
     redirect('/login');
   }
 
-  const data = await getDashboardData();
+  const data = await getDashboardData(searchParams?.from, searchParams?.to);
   const operationalAlerts: OperationalAlertItem[] = [];
 
   if (data.overdueDebts > 0) {
@@ -365,6 +467,37 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <Card className="border-slate-300 bg-white shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-black text-slate-950">Filtro de periodo</CardTitle>
+          <CardDescription>
+            Ajuste a leitura das vendas e entradas do grafico. Sem filtro, a visao padrao usa os ultimos 7 dias.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 lg:grid-cols-[auto_1fr] lg:items-end">
+          <DateRangeFilter />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-extrabold uppercase text-slate-600">{data.periodLabel}</p>
+              <p className="mt-1 text-xl font-black text-slate-950">{currency.format(data.periodSales)}</p>
+              <p className="text-xs text-slate-600">{data.periodOrders} pedido(s) no periodo.</p>
+            </div>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs font-extrabold uppercase text-emerald-700">Entradas em caixa</p>
+              <p className="mt-1 text-xl font-black text-emerald-800">{currency.format(data.periodCashRevenue)}</p>
+              <p className="text-xs text-emerald-700">Vendas pagas e recebimentos de fiado.</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-extrabold uppercase text-slate-600">Saldo do periodo</p>
+              <p className={`mt-1 text-xl font-black ${data.periodNetCash >= 0 ? 'text-emerald-800' : 'text-red-700'}`}>
+                {currency.format(data.periodNetCash)}
+              </p>
+              <p className="text-xs text-slate-600">Entradas menos despesas filtradas.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricCard
@@ -461,11 +594,11 @@ export default async function DashboardPage() {
           <CardHeader className="border-b border-slate-200 bg-white">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <CardTitle className="text-xl font-black text-slate-950">Vendas dos últimos 7 dias</CardTitle>
-                <CardDescription>Valor bruto por dia, sem pedidos cancelados.</CardDescription>
+                <CardTitle className="text-xl font-black text-slate-950">Vendas e entradas no periodo</CardTitle>
+                <CardDescription>Vendas registradas e dinheiro efetivamente recebido em caixa.</CardDescription>
               </div>
               <Badge variant="secondary" className="w-fit border border-slate-300 bg-slate-100 text-slate-700">
-                Análise semanal
+                {data.periodLabel}
               </Badge>
             </div>
           </CardHeader>

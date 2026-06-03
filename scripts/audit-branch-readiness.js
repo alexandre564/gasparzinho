@@ -10,6 +10,7 @@ const OPERATIONAL_PATTERNS = [
   'order',
   'delivery',
   'debt',
+  'cashEntry',
   'expense',
   'vehicle',
   'dailyClosing',

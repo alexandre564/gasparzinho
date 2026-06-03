@@ -21,7 +21,7 @@ export default async function FechamentoPage({
 
   const closingData = await getDailyClosingData();
   const history = await getClosingHistory(searchParams?.from, searchParams?.to);
-  const { sales, expenses, stockForecast, isAlreadyClosed, ...summaryData } = closingData;
+  const { sales, cashEntries, expenses, stockForecast, isAlreadyClosed, ...summaryData } = closingData;
   const exportParams = new URLSearchParams();
 
   if (searchParams?.from) exportParams.set('from', searchParams.from);
@@ -31,6 +31,7 @@ export default async function FechamentoPage({
   const clientData = {
     summary: summaryData,
     sales,
+    cashEntries,
     expenses,
     stockForecast,
   };
@@ -57,7 +58,7 @@ export default async function FechamentoPage({
 
       <div id="closing-content" className="space-y-6">
         <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
-          <ClosingSummary data={{ ...summaryData, sales, expenses, stockForecast }} />
+          <ClosingSummary data={{ ...summaryData, sales, cashEntries, expenses, stockForecast }} />
         </Suspense>
       </div>
 
