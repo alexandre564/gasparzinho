@@ -15,6 +15,8 @@
     "data:audit": "node scripts/audit-operational-data.js",
     "data:repair": "node scripts/repair-operational-data.js",
     "data:repair:apply": "node scripts/repair-operational-data.js --apply",
+    "data:test-cleanup": "node scripts/cleanup-test-data.js",
+    "data:test-cleanup:apply": "node scripts/cleanup-test-data.js --apply --confirm=DELETE_TEST_DATA_KEEP_CUSTOMERS",
     "branches:audit": "node scripts/audit-branch-readiness.js",
     "branches:schema-audit": "node scripts/audit-branch-schema-readiness.js",
     "branches:data-audit": "node scripts/audit-branch-data.js",
