@@ -29,6 +29,7 @@ import { getCurrentBranchScope } from '@/lib/current-branch-scope';
 export const dynamic = 'force-dynamic';
 
 const OPEN_DEBT_STATUSES = ['PENDENTE', 'VENCIDO', 'RENEGOCIADO'] as const;
+type DashboardPeriod = 'today' | 'week' | 'month' | 'custom';
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -56,26 +57,54 @@ function endOfDay(date: Date) {
   return value;
 }
 
-function getDashboardRange(from?: string, to?: string) {
+function normalizeDashboardPeriod(period?: string, from?: string, to?: string): DashboardPeriod {
+  if (period === 'today' || period === 'month' || period === 'custom') {
+    return period;
+  }
+
+  if (from || to) {
+    return 'custom';
+  }
+
+  return 'week';
+}
+
+function getDashboardRange(period?: string, from?: string, to?: string) {
+  const selectedPeriod = normalizeDashboardPeriod(period, from, to);
   const start = parseFilterDate(from);
   const end = parseFilterDate(to);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (start || end) {
+  if (selectedPeriod === 'today') {
+    return { from: today, to: endOfDay(today), period: selectedPeriod, label: 'Hoje' };
+  }
+
+  if (selectedPeriod === 'month') {
+    const monthStart = new Date(today);
+    monthStart.setDate(1);
+    return { from: monthStart, to: endOfDay(today), period: selectedPeriod, label: 'Mes atual' };
+  }
+
+  if (selectedPeriod === 'custom' && (start || end)) {
     const rangeStart = start ?? end ?? today;
     const rangeEnd = end ? endOfDay(end) : endOfDay(today);
 
     return rangeStart <= rangeEnd
-      ? { from: rangeStart, to: rangeEnd, isCustom: true }
-      : { from: startOfDay(rangeEnd), to: endOfDay(rangeStart), isCustom: true };
+      ? { from: rangeStart, to: rangeEnd, period: selectedPeriod, label: 'Personalizado' }
+      : { from: startOfDay(rangeEnd), to: endOfDay(rangeStart), period: selectedPeriod, label: 'Personalizado' };
   }
 
   const defaultStart = new Date(today);
   defaultStart.setDate(defaultStart.getDate() - 6);
 
-  return { from: defaultStart, to: endOfDay(today), isCustom: false };
+  return {
+    from: defaultStart,
+    to: endOfDay(today),
+    period: selectedPeriod === 'custom' ? selectedPeriod : 'week',
+    label: selectedPeriod === 'custom' ? 'Personalizado' : 'Semana',
+  };
 }
 
 function getChartPoints(from: Date, to: Date) {
@@ -108,13 +137,13 @@ function getChartPoints(from: Date, to: Date) {
   return points;
 }
 
-async function getDashboardData(from?: string, to?: string) {
+async function getDashboardData(period?: string, from?: string, to?: string) {
   const branchScope = await getCurrentBranchScope();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const monthStart = new Date(today);
   monthStart.setDate(1);
-  const dashboardRange = getDashboardRange(from, to);
+  const dashboardRange = getDashboardRange(period, from, to);
 
   const [
     salesToday,
@@ -224,7 +253,7 @@ async function getDashboardData(from?: string, to?: string) {
     periodCashRevenue,
     periodExpenses: periodExpenses._sum.value ?? 0,
     periodNetCash: periodCashRevenue - (periodExpenses._sum.value ?? 0),
-    periodLabel: dashboardRange.isCustom ? 'Periodo filtrado' : 'Ultimos 7 dias',
+    periodLabel: dashboardRange.label,
     openDebtValue: openDebtValue.reduce((sum, debt) => sum + (debt.renegotiatedValue ?? debt.value), 0),
     overdueDebts,
     activeCustomers,
@@ -388,7 +417,7 @@ type OperationalAlertItem = {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: { from?: string; to?: string };
+  searchParams?: { period?: string; from?: string; to?: string };
 }) {
   const session = await auth();
 
@@ -396,7 +425,7 @@ export default async function DashboardPage({
     redirect('/login');
   }
 
-  const data = await getDashboardData(searchParams?.from, searchParams?.to);
+  const data = await getDashboardData(searchParams?.period, searchParams?.from, searchParams?.to);
   const operationalAlerts: OperationalAlertItem[] = [];
 
   if (data.overdueDebts > 0) {
@@ -469,13 +498,7 @@ export default async function DashboardPage({
       </section>
 
       <Card className="border-slate-300 bg-white shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-black text-slate-950">Filtro de periodo</CardTitle>
-          <CardDescription>
-            Ajuste a leitura das vendas e entradas do grafico. Sem filtro, a visao padrao usa os ultimos 7 dias.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-[auto_1fr] lg:items-end">
+        <CardContent className="grid gap-4 pt-5 lg:grid-cols-[auto_1fr] lg:items-start">
           <DateRangeFilter />
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
